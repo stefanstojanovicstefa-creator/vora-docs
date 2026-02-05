@@ -5,6 +5,7 @@ import { ToolCallVisualization } from './components/ToolCallVisualization';
 import { VoiceWaveform } from './components/VoiceWaveform';
 import { MCPToolsPanel } from './components/MCPToolsPanel';
 import { VoiceControls } from './components/VoiceControls';
+import { DataPanels } from './components/DataPanels';
 
 // LiveKit connection details from env
 const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL || 'ws://localhost:7880';
@@ -138,6 +139,11 @@ function App() {
               <MCPToolsPanel />
             </div>
           )}
+        </div>
+
+        {/* Data Panels - Show live data created by tools */}
+        <div className="mb-6">
+          <DataPanels toolCalls={toolCalls} />
         </div>
 
         {/* Stats footer */}

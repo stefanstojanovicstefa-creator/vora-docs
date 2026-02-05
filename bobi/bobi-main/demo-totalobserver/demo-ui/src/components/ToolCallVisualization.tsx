@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ToolCallMessage } from '../types';
 
 interface Props {
@@ -13,6 +14,8 @@ const TOOL_ICONS: Record<string, string> = {
 };
 
 export function ToolCallVisualization({ toolCalls }: Props) {
+  const [expandedToolCall, setExpandedToolCall] = useState<number | null>(null);
+
   const getIcon = (toolName: string) => {
     return TOOL_ICONS[toolName] || TOOL_ICONS.default;
   };
@@ -21,6 +24,10 @@ export function ToolCallVisualization({ toolCalls }: Props) {
     return name.split('_').map(w =>
       w.charAt(0).toUpperCase() + w.slice(1)
     ).join(' ');
+  };
+
+  const toggleToolCall = (index: number) => {
+    setExpandedToolCall(expandedToolCall === index ? null : index);
   };
 
   return (
@@ -72,6 +79,29 @@ export function ToolCallVisualization({ toolCalls }: Props) {
                 <div className="bg-gray-900 rounded p-2 font-mono text-yellow-400 max-h-24 overflow-y-auto">
                   {call.result.message || call.result.success?.toString() || 'Success'}
                 </div>
+              </div>
+            )}
+
+            {/* Show Full Data button */}
+            <button
+              onClick={() => toggleToolCall(idx)}
+              className="mt-2 px-3 py-1 bg-totalobserver-blue hover:bg-blue-600 text-white rounded text-xs transition"
+            >
+              {expandedToolCall === idx ? 'Hide Full Data ▲' : 'Show Full Data ▼'}
+            </button>
+
+            {/* Expanded full data view */}
+            {expandedToolCall === idx && (
+              <div className="mt-3 text-xs animate-fadeIn">
+                <p className="text-gray-400 mb-2">Complete Tool Call Data:</p>
+                <pre className="bg-black rounded p-3 overflow-x-auto text-green-400">
+                  {JSON.stringify({
+                    tool_name: call.tool_name,
+                    timestamp: call.timestamp,
+                    params: call.params,
+                    result: call.result,
+                  }, null, 2)}
+                </pre>
               </div>
             )}
           </div>
