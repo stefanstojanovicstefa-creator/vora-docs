@@ -1,37 +1,38 @@
 // src/components/VoiceControls.tsx
 interface VoiceControlsProps {
-  isSpeaking: boolean;
+  isAssistantActive: boolean;
   connected: boolean;
-  onToggleMic: () => void;
+  onToggleAssistant: () => void;
 }
 
-export function VoiceControls({ isSpeaking, connected, onToggleMic }: VoiceControlsProps) {
+export function VoiceControls({ isAssistantActive, connected, onToggleAssistant }: VoiceControlsProps) {
   return (
     <div className="flex flex-col items-center justify-center p-8">
       <button
-        onClick={onToggleMic}
+        onClick={onToggleAssistant}
         disabled={!connected}
         className={`
           w-32 h-32 rounded-full flex items-center justify-center
           transition-all duration-300 ease-in-out
-          ${isSpeaking
+          ${isAssistantActive
             ? 'bg-red-500 hover:bg-red-600 scale-110 shadow-2xl'
             : 'bg-blue-500 hover:bg-blue-600 shadow-lg'
           }
           ${!connected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          ${isAssistantActive ? 'animate-pulse' : ''}
           text-white text-5xl
         `}
-        aria-label={isSpeaking ? 'Stop speaking' : 'Start speaking'}
+        aria-label={isAssistantActive ? 'Stop assistant' : 'Start assistant'}
       >
-        {isSpeaking ? '🎤' : '🎙️'}
+        {isAssistantActive ? '🔴' : '🎤'}
       </button>
 
       <p className={`mt-4 text-lg font-semibold ${
-        isSpeaking ? 'text-red-600' : 'text-gray-700'
+        isAssistantActive ? 'text-red-600' : 'text-gray-700'
       }`}>
         {!connected && 'Not Connected'}
-        {connected && !isSpeaking && 'Click to Speak'}
-        {connected && isSpeaking && 'Speaking...'}
+        {connected && !isAssistantActive && 'Start Assistant'}
+        {connected && isAssistantActive && 'Listening...'}
       </p>
 
       {!connected && (

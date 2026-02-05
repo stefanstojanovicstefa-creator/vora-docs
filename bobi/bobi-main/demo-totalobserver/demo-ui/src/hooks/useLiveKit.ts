@@ -15,7 +15,7 @@ export function useLiveKit({ url, token }: UseLiveKitProps) {
   const [transcripts, setTranscripts] = useState<TranscriptMessage[]>([]);
   const [toolCalls, setToolCalls] = useState<ToolCallMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isAssistantActive, setIsAssistantActive] = useState(false);
   const [audioTrack, setAudioTrack] = useState<LocalAudioTrack | null>(null);
 
   // Connect to LiveKit room
@@ -84,9 +84,9 @@ export function useLiveKit({ url, token }: UseLiveKitProps) {
       await room.localParticipant.publishTrack(track);
 
       setAudioTrack(track);
-      setIsSpeaking(true);
+      setIsAssistantActive(true);
 
-      console.log('[LiveKit] Microphone enabled and published');
+      console.log('[LiveKit] Microphone enabled and published - assistant active');
     } catch (e: any) {
       console.error('[LiveKit] Failed to enable microphone:', e);
       setError(e.message || 'Failed to enable microphone');
@@ -110,9 +110,9 @@ export function useLiveKit({ url, token }: UseLiveKitProps) {
       audioTrack.stop();
 
       setAudioTrack(null);
-      setIsSpeaking(false);
+      setIsAssistantActive(false);
 
-      console.log('[LiveKit] Microphone disabled');
+      console.log('[LiveKit] Microphone disabled - assistant stopped');
     } catch (e: any) {
       console.error('[LiveKit] Failed to disable microphone:', e);
     }
@@ -239,7 +239,7 @@ export function useLiveKit({ url, token }: UseLiveKitProps) {
     error,
     connect,
     disconnect,
-    isSpeaking,
+    isAssistantActive,
     enableMicrophone,
     disableMicrophone,
   };

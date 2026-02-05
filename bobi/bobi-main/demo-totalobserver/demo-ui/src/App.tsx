@@ -6,6 +6,7 @@ import { VoiceWaveform } from './components/VoiceWaveform';
 import { MCPToolsPanel } from './components/MCPToolsPanel';
 import { VoiceControls } from './components/VoiceControls';
 import { DataPanels } from './components/DataPanels';
+import { AssistantStatus } from './components/AssistantStatus';
 
 // LiveKit connection details from env
 const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL || 'ws://localhost:7880';
@@ -18,7 +19,7 @@ function App() {
     transcripts,
     toolCalls,
     error,
-    isSpeaking,
+    isAssistantActive,
     enableMicrophone,
     disableMicrophone,
   } = useLiveKit({
@@ -29,9 +30,9 @@ function App() {
 
   const [showTools, setShowTools] = useState(false);
 
-  // Handle mic toggle
-  const handleToggleMic = () => {
-    if (isSpeaking) {
+  // Handle assistant toggle
+  const handleToggleAssistant = () => {
+    if (isAssistantActive) {
       disableMicrophone();
     } else {
       enableMicrophone();
@@ -108,14 +109,18 @@ function App() {
           </div>
         )}
 
-        {/* Voice Controls - Prominent microphone button */}
+        {/* Voice Controls - Prominent assistant button */}
         <div className="mb-6">
           <div className="bg-white rounded-lg shadow-lg">
             <VoiceControls
-              isSpeaking={isSpeaking}
+              isAssistantActive={isAssistantActive}
               connected={connected}
-              onToggleMic={handleToggleMic}
+              onToggleAssistant={handleToggleAssistant}
             />
+            {/* Assistant Status */}
+            <div className="pb-6 flex justify-center">
+              <AssistantStatus isActive={isAssistantActive} connected={connected} />
+            </div>
           </div>
         </div>
 
