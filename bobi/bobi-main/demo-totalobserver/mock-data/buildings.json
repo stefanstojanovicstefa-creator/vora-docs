@@ -1,0 +1,29 @@
+[
+  {
+    "id": "plaza-mall",
+    "name": "Plaza Shopping Mall",
+    "type": "retail",
+    "sqm": 45000,
+    "tenants": 120,
+    "manager": "Jelena Petrović",
+    "address": "Bulevar Kralja Aleksandra 120, Beograd"
+  },
+  {
+    "id": "tech-park",
+    "name": "Tech Park Office Complex",
+    "type": "office",
+    "sqm": 28000,
+    "tenants": 45,
+    "manager": "Milan Jovanović",
+    "address": "Milutina Milankovića 11, Novi Beograd"
+  },
+  {
+    "id": "riverside-factory",
+    "name": "Riverside Manufacturing",
+    "type": "industrial",
+    "sqm": 15000,
+    "tenants": 1,
+    "manager": "Dragan Nikolić",
+    "address": "Industrijska zona bb, Pančevo"
+  }
+]

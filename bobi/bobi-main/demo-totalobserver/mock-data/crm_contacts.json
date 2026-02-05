@@ -1,0 +1,28 @@
+[
+  {
+    "id": "contact-001",
+    "name": "Dragan Krstonosic",
+    "company": "TotalObserver",
+    "role": "CEO",
+    "email": "dragan@totalobserver.com",
+    "phone": "+381641112233",
+    "notes": "Interested in AI voice integration. Concerned about data privacy. ISO 27001 certified. Prefers on-premise deployment.",
+    "deal_stage": "demo_scheduled",
+    "deal_value": 45000,
+    "last_contact": "2024-02-04T16:00:00Z",
+    "tags": ["enterprise", "high-priority", "privacy-focused"]
+  },
+  {
+    "id": "contact-002",
+    "name": "Marija Simić",
+    "company": "BG Properties",
+    "role": "Operations Director",
+    "email": "marija.simic@bgproperties.rs",
+    "phone": "+381642223344",
+    "notes": "Managing 15 commercial buildings. Looking for maintenance automation. Budget approved for Q1.",
+    "deal_stage": "proposal_sent",
+    "deal_value": 32000,
+    "last_contact": "2024-02-01T10:30:00Z",
+    "tags": ["mid-market", "ready-to-buy"]
+  }
+]

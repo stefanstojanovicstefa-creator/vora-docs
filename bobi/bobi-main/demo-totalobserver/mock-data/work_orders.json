@@ -1,0 +1,28 @@
+[
+  {
+    "id": "WO-2024-1847",
+    "building_id": "plaza-mall",
+    "building_name": "Plaza Shopping Mall",
+    "issue_type": "HVAC",
+    "description": "Food court AC unit not cooling properly",
+    "priority": "high",
+    "status": "in_progress",
+    "assigned_to": "tech-001",
+    "assigned_to_name": "Marko Stanković",
+    "created_at": "2024-02-03T09:15:00Z",
+    "reporter": "Jelena Petrović"
+  },
+  {
+    "id": "WO-2024-1846",
+    "building_id": "tech-park",
+    "building_name": "Tech Park Office Complex",
+    "issue_type": "Electrical",
+    "description": "Flickering lights in conference room 3B",
+    "priority": "medium",
+    "status": "pending",
+    "assigned_to": null,
+    "assigned_to_name": null,
+    "created_at": "2024-02-02T14:30:00Z",
+    "reporter": "Milan Jovanović"
+  }
+]

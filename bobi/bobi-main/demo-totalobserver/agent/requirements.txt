@@ -1,0 +1,10 @@
+# Inherit from parent
+-r ../../requirements.txt
+
+# Google API clients for real integrations
+google-auth>=2.27.0
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.116.0
+
+# MCP (if needed for structure)
+mcp>=0.1.0

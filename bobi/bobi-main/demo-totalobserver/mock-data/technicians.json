@@ -1,0 +1,26 @@
+[
+  {
+    "id": "tech-001",
+    "name": "Marko Stanković",
+    "skills": ["HVAC", "Refrigeration"],
+    "phone": "+381641234567",
+    "available": true,
+    "current_assignments": 2
+  },
+  {
+    "id": "tech-002",
+    "name": "Ana Mitrović",
+    "skills": ["Electrical", "Lighting"],
+    "phone": "+381641234568",
+    "available": true,
+    "current_assignments": 1
+  },
+  {
+    "id": "tech-003",
+    "name": "Stefan Pavlović",
+    "skills": ["Plumbing", "General"],
+    "phone": "+381641234569",
+    "available": false,
+    "current_assignments": 3
+  }
+]
