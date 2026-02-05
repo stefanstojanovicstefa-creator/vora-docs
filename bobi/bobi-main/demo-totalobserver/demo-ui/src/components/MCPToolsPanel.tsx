@@ -1,4 +1,3 @@
-import React from 'react';
 
 const AVAILABLE_TOOLS = [
   { category: 'TotalObserver', tools: ['create_work_order', 'list_work_orders', 'assign_technician'] },

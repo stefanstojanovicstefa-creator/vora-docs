@@ -1,6 +1,6 @@
 // src/hooks/useLiveKit.ts
 import { useEffect, useState, useCallback } from 'react';
-import { Room, RoomEvent, DataPacket_Kind } from 'livekit-client';
+import { Room, RoomEvent } from 'livekit-client';
 import type { LiveKitMessage, TranscriptMessage, ToolCallMessage } from '../types';
 
 interface UseLiveKitProps {
@@ -9,7 +9,7 @@ interface UseLiveKitProps {
   roomName: string;
 }
 
-export function useLiveKit({ url, token, roomName }: UseLiveKitProps) {
+export function useLiveKit({ url, token }: UseLiveKitProps) {
   const [room, setRoom] = useState<Room | null>(null);
   const [connected, setConnected] = useState(false);
   const [transcripts, setTranscripts] = useState<TranscriptMessage[]>([]);

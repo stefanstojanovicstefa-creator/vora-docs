@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLiveKit } from './hooks/useLiveKit';
 import { TranscriptDisplay } from './components/TranscriptDisplay';
 import { ToolCallVisualization } from './components/ToolCallVisualization';
@@ -92,7 +92,7 @@ function App() {
         {/* Top row: VoiceWaveform + TranscriptDisplay */}
         <div className="grid grid-cols-3 gap-6 mb-6">
           <div className="col-span-1">
-            <VoiceWaveform isListening={connected} />
+            <VoiceWaveform active={connected} />
           </div>
           <div className="col-span-2">
             <TranscriptDisplay transcripts={transcripts} />

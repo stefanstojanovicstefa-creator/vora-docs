@@ -116,7 +116,13 @@ async def call_mcp_tool_wrapper(tool_name: str, **kwargs):
 async def entrypoint(ctx: JobContext):
     """Main agent entrypoint"""
     room_name = ctx.room.name
-    print(f"\n[DEMO AGENT] 🚀 Starting TotalObserver Demo Agent in room: {room_name}\n")
+    print(f"\n{'='*60}")
+    print(f"🏢 TOTALOBSERVER DEMO AGENT")
+    print(f"{'='*60}")
+    print(f"Room: {room_name}")
+    print(f"MCP Tools: {len(mcp_bridge.get_available_tools())}")
+    print(f"Real Google: {USE_REAL_GOOGLE}")
+    print(f"{'='*60}\n")
 
     # Connect to room
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
