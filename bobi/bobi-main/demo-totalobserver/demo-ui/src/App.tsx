@@ -4,6 +4,7 @@ import { TranscriptDisplay } from './components/TranscriptDisplay';
 import { ToolCallVisualization } from './components/ToolCallVisualization';
 import { VoiceWaveform } from './components/VoiceWaveform';
 import { MCPToolsPanel } from './components/MCPToolsPanel';
+import { VoiceControls } from './components/VoiceControls';
 
 // LiveKit connection details from env
 const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL || 'ws://localhost:7880';
@@ -11,13 +12,30 @@ const LIVEKIT_TOKEN = import.meta.env.VITE_LIVEKIT_TOKEN || '';
 const ROOM_NAME = import.meta.env.VITE_ROOM_NAME || 'totalobserver-demo';
 
 function App() {
-  const { connected, transcripts, toolCalls, error } = useLiveKit({
+  const {
+    connected,
+    transcripts,
+    toolCalls,
+    error,
+    isSpeaking,
+    enableMicrophone,
+    disableMicrophone,
+  } = useLiveKit({
     url: LIVEKIT_URL,
     token: LIVEKIT_TOKEN,
     roomName: ROOM_NAME,
   });
 
   const [showTools, setShowTools] = useState(false);
+
+  // Handle mic toggle
+  const handleToggleMic = () => {
+    if (isSpeaking) {
+      disableMicrophone();
+    } else {
+      enableMicrophone();
+    }
+  };
 
   // Error screen
   if (error) {
@@ -88,6 +106,17 @@ function App() {
             </p>
           </div>
         )}
+
+        {/* Voice Controls - Prominent microphone button */}
+        <div className="mb-6">
+          <div className="bg-white rounded-lg shadow-lg">
+            <VoiceControls
+              isSpeaking={isSpeaking}
+              connected={connected}
+              onToggleMic={handleToggleMic}
+            />
+          </div>
+        </div>
 
         {/* Top row: VoiceWaveform + TranscriptDisplay */}
         <div className="grid grid-cols-3 gap-6 mb-6">
