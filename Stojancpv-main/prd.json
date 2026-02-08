@@ -1,0 +1,176 @@
+{
+  "project": "Vora Voice Platform",
+  "branchName": "ralph/phase-1-unblock-core",
+  "description": "Phase 1: Unblock Core - Fix crashes, data pipeline gaps, UX lies, and env var issues blocking core user flows. IMPORTANT: The codebase is at ventus-voice/frontend/ and ventus-voice/backend/ (NOT at project root frontend/ backend/).",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Fix Command Palette crash on Ctrl+K",
+      "description": "As a user, I want to press Ctrl+K/Cmd+K to open the Command Palette without the app crashing, so I can use keyboard navigation and command search.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Ctrl+K / Cmd+K opens Command Palette overlay without crash or console errors",
+        "User can type to fuzzy-search commands in the palette",
+        "Arrow keys navigate results, Enter selects, Escape closes",
+        "Works on fresh page load and after in-app navigation",
+        "Check: CommandPalette.tsx uses Radix Dialog with proper portal target and provider tree",
+        "Check: useCommandPalette.tsx hook handles undefined/null states without throwing",
+        "Files: ventus-voice/frontend/src/components/CommandPalette/CommandPalette.tsx, ventus-voice/frontend/src/hooks/useCommandPalette.tsx",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Root cause: custom useFocusTrap in dialog.tsx conflicted with Radix Dialog's built-in focus management, causing crash when CommandPalette portal mounted. Fix: removed custom useFocusTrap from DialogContent and AlertDialogContent, relying on Radix's native focus trap instead. Also cleaned up ref handling (removed unnecessary useImperativeHandle, passing ref directly). CommandPaletteProvider correctly wraps the app inside BrowserRouter, hook handles null states properly. Typecheck passes."
+    },
+    {
+      "id": "US-002",
+      "title": "Wire smart scraper to brand analyzer",
+      "description": "As a developer, I need analyzeBrand() to call smartScrapeWebsite() instead of the old scrapeWebsite() so agent creation from URL is fast (~1 min vs ~45 min).",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "In brand-analyzer.service.ts (around line 65), analyzeBrand() calls smartScrapeWebsite() instead of scrapeWebsite()",
+        "smart-page-selector.ts is tracked in git (git add if untracked)",
+        "The smart scraper pipeline runs: HTTP-first fetch, 5 workers, circuit breaker pattern",
+        "Test: scraping a typical website completes in under 2 minutes",
+        "Files: ventus-voice/backend/src/services/ai/brand-analyzer.service.ts, ventus-voice/backend/src/services/scraping/playwright-scraper.service.ts, ventus-voice/backend/src/services/scraping/smart-page-selector.ts",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Verify and fix KB creation from scrape pipeline",
+      "description": "As a developer, I need to verify that POST /api/agents/create with scraped brand data actually creates a KB entity, generates embeddings, and links KB to the agent.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Trace POST /api/agents/create handler to identify where brand analyzer KB output is consumed",
+        "KB entity is created in the database when agent is created from URL wizard",
+        "KB documents/chunks are stored properly",
+        "KB is linked to the created agent record (foreign key or reference)",
+        "If KB creation is missing, implement the connection between brand analyzer output and KB service",
+        "Files: ventus-voice/backend/src/routes/agent.routes.ts, KB service, brand-analyzer.service.ts output",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Depends on US-002 (smart scraper must be wired first)"
+    },
+    {
+      "id": "US-004",
+      "title": "Fix KB embedding env var and verify embedding generation",
+      "description": "As a developer, I need the embedding service env var to match .env so embeddings are actually generated and RAG search works.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Check env var name in embeddings.service.ts (likely GOOGLE_GEMINI_API_KEY) matches actual .env variable name",
+        "If mismatched, update the code to use the correct env var name from .env",
+        "After fix: uploading a document to KB generates embeddings in storage (SQLite/vector store)",
+        "After fix: searching against KB returns semantic results (not empty)",
+        "Files: ventus-voice/backend/src/services/embeddings.service.ts (or similar), ventus-voice/backend/.env",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "Depends on US-003 (KB creation must work first)"
+    },
+    {
+      "id": "US-005",
+      "title": "Fix session detail data pipeline",
+      "description": "As a user, I want to click on a session in the session list and see data in all 3 tabs (Details, Transcript, Timeline) so I can review my calls.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Check backend session route returns data when queried directly (e.g. GET /api/sessions/:id)",
+        "Verify the URL param name in the frontend route matches what SessionDetailPage.tsx expects",
+        "Verify useSessionDetailPage hook fetches the correct endpoint with the correct ID",
+        "Details tab shows session metadata (agent name, duration, status, timestamps)",
+        "Transcript tab shows conversation text",
+        "Timeline tab shows event timeline",
+        "Note: older pre-fix sessions may have no data - that is expected, test with fresh sessions",
+        "Files: ventus-voice/frontend/src/pages/SessionDetailPage.tsx, ventus-voice/backend/src/routes/session.routes.ts",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Debug and fix tutorial trigger mechanism",
+      "description": "As a new user, I want the tutorial to trigger on my first dashboard visit so I get guided onboarding.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Verify tutorial.routes.ts is imported and registered in ventus-voice/backend/src/index.ts",
+        "GET /api/tutorial/state returns correct initial state for new users (not pre-completed)",
+        "Find where <TutorialSystem /> is mounted and identify what condition gates its rendering",
+        "Fix the gate condition so tutorial renders for new/first-time users",
+        "Tutorial can be reset via POST /api/tutorial/state with action 'reset'",
+        "All 4 tutorial steps are navigable and dismissible",
+        "Files: ventus-voice/frontend/src/components/tutorial/TutorialSystem.tsx, ventus-voice/backend/src/routes/tutorial.routes.ts, ventus-voice/backend/src/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Rewrite step counter to use 7 logical stages",
+      "description": "As a user, I want the agent setup progress to show accurate completion based on 7 logical stages, not raw field counts, so I know what's actually done.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Define 7 logical stages: basic info, system prompt, LLM model, voice config, STT config, knowledge base, tested",
+        "Replace field-counting logic in agentForgeService.getIncompleteSession() with stage-based completion checks",
+        "Progress displays as 'X/7 steps (Y%)' format",
+        "An incomplete agent NEVER shows 100%",
+        "A fully configured and tested agent shows 7/7 (100%)",
+        "Dashboard incomplete session card (Dashboard.tsx lines 243-278) uses new progress format",
+        "'Continue' button navigates to the first incomplete stage",
+        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx, agentForgeService in ventus-voice/backend/ or ventus-voice/frontend/",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Targeted env var audit for critical services",
+      "description": "As a developer, I need all process.env references for KB, Paddle, and OAuth to match the actual .env file so features don't silently fail.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Grep all process.env references in ventus-voice/backend/src/ source code",
+        "Cross-reference KB embedding vars against ventus-voice/backend/.env (or root .env)",
+        "Cross-reference Paddle billing vars (PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, PADDLE_ENVIRONMENT) against .env",
+        "Cross-reference critical OAuth service vars against .env",
+        "Fix any mismatched variable names to match .env",
+        "Create or update .env.example with ALL required variables, grouped by service, with descriptions and example formats",
+        "Files: all ventus-voice/backend/src/ files with process.env, .env, .env.example",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Add startup env var validation",
+      "description": "As a developer, I want the server to fail fast with clear errors if critical env vars are missing, instead of features silently failing at runtime.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Create validateRequiredEnvVars() function (e.g. in ventus-voice/backend/src/utils/validateEnv.ts)",
+        "Function checks all critical env vars identified in US-008",
+        "FATAL missing vars cause process.exit(1) with message naming the var and which feature it affects",
+        "WARN missing vars log warnings but allow startup",
+        "Function runs before any route or service initialization in ventus-voice/backend/src/index.ts",
+        "Function does NOT log actual env var values (security)",
+        "Files: new ventus-voice/backend/src/utils/validateEnv.ts, ventus-voice/backend/src/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "Depends on US-008 (need var list from audit)"
+    }
+  ]
+}

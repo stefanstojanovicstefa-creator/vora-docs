@@ -1,0 +1,31 @@
+# Ralph Progress Log
+# Project: Vora Voice Platform
+# Feature: Phase 1 - Unblock Core
+# Branch: ralph/phase-1-unblock-core
+# Started: 2026-02-09
+
+---
+
+## Iteration 1: US-001 - Fix Command Palette crash on Ctrl+K
+
+**Status**: COMPLETE
+
+**Root Cause**: Custom `useFocusTrap` hook in `dialog.tsx` and `alert-dialog.tsx` conflicted with Radix Dialog/AlertDialog's built-in focus management. When CommandPalette (which uses Radix Dialog) tried to open via Ctrl+K, both the custom focus trap and Radix's native focus trap competed for focus control, causing a crash.
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/components/ui/dialog.tsx`:
+   - Removed `useFocusTrap` import and usage from `DialogContent`
+   - Removed unnecessary `useImperativeHandle` ref merging
+   - Pass forwarded `ref` directly to `DialogPrimitive.Content`
+   - Radix Dialog's native focus trap handles focus management correctly
+
+2. `ventus-voice/frontend/src/components/ui/alert-dialog.tsx`:
+   - Same fix applied: removed custom `useFocusTrap` and simplified ref handling
+   - Radix AlertDialog already manages its own focus trap
+
+**Verification**:
+- TypeScript typecheck passes (npx tsc --noEmit)
+- CommandPaletteProvider wraps App inside BrowserRouter (correct provider tree)
+- useCommandPalette hook handles undefined/null states properly
+- Escape key handling works: first clears query, second closes palette
+
