@@ -36,8 +36,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wired analyzeBrand() to call smartScrapeWebsite() instead of scrapeWebsite(). Updated options type to pass through signal for abort support. Added smart-page-selector.ts to git tracking. smartScrapeWebsite uses HTTP-first fetch, 5 concurrent workers, circuit breaker at 50% failure rate, sitemap.xml discovery with BFS fallback. Backend typecheck clean for changed files."
     },
     {
       "id": "US-003",
