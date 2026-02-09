@@ -274,3 +274,24 @@
 - TypeScript typecheck passes on both changed files
 - Pre-existing errors in knowledge-injection and short-term-memory services unchanged
 
+---
+
+# Phase 2: Verify & Quick Wins
+# Branch: ralph/phase-2-verify-quick-wins
+
+## Iteration 10: US-201 - Remove 'Usage & Cost' from sidebar
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/components/layout/Sidebar.tsx`:
+   - Removed the `/cost-analytics` nav entry (labelKey: 'usageAndCosts', icon: DollarSign)
+   - Removed unused `DollarSign` import from lucide-react
+   - Route `/cost-analytics` and page component `CostAnalyticsDashboard.tsx` preserved (accessible via direct URL)
+
+**Verification**:
+- Sidebar links array now has 13 entries (was 14), no layout gap
+- `/cost-analytics` route still exists in App.tsx
+- CostAnalyticsDashboard page component still exists
+- TypeScript typecheck passes (zero errors)
+
