@@ -125,8 +125,8 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "VERIFIED: Complete custom functions execution chain is correctly wired. (1) CRUD routes: custom-functions.routes.ts mounted at /api/custom-functions (index.ts:636). Service uses CustomFunctionsService class with createFunction() that validates agent exists, enforces unique name per agent, saves to custom_functions table with correct Prisma schema (id, agentId, name, description, method, url, headers, bodyTemplate, parameters, authType, authConfig, responseMapping). (2) AI wizard: function-wizard.routes.ts mounted at /api/function-wizard (index.ts:638) for natural language → function generation. (3) MCP gateway: mcp-gateway.service.ts has full MCP SDK integration with connect(), discoverTools(), executeTool() methods. SSRF protection blocks localhost/private IPs/metadata endpoints. Lazy-loads @modelcontextprotocol/sdk. (4) Function execution: function-executor.service.ts has executeFunction() with full pipeline: load function → validate params against JSON Schema → build HTTP request (URL/header/body templating) → add auth (API_KEY, BEARER_TOKEN, BASIC_AUTH, OAUTH2) → execute via axios (30s timeout) → map response → log execution → update stats. (5) Execution logging: logExecution() writes to function_call_logs table with functionId, sessionId, agentId, parameters, requestUrl, requestMethod, requestBody, requestHeaders, status (SUCCESS/FAILED/TIMEOUT/INVALID_PARAMS), statusCode, responseBody, errorMessage, executionTime — captures timestamp, input, output, status as required. (6) PremiumLock gate: CustomFunctionsPage.tsx imports PremiumLock from billing components (line 65), wraps content at line 344-388. E2E test mocks subscription as 'enterprise' to bypass gate. (7) E2E test exists: frontend/e2e/custom-functions.spec.ts with comprehensive tests for list, create, edit, test execution, templates, toggle, duplication, deletion, logs. No broken code paths. No code changes needed. Typecheck passes."
     },
     {
       "id": "US-208",

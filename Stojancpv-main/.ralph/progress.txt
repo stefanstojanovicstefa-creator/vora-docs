@@ -407,3 +407,25 @@
 
 **All OAuth systems verified**: authorize URL generation, callback token exchange, token persistence (encrypted), auto-refresh logic. No broken code paths. No code changes needed.
 
+## Iteration 16: US-207 - Verify custom functions execution chain
+
+**Status**: COMPLETE (verification only — no code changes needed)
+
+**Full Chain Traced**:
+
+1. **CRUD routes**: custom-functions.routes.ts mounted at /api/custom-functions (index.ts:636). Service uses CustomFunctionsService class with createFunction() that validates agent exists, enforces unique name per agent, saves to custom_functions table with correct Prisma schema.
+
+2. **AI wizard**: function-wizard.routes.ts mounted at /api/function-wizard (index.ts:638) for natural language → function generation.
+
+3. **MCP gateway**: mcp-gateway.service.ts has full MCP SDK integration with connect(), discoverTools(), executeTool(). SSRF protection blocks localhost/private IPs/metadata endpoints. Lazy-loads @modelcontextprotocol/sdk.
+
+4. **Function execution**: function-executor.service.ts has executeFunction() with full pipeline: load function → validate params (JSON Schema) → build HTTP request (URL/header/body templating) → add auth (API_KEY, BEARER_TOKEN, BASIC_AUTH, OAUTH2) → execute via axios (30s timeout) → map response → log execution → update stats.
+
+5. **Execution logging**: logExecution() writes to function_call_logs table with functionId, sessionId, agentId, parameters, requestUrl, requestMethod, requestBody, requestHeaders, status (SUCCESS/FAILED/TIMEOUT/INVALID_PARAMS), statusCode, responseBody, errorMessage, executionTime.
+
+6. **PremiumLock gate**: CustomFunctionsPage.tsx imports PremiumLock from billing components (line 65), wraps content at lines 344-388.
+
+7. **E2E test**: frontend/e2e/custom-functions.spec.ts with comprehensive tests covering list, create, edit, test execution, templates, toggle, duplication, deletion, logs.
+
+**No broken code paths found. No code changes needed.**
+
