@@ -54,8 +54,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Depends on US-002 (smart scraper must be wired first)"
+      "passes": true,
+      "notes": "Traced full flow: URL wizard → brand analysis → agent creation. Gap identified: brand analysis stored knowledgeBase JSON on brands table but no knowledge_bases record was created when agent was created from URL wizard. Fix: (1) Added optional brandId to createAgentSchema, (2) Frontend UrlCreationWizard now passes brandAnalysis.id as brandId in create payload, (3) Backend agent creation handler (agents.routes.ts) now creates knowledge_bases record linked to agent and stores brand KB content as a document when brandId is provided. KB creation is non-blocking (try/catch) so agent creation succeeds even if KB fails. Typecheck passes on both frontend and backend."
     },
     {
       "id": "US-004",

@@ -54,3 +54,37 @@
 - TypeScript typecheck clean for changed files
 - Pre-existing errors in unrelated knowledge-injection and short-term-memory services (not introduced by this change)
 
+## Iteration 3: US-003 - Verify and fix KB creation from scrape pipeline
+
+**Status**: COMPLETE
+
+**Root Cause**: Brand analysis stored `knowledgeBase` JSON on the `brands` table (in `brand-analysis.job.ts` line 220), but when an agent was created from the URL wizard via POST `/api/agents/create`, no `knowledge_bases` record was created and linked to the agent. The agent creation flow only checked for existing KBs (line 488-495) but never created one from brand data.
+
+**Data Flow Traced**:
+1. URL Wizard: POST `/api/brands/analyze` → enqueues brand analysis job → stores KB data on brands table
+2. URL Wizard polls GET `/api/brands/:brandId` → gets `brandAnalysis` with `knowledgeBase` JSON
+3. URL Wizard: POST `/api/agents/create` with only `prompt` → creates agent → no KB linkage
+
+**Gap**: brandId was never passed to the agent creation endpoint, so brand KB data couldn't be linked.
+
+**Changes Made**:
+1. `ventus-voice/backend/src/schemas/request-validation.schema.ts`:
+   - Added optional `brandId` field to `createAgentSchema`
+
+2. `ventus-voice/frontend/src/pages/UrlCreationWizard.tsx`:
+   - `handleCreateAgent` now includes `brandAnalysis.id` as `brandId` in the create payload
+
+3. `ventus-voice/backend/src/routes/agents.routes.ts`:
+   - Destructures `brandId` from `req.body` in create handler
+   - After agent creation (Step 4a), if `brandId` provided:
+     - Fetches brand data from DB (with userId ownership check)
+     - Creates `knowledge_bases` record linked to the new agent (type: 'brand')
+     - Creates `documents` record with brand KB content as rawContent
+     - KB creation is wrapped in try/catch so failures don't block agent creation
+
+**Verification**:
+- TypeScript typecheck passes on both frontend and backend (no errors from changed files)
+- `knowledge_bases.agentId` links KB to agent (Prisma schema verified)
+- `documents.rawContent` stores the brand KB JSON for RAG retrieval
+- Ownership verified: brand must belong to same userId as agent creator
+
