@@ -367,3 +367,27 @@
 - Pre-existing errors in knowledge-injection and auto-injection services unchanged
 - Middleware chain order: requireAuth → requireAdmin → validateBody → handler
 
+## Iteration 14: US-205 - Verify Paddle billing code paths and env vars
+
+**Status**: COMPLETE (verification only — no code changes needed)
+
+**Files Traced**:
+1. `ventus-voice/backend/src/routes/subscription.routes.ts` — 6 endpoints (GET /, GET /limits, POST /cancel, POST /reactivate, GET /portal, GET /invoices), all behind requireAuth. Mounted at `/api/subscription` (index.ts:692).
+2. `ventus-voice/backend/src/routes/webhooks.routes.ts` (lines 617-1064) — Active Paddle webhook handler at `/api/webhooks/paddle`. Mounted at index.ts:733.
+3. `ventus-voice/backend/src/routes/webhooks/paddle.routes.ts` — Dedicated Paddle webhook handler with idempotency. NOT mounted in index.ts.
+4. `ventus-voice/backend/src/services/paddle.service.ts` — Paddle API client for checkout URL generation, customer portal, env checks.
+5. `ventus-voice/backend/src/services/subscription.service.ts` — Subscription data retrieval, plan limits, usage tracking, invoice history.
+6. `ventus-voice/backend/src/services/entitlements.service.ts` — Full entitlements system with tier config, usage recording, quota enforcement.
+7. `ventus-voice/backend/src/routes/credit-packs.routes.ts` — Credit pack listing, checkout, purchase history. Mounted at `/api/credit-packs` (index.ts:695).
+
+**Verification Results**:
+- **Webhook HMAC-SHA256**: Active handler (webhooks.routes.ts:617) correctly parses `ts=timestamp;h1=signature` format, creates HMAC with PADDLE_WEBHOOK_SECRET, and compares. NOT a placeholder.
+- **Env vars**: PADDLE_API_KEY read in paddle.service.ts:21, PADDLE_WEBHOOK_SECRET read in webhooks.routes.ts:619. Both match .env.example.
+- **Lifecycle handlers**: subscription.created/updated/cancelled/paused/resumed/activated/past_due/trialing + transaction.completed/payment_failed — all present and functional.
+- **Portal redirect**: GET /api/subscription/portal at subscription.routes.ts:148 builds URL from PADDLE_CUSTOMER_PORTAL_URL.
+- **Pricing data**: GET /api/credit-packs returns real data from minute_packs table (not empty/placeholder). Maps minutes to credits 1:1.
+- **Entitlements integration**: Webhook handlers call `updateEntitlementTier()` (dedicated handler) or directly upsert subscriptions table (active handler).
+- **No broken code paths found**. No code changes needed.
+
+**Note**: Two separate Paddle webhook implementations exist (webhooks.routes.ts inline + webhooks/paddle.routes.ts dedicated). Only the inline one is mounted. The dedicated one has superior features (idempotency, event storage, Zod parsing, timing-safe comparison) but is not wired up. This is a tech debt item for Phase 5, not a blocker.
+
