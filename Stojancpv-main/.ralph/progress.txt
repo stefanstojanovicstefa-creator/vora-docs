@@ -785,3 +785,34 @@
 - StatCard still works without href (backwards-compatible)
 - TypeScript typecheck passes (zero errors)
 
+## Iteration 10: US-310 - Fix upload popup reliability in InterviewBot
+
+**Status**: COMPLETE
+
+**Root Cause**: Z-index mismatch between DialogOverlay (z-50) and DialogContent (z-[60]) in the Knowledge Base upload modal. The shared `DialogContent` wrapper from `dialog.tsx` renders its own `DialogOverlay` at z-50. When the AgentCreationOverlay (also z-50 fixed fullscreen) was active, it could occlude the Dialog's overlay, causing:
+1. Click-through: pointer events on the overlay area hit AgentCreationOverlay instead
+2. Focus-stealing: Radix's auto-focus on the close button fought with file input focus
+3. Intermittent failures: timing-dependent on whether AgentCreationOverlay was mounted
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/pages/InterviewBot.tsx`:
+   - Added `import * as DialogPrimitive from "@radix-ui/react-dialog"` for direct primitive access
+   - Added `X` to lucide-react imports for the close button icon
+   - Replaced the `DialogContent` wrapper with direct Radix primitives:
+     - `DialogPrimitive.Portal` — explicit portal without nested wrapper
+     - `DialogPrimitive.Overlay` — at z-[60] (was implicitly z-50 via wrapper)
+     - `DialogPrimitive.Content` — at z-[60] with proper Radix focus management
+     - `DialogPrimitive.Close` — explicit close button with accessibility
+   - Added `onOpenAutoFocus` handler (preventDefault) to stop Radix from auto-focusing close button, preventing focus-fights with DocumentUploader's file input and drag-drop zone
+   - Added `onPointerDownOutside` handler to prevent accidental closure during active uploads
+   - Removed unused `DialogContent`, `DialogPortal`, `DialogOverlay` imports from ui/dialog
+
+**Verification**:
+- Both overlay and content now render at z-[60], above all z-50 elements
+- Radix focus trapping works natively via DialogPrimitive.Content
+- Upload popup opens reliably: button click and kbGatekeeper auto-trigger both work
+- File input and drag-drop within the dialog are not blocked by focus management
+- Active uploads cannot be accidentally dismissed by clicking outside
+- Dialog correctly closes via X button, Continue button, and Escape key
+- TypeScript typecheck passes (zero errors)
+

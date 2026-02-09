@@ -177,8 +177,8 @@
         "Typecheck passes"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": "Depends on 3.1. Phase 1 US-007 already fixed the progress bar and Continue button."
+      "passes": true,
+      "notes": "COMPLETE: Root cause was z-index mismatch — the shared DialogContent wrapper renders DialogOverlay at z-50, but the upload dialog content was at z-[60]. When AgentCreationOverlay (also z-50 fixed fullscreen) was visible, it could occlude the overlay, causing click-through and focus-stealing that made the popup intermittently unresponsive. Fix: Replaced the DialogContent wrapper with Radix Dialog primitives directly (DialogPrimitive.Portal, DialogPrimitive.Overlay, DialogPrimitive.Content) so BOTH overlay and content render at z-[60]. Added onOpenAutoFocus handler (e.preventDefault()) to prevent Radix from auto-focusing the close button, which was causing focus-fights with file inputs and drag-drop zones. Added onPointerDownOutside handler to prevent accidental closure during active uploads. Added X icon import for the close button. Typecheck passes."
     }
   ]
 }
