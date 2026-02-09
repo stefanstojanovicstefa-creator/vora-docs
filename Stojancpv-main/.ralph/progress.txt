@@ -816,3 +816,37 @@
 - Dialog correctly closes via X button, Continue button, and Escape key
 - TypeScript typecheck passes (zero errors)
 
+---
+
+# Phase 4: Feature Completion
+# Branch: ralph/phase-4-feature-completion
+
+## Iteration 27: US-401 - Flow Studio Validate Handler
+
+**Status**: COMPLETE
+
+**Problem**: Validate button in FlowStudioPage.tsx had no onClick handler. Users couldn't check flow validity before publishing.
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/pages/FlowStudioPage.tsx`:
+   - Added `AlertTriangle` to lucide-react imports
+   - Added `toast` import from `sonner`
+   - Implemented `validateFlow()` function with 5 validation checks:
+     1. **Orphan nodes**: Nodes with no incoming AND no outgoing edges (excluding start and note nodes)
+     2. **Missing terminal state**: No `endCall` node present in the flow
+     3. **Circular dependencies**: DFS-based cycle detection using visited + inStack sets
+     4. **Required field checks**: Per-node-type validation for message (message text), question (questionText, targetVariable), capture (variableName), apiCall (url), transfer (destination), function (functionName), goTo (targetNodeId)
+     5. **Start node connectivity**: Start node must exist and have at least one outgoing edge
+   - Implemented `handleValidate()` that calls validateFlow and shows sonner toast:
+     - Success: green checkmark + "Flow is valid" with node/edge counts
+     - Failure: red error list showing up to 5 issues with node names and specific problems, overflow counted
+   - Implemented `handlePublish()` that runs validateFlow as pre-check — blocks publish with error toast if validation fails
+   - Wired Validate button `onClick={handleValidate}`
+   - Wired Publish button `onClick={handlePublish}`
+
+**Verification**:
+- TypeScript typecheck passes (zero errors)
+- Validation covers all acceptance criteria: orphan detection, end condition check, cycle detection, required field checks
+- Toast notifications used for results display (sonner)
+- Publish runs validation as pre-check before any publish action
+
