@@ -151,7 +151,7 @@
       ],
       "priority": 8,
       "passes": true,
-      "notes": "Audit found ~180 unique process.env refs in backend, 38 in .env. No name mismatches—code uses defensive fallback chains (e.g. GOOGLE_AI_API_KEY→GEMINI_API_KEY→GOOGLE_GEMINI_API_KEY→GOOGLE_API_KEY). KB embedding vars: working due to fallbacks. Paddle billing: 12 vars missing from .env (billing non-operational until configured). CRM/Calendar OAuth: ~32 vars missing (features disabled by design). Updated .env.example: added PADDLE_API_KEY, PADDLE_SANDBOX, PADDLE_PRODUCT_* IDs, PADDLE_MINUTE_PACK_* IDs, OPENROUTER_API_KEY, VOYAGE_API_KEY. All var names in code match .env.example exactly. Typecheck clean."
+      "notes": "Comprehensive audit of ~180 unique process.env refs in backend against .env and .env.example. No code-level name mismatches—code uses defensive fallback chains (e.g. GOOGLE_AI_API_KEY→GEMINI_API_KEY→GOOGLE_GEMINI_API_KEY→GOOGLE_API_KEY). KB embedding vars: working (OpenAI text-embedding-3-small, fixed in US-004). Paddle billing: fixed .env.example with correct var names (PADDLE_API_KEY, PADDLE_SANDBOX, PADDLE_PRODUCT_STARTER/PRO/ENTERPRISE, PADDLE_MINUTE_PACK_100/500/1000_PRICE_ID—previously had wrong PADDLE_CREDIT_PACK_* names). Additional vars added to .env.example: GOOGLE_AI_API_KEY, GEMINI_API_KEY (Gemini fallback aliases), RIME_API_KEY (TTS provider), REDIS_URL/UPSTASH_REDIS_URL (background jobs), MCP_OAUTH_STATE_SECRET, WHATSAPP_ACCESS_TOKEN/PHONE_NUMBER_ID/BUSINESS_ACCOUNT_ID, SEMANTIC_CACHE_WARMING, HLL_TRACKING_ENABLED, AUDIO_CACHE_URL_BASE. Removed duplicate PADDLE_CUSTOMER_PORTAL_URL and duplicate FRONTEND_URL/RATE_LIMIT_* entries. All vars now grouped by service with descriptions. CRM/Calendar OAuth vars were already present. Typecheck passes (36 pre-existing errors in 3 files unchanged from US-005)."
     },
     {
       "id": "US-009",
@@ -169,8 +169,8 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": "Depends on US-008 (need var list from audit)"
+      "passes": true,
+      "notes": "Found comprehensive env validation system already existed in ventus-voice/backend/src/config/env-validation.ts with REQUIRED (FATAL: process.exit(1)) and OPTIONAL (WARN: log + continue) tiers. validateEnvironment() already called in index.ts (line 240) before any routes. Already had DATABASE_URL, LIVEKIT_API_KEY/SECRET/WS_URL, CLERK_SECRET_KEY as REQUIRED. Already had GOOGLE_GEMINI_API_KEY, XAI_API_KEY, OPENAI_API_KEY, ELEVENLABS_API_KEY, DEEPGRAM_API_KEY, etc. as OPTIONAL. Changes: (1) Added ENCRYPTION_MASTER_KEY to REQUIRED vars with 64-hex-char validation (provider credential storage). (2) Added OPENROUTER_API_KEY to OPTIONAL vars (brand analysis AI routing). (3) Added PADDLE_API_KEY and PADDLE_WEBHOOK_SECRET to OPTIONAL vars (billing). (4) Added 'openrouter' and 'paddle' to isFeatureEnabled() map. (5) Added Paddle Billing and OpenRouter AI to startup feature flags log in index.ts. Security: function does NOT log actual values, only var names. SKIP_ENV_VALIDATION=true blocked in production (process.exit(1)). Typecheck passes."
     }
   ]
 }

@@ -240,3 +240,37 @@
 - No code changes needed (no mismatched var names to fix)
 - TypeScript typecheck passes
 
+## Iteration 9: US-009 - Add startup env var validation
+
+**Status**: COMPLETE
+
+**Finding**: Comprehensive env validation system already existed in `ventus-voice/backend/src/config/env-validation.ts` with REQUIRED (FATAL: `process.exit(1)`) and OPTIONAL (WARN: log + continue) tiers. `validateEnvironment()` already called in `index.ts` (line 240) before any routes. Security: does NOT log actual values. `SKIP_ENV_VALIDATION=true` blocked in production.
+
+**What was already implemented**:
+- REQUIRED: DATABASE_URL (with PostgreSQL format validation), LIVEKIT_API_KEY/SECRET/WS_URL (with format checks), CLERK_SECRET_KEY (with sk_ prefix check)
+- OPTIONAL: GOOGLE_GEMINI_API_KEY, XAI_API_KEY, OPENAI_API_KEY, ELEVENLABS_API_KEY, DEEPGRAM_API_KEY, CARTESIA_API_KEY, ASSEMBLYAI_API_KEY, FLY_API_TOKEN, SENTRY_DSN, UPSTASH_REDIS_REST_URL/TOKEN, REDIS_HOST, HUBSPOT_CLIENT_ID, SALESFORCE_CLIENT_ID, GROQ_API_KEY, MISTRAL_API_KEY, COHERE_API_KEY, PERPLEXITY_API_KEY, AI21_API_KEY, GOOGLE_APPLICATION_CREDENTIALS, GOOGLE_CLOUD_API_KEY
+- Feature flag map: `isFeatureEnabled()` for all optional features
+
+**Gaps identified from US-008 audit**:
+1. Missing ENCRYPTION_MASTER_KEY from REQUIRED (provider credential storage)
+2. Missing OPENROUTER_API_KEY from OPTIONAL (brand analysis AI routing)
+3. Missing PADDLE_API_KEY/PADDLE_WEBHOOK_SECRET from OPTIONAL (billing)
+4. Missing ROUTEWAY_API_KEY from OPTIONAL (agent wizard compilation)
+5. Missing feature flags for openrouter, paddle, routeway
+
+**Changes Made**:
+1. `ventus-voice/backend/src/config/env-validation.ts`:
+   - Added `ENCRYPTION_MASTER_KEY` to REQUIRED vars with 64-hex-char regex validation
+   - Added `OPENROUTER_API_KEY` to OPTIONAL vars (AI routing for brand analysis)
+   - Added `PADDLE_API_KEY` to OPTIONAL vars (subscription billing)
+   - Added `PADDLE_WEBHOOK_SECRET` to OPTIONAL vars (webhook verification)
+   - Added `ROUTEWAY_API_KEY` to OPTIONAL vars (agent wizard compilation)
+   - Added `'openrouter'`, `'paddle'`, `'routeway'` to `isFeatureEnabled()` map
+
+2. `ventus-voice/backend/src/index.ts`:
+   - Added `OpenRouter AI` and `Paddle Billing` to startup feature flags log
+
+**Verification**:
+- TypeScript typecheck passes on both changed files
+- Pre-existing errors in knowledge-injection and short-term-memory services unchanged
+
