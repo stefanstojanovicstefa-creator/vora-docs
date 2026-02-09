@@ -482,3 +482,39 @@
 
 **No broken code paths. No code changes needed. Typecheck passes (pre-existing errors in short-term-memory.service.ts only).**
 
+---
+
+# Phase 3: Visual & UX Quality
+# Branch: ralph/phase-3-visual-ux
+
+## Iteration 18: US-301 - Light theme CSS rebuild
+
+**Status**: COMPLETE
+
+**Analysis**: ThemeProvider.tsx was already correct — `applyTheme()` removes both `light` and `dark` classes, then adds the resolved theme class. The toggle works bidirectionally.
+
+**Gaps Found in index.css**:
+1. `.light` block was missing `--primary-foreground` (standalone, not just in shadcn mappings)
+2. `.light` block was missing `--secondary-foreground`
+3. `.light` block was missing `--gradient-hologram`
+4. `.light` block was missing `--glow-primary` and `--glow-strong`
+5. `.glass-card` used hardcoded `rgba(18, 18, 18, 0.6)` — black glass on white backgrounds
+6. `.bg-glass` utility used hardcoded `rgba(18, 18, 18, 0.7)` — same problem
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/index.css`:
+   - Added `--primary-foreground: 0 0% 100%` to `.light` block (white text on blue)
+   - Added `--secondary-foreground: 0 0% 100%` to `.light` block
+   - Added `--gradient-hologram` to `.light` (reversed: dark-to-light blue direction)
+   - Added `--glow-primary` and `--glow-strong` to `.light` (subtle blue shadows instead of neon)
+   - Removed duplicate `--primary-foreground` from shadcn mappings section (now set properly above)
+   - Split `.glass-card` into theme-specific rules: dark uses `rgba(18,18,18,0.6)`, light uses `rgba(255,255,255,0.7)` with blue-tinted borders
+   - Split `.bg-glass` into theme-specific rules: dark `rgba(18,18,18,0.7)`, light `rgba(255,255,255,0.7)`
+   - Shared properties (backdrop-filter, border-radius, transition) remain in base `.glass-card` rule
+
+**Verification**:
+- `:root/.dark` variables completely unchanged
+- `.light` block has equivalents for ALL variables in dark block
+- Glass effects have theme-appropriate backgrounds for both modes
+- TypeScript typecheck passes (zero errors)
+
