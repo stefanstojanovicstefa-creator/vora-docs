@@ -735,3 +735,22 @@
 - No layout shift in TopBar after removal (one fewer flex item)
 - TypeScript typecheck passes (zero errors)
 
+## Iteration 25: US-308 - RTL orb repositioning with CSS logical properties
+
+**Status**: COMPLETE (verification only — no code changes needed)
+
+**Audit Results**:
+- `orb.tsx`: Zero left/right, ml-/mr-/pl-/pr-, or directional positioning. Uses `className ?? "relative h-full w-full"`. WebGL Canvas is direction-agnostic.
+- `orb-lines.tsx`: Same — zero directional CSS.
+- `orb-galaxy.tsx`: Same — zero directional CSS.
+- `VoraOrb.tsx`: Uses `relative w-full h-full` — direction-neutral.
+- `VoraOrbLite.tsx`: SVG fallback — no directional CSS.
+
+**Parent Container Audit**:
+- `AgentCreationOverlay.tsx`: Orb wrapped in `absolute inset-0` (RTL-safe, stretches all sides).
+- `AgentTestPage.tsx`: Uses `left-0 right-0` together (equivalent to `inset-x-0`, RTL-safe).
+- `InterviewBot.tsx`: No directional CSS around Orb usage.
+- `OrbPreview.tsx` / `ElevenLabsOrbPreview.tsx`: Demo/preview pages with centered layouts.
+
+**Conclusion**: The orb components are already fully RTL-compatible. No CSS logical property conversions needed because no physical direction properties exist. The sphere renders in a Canvas that fills its container symmetrically regardless of text direction.
+
