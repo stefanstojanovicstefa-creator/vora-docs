@@ -55,8 +55,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Depends on 3.1"
+      "passes": true,
+      "notes": "COMPLETE: Standardized CSS across all 8 Command Center tabs. (1) CommandCenterPage: Added max-w-2xl to all TabsContent and increased container padding to p-6. (2) BrainTab: Normalized space-y-6 to space-y-4, removed redundant text-sm from Labels. (3) VoiceTab: Normalized mixed space-y-3/5 to space-y-4, added w-full to TTS Provider SelectTrigger. (4) BehaviorTab: Removed text-xs span wrappers from AccordionTrigger labels, normalized space-y-5 to space-y-4, added w-full to Behavioral Preset SelectTrigger. (5) AnalysisTab: Removed text-sm from AccordionTriggers, changed text-xs Labels to default, normalized space-y-3 to space-y-4. (6) AdvancedTab: Normalized webhooks space-y-3 to space-y-4. EarsTab and FlowTab were already consistent. ToolsTab uses Collapsible (intentionally different pattern). Typecheck passes."
     },
     {
       "id": "US-304",
@@ -74,8 +74,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": "Bundle with 3.3"
+      "passes": true,
+      "notes": "COMPLETE: Reused existing MemoryTab from AgentDetail directly in Command Center. Added 'memory' to ENABLED_TABS at index 4 (between behavior and tools). Added to CORE tab group. Added ⌘5 keyboard shortcut (shifted tools→⌘6, analysis→⌘7, flow→⌘8, advanced→⌘9). Added Memory item to command palette. Rendered MemoryTab with agentId prop in TabsContent with consistent max-w-2xl styling. MemoryTab provides: MemorySettings (enabled toggle, token budget slider, retention period, auto-summarize with its own save mutation), CustomerMemoryViewer (customer profiles with RIF scores, search), ConversationHistory (session transcripts with pagination). Memory settings persist via direct PATCH /api/agents/{agentId}/config call. Typecheck passes."
     },
     {
       "id": "US-305",

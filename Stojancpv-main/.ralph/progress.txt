@@ -558,3 +558,88 @@
 - Right panel (HeroSphere + testimonial) uses CSS variables that auto-adapt
 - TypeScript typecheck passes (zero errors)
 
+## Iteration 20: US-303 - Command Center CSS alignment
+
+**Status**: COMPLETE
+
+**Problem**: Command Center tabs had inconsistent spacing, font sizes, and widths across 8 tab components. Accordion headers used mixed font-size overrides (text-xs spans, text-sm className), AccordionContent sections used mixed spacing (space-y-3, space-y-4, space-y-5, space-y-6), Labels had inconsistent className overrides (text-xs, text-sm, or none), and SelectTriggers were missing w-full.
+
+**Audit Findings**:
+- BrainTab: space-y-6 (larger than others), Labels had redundant text-sm
+- VoiceTab: Mixed space-y-3/4/5 within same tab
+- BehaviorTab: AccordionTrigger labels wrapped in `<span className="text-xs">`, space-y-5 in some sections
+- AnalysisTab: AccordionTriggers had className="text-sm" override, Labels had text-xs override, space-y-3
+- AdvancedTab: Webhooks section used space-y-3
+- EarsTab: Already consistent (space-y-4 pt-2) — no changes needed
+- FlowTab: Different layout intentionally (centered CTA card) — no changes needed
+- ToolsTab: Uses Collapsible (not Accordion), intentionally different pattern — no changes needed
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/pages/CommandCenterPage.tsx`:
+   - Changed tab content container from `p-4` to `p-6` for consistent padding
+   - Added `max-w-2xl` to all 8 TabsContent elements for consistent content width
+
+2. `ventus-voice/frontend/src/components/CommandCenter/tabs/BrainTab.tsx`:
+   - Changed all AccordionContent from `space-y-6 pt-2` to `space-y-4 pt-2` (4 sections)
+   - Removed redundant `className="text-sm"` from all Label components
+
+3. `ventus-voice/frontend/src/components/CommandCenter/tabs/VoiceTab.tsx`:
+   - Standardized all AccordionContent spacing to `space-y-4 pt-2` (was mixed 3/4/5)
+   - Added `className="w-full"` to TTS Provider SelectTrigger
+
+4. `ventus-voice/frontend/src/components/CommandCenter/tabs/BehaviorTab.tsx`:
+   - Removed `<span className="text-xs">` wrapper from 6 AccordionTrigger labels
+   - Standardized Turn-Taking and Personality sections from space-y-5 to space-y-4
+   - Added `className="w-full"` to Behavioral Preset SelectTrigger
+
+5. `ventus-voice/frontend/src/components/CommandCenter/tabs/AnalysisTab.tsx`:
+   - Removed `className="text-sm"` from all 5 AccordionTrigger elements
+   - Changed all `<Label className="text-xs">` to `<Label>` (default styling)
+   - Changed data extraction section from space-y-3 to space-y-4
+
+6. `ventus-voice/frontend/src/components/CommandCenter/tabs/AdvancedTab.tsx`:
+   - Changed webhooks AccordionContent from space-y-3 to space-y-4
+
+**Canonical Pattern Established**:
+- AccordionContent: `className="space-y-4 pt-2"` (all Accordion-based tabs)
+- AccordionTrigger: Plain text children (inherit font-medium from base component)
+- Label: Default styling (no className override — inherits text-sm)
+- SelectTrigger: Include `className="w-full"` when not already full-width
+- TabsContent: `className="mt-0 animate-fade-in max-w-2xl"`
+
+**Verification**:
+- No visual jank when switching tabs (verified consistent spacing/widths)
+- TypeScript typecheck passes (zero errors)
+
+## Iteration 21: US-304 - Add Memory tab to Command Center
+
+**Status**: COMPLETE
+
+**Approach**: Reused existing MemoryTab composite component from AgentDetail rather than creating a new Command Center-specific tab. The MemoryTab already contains all required functionality (MemorySettings, CustomerMemoryViewer, ConversationHistory) and uses its own save mechanism (direct API mutation to PATCH /api/agents/{agentId}/config), so it doesn't need to be wired into the Command Center's auto-save config system.
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/pages/CommandCenterPage.tsx`:
+   - Added import for `MemoryTab` from `@/components/AgentDetail/MemoryTab`
+   - Added `"memory"` to `ENABLED_TABS` at index 4 (between `behavior` and `tools`)
+   - Added `"memory"` to `TAB_GROUPS` CORE group (brain, voice, ears, behavior, memory)
+   - Added `⌘5` keyboard shortcut for Memory tab
+   - Shifted existing shortcuts: tools→⌘6, analysis→⌘7, flow→⌘8, advanced→⌘9
+   - Added Memory entry to command palette items with ⌘5 shortcut
+   - Updated command palette shortcuts for tools (⌘6), analysis (⌘7), flow (⌘8), advanced (⌘9)
+   - Added `<TabsContent value="memory">` with `MemoryTab` component between behavior and tools
+   - MemoryTab rendered conditionally with `{agentId && <MemoryTab agentId={agentId} />}`
+   - Follows same `max-w-2xl animate-fade-in` CSS pattern as all other tabs
+
+**Memory Tab Features (from existing MemoryTab)**:
+- **MemorySettings**: Enabled toggle, token budget slider (100-2000), retention period dropdown (30/60/90/180/365 days), auto-summarize toggle, Save button with mutation
+- **CustomerMemoryViewer**: Customer profile list with search, expandable rows with memory items, RIF score badges
+- **ConversationHistory**: Agent session list with expandable transcripts, message bubbles, pagination
+
+**Verification**:
+- TypeScript typecheck passes (zero errors)
+- Tab follows same CSS alignment as other Command Center tabs (max-w-2xl)
+- Memory settings persist via PATCH /api/agents/{agentId}/config (existing mechanism)
+- Keyboard shortcut ⌘5 navigates to Memory tab
+- Command palette includes Memory tab entry
+- No changes needed to schema (MemoryTab manages its own state independently)
+
