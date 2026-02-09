@@ -136,6 +136,7 @@ export class BrandAnalyzerService {
         systemPrompt: analysis.system_prompt,
         knowledgeBase: analysis.knowledge_base,
         recommendedIntegrations: analysis.recommended_integrations,
+        detectedLanguage: analysis.detected_language || undefined,
         pagesScraped: scrapeResult.successCount,
         tokensUsed: usage.totalTokens,
         analysisCost: usage.costUsd,

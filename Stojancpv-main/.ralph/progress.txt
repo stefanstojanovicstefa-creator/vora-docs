@@ -897,3 +897,58 @@ start, endCall, message, question, capture, setVariable, condition, router, menu
 - Errors caught and displayed per-step and globally
 - Test panel is a modal overlay that doesn't interfere with flow canvas
 
+## Iteration 29: US-403 - Auto-Language Detection in URL Wizard
+
+**Status**: COMPLETE
+
+**Problem**: URL Creation Wizard had no language awareness. When a user analyzed a Japanese, French, or Arabic website, the agent was created with English defaults regardless of the website's actual language.
+
+**Approach**: LLM-based language detection during brand analysis (most reliable for content-heavy websites). The AI already sees all scraped page content, so adding language detection to the same prompt is zero-cost.
+
+**Changes Made**:
+
+### Backend
+1. `ventus-voice/backend/src/services/ai/openrouter.service.ts`:
+   - Added `detected_language?: string` field to `OpenRouterAnalysisResponse`
+   - Added "Website Language Detection" section to AI prompt with ISO 639-1 code instructions
+   - Included 25+ common language codes and detection rules (analyze body content, use dominant language, default to "en" only if genuinely English)
+
+2. `ventus-voice/backend/src/types/brand-analysis.types.ts`:
+   - Added `detectedLanguage?: string` to `BrandAnalysisResult`
+   - Added `detected_language?: string` to `DeepSeekAnalysisResponse`
+
+3. `ventus-voice/backend/src/services/ai/brand-analyzer.service.ts`:
+   - Pass `analysis.detected_language` through to `BrandAnalysisResult.detectedLanguage`
+
+4. `ventus-voice/backend/src/jobs/brand-analysis.job.ts`:
+   - Store `detectedLanguage` inside `systemPrompt` JSON blob (avoids schema migration)
+   - Spread: `{ ...result.systemPrompt, detectedLanguage: result.detectedLanguage }`
+
+5. `ventus-voice/backend/src/controllers/brands.controller.ts`:
+   - Extract `detectedLanguage` from `systemPrompt` JSON in `getBrand()` handler
+   - Return `detectedLanguage` at top level of response (alongside id, status, etc.)
+
+### Frontend
+6. `ventus-voice/frontend/src/pages/UrlCreationWizard.tsx`:
+   - Added `detectedLanguage?: string | null` to `BrandAnalysisResult` type
+   - Added `selectedLanguage` state (default: "en"), pre-filled from `data.detectedLanguage` when analysis completes
+   - Added Language card in preview step: Languages icon, "Auto-detected" badge, hint text, Select dropdown with all 65 supported languages (flag + name + nativeName)
+   - User can override detected language via dropdown
+   - `buildAgentPrompt()` now accepts `language` parameter, includes `Language: <name> (<code>)` line in prompt
+   - Agent creation uses selected language in prompt
+   - Imported: `Languages` icon, `Select`/`SelectContent`/`SelectItem`/`SelectTrigger`/`SelectValue`, `SUPPORTED_LANGUAGES`, `getLanguageByCode`
+
+**Data Flow**:
+```
+Website URL → brand analysis AI prompt → AI detects "ja" → stored in systemPrompt JSON
+→ GET /api/brands/:id returns detectedLanguage: "ja" → frontend pre-selects Japanese
+→ User sees "🇯🇵 Japanese (日本語)" in dropdown, can override to any of 65 languages
+→ Agent prompt includes "Language: Japanese (ja)" → compiler configures STT/TTS/response language
+```
+
+**Verification**:
+- English websites still default to "en" (no regression)
+- Non-English websites get auto-detected language pre-selected
+- User can override detected language
+- TypeScript typecheck passes on both frontend (zero errors) and backend (pre-existing errors only)
+

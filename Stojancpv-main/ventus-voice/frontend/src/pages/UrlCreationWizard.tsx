@@ -20,6 +20,7 @@ import {
   X,
   Zap,
   Settings2,
+  Languages,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -32,7 +33,9 @@ import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiClient, ApiClientError } from "@/lib/api-client";
+import { SUPPORTED_LANGUAGES, getLanguageByCode } from "@/data/supported-languages";
 
 // Type definitions for MCP suggestions
 interface MCPSuggestion {
@@ -91,6 +94,7 @@ type BrandAnalysisResult = {
   systemPrompt?: Record<string, unknown> | null;
   knowledgeBase?: Record<string, unknown> | null;
   recommendedIntegrations?: RecommendedIntegrations | null;
+  detectedLanguage?: string | null; // ISO 639-1 code
   pagesScraped?: number | null;
   analysisCost?: number | null;
   tokensUsed?: number | null;
@@ -135,6 +139,9 @@ export default function UrlCreationWizard() {
 
   // Enabled MCPs state (populated from analysis)
   const [enabledMcps, setEnabledMcps] = useState<Set<string>>(new Set());
+
+  // Language state (pre-filled from brand analysis, user-overridable)
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
 
   // AbortController for cancelling ongoing requests
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -267,7 +274,8 @@ export default function UrlCreationWizard() {
   const buildAgentPrompt = (
     analysis: BrandAnalysisResult,
     websiteUrl: string,
-    selectedMcps: Set<string>
+    selectedMcps: Set<string>,
+    language?: string
   ): string => {
     const content = toScrapedContent(analysis, websiteUrl, t);
 
@@ -303,11 +311,20 @@ export default function UrlCreationWizard() {
       }
     }
 
+    // Resolve language name for prompt
+    const langInfo = language ? getLanguageByCode(language) : null;
+    const languageLine = langInfo
+      ? `Language: ${langInfo.name} (${language})`
+      : language
+        ? `Language: ${language}`
+        : "Language: English (en)";
+
     return [
       `Create a voice agent for ${content.brandName}.`,
       `Website: ${websiteUrl}`,
       "",
       `Industry: ${content.recommendedIntegrations?.industry || "general"}`,
+      languageLine,
       `Tone: ${content.tone}`,
       "",
       `Company description: ${content.description}`,
@@ -435,6 +452,11 @@ export default function UrlCreationWizard() {
             setEnabledMcps(new Set(primaryMcpIds));
           }
 
+          // Pre-configure language from auto-detection
+          if (data.detectedLanguage) {
+            setSelectedLanguage(data.detectedLanguage);
+          }
+
           setCurrentStep("preview");
           return;
         }
@@ -505,7 +527,7 @@ export default function UrlCreationWizard() {
     setCurrentStep("creating");
 
     try {
-      const prompt = buildAgentPrompt(brandAnalysis, url.trim(), enabledMcps);
+      const prompt = buildAgentPrompt(brandAnalysis, url.trim(), enabledMcps, selectedLanguage);
 
       // Build the request payload with enabled integrations
       const payload: { prompt: string; enabledMcps?: string[]; tools?: ToolDefinition[]; brandId?: string } = {
@@ -849,6 +871,41 @@ export default function UrlCreationWizard() {
           </CardHeader>
           <CardContent>
             <p className="text-[hsl(var(--text-muted))]">{scrapedContent.description}</p>
+          </CardContent>
+        </Card>
+
+        {/* Detected Language */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Languages className="h-5 w-5 text-[hsl(var(--primary))]" />
+              <CardTitle>{t("agent:urlWizard.preview.sections.language", "Agent Language")}</CardTitle>
+              {brandAnalysis?.detectedLanguage && (
+                <Badge variant="secondary" className="text-xs">
+                  {t("agent:urlWizard.preview.labels.autoDetected", "Auto-detected")}
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-[hsl(var(--text-muted))]">
+              {t(
+                "agent:urlWizard.preview.labels.languageHint",
+                "This language will be used for the agent's STT, TTS, and response language. You can change it below."
+              )}
+            </p>
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t("agent:urlWizard.preview.labels.selectLanguage", "Select language")} />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_LANGUAGES.map(lang => (
+                  <SelectItem key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.name} ({lang.nativeName})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
 

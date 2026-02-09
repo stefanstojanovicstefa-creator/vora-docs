@@ -56,8 +56,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Implemented auto-language detection in the brand analysis pipeline. Backend: (1) Added 'detected_language' field to OpenRouterAnalysisResponse and AI prompt with ISO 639-1 detection instructions and 25+ language codes, (2) Added 'detectedLanguage' to BrandAnalysisResult type, (3) BrandAnalyzerService passes detected_language from AI response through to result, (4) brand-analysis.job stores detectedLanguage inside systemPrompt JSON (no schema migration needed), (5) brands.controller extracts and returns detectedLanguage at top level of GET response. Frontend: (1) Added detectedLanguage to BrandAnalysisResult type in UrlCreationWizard, (2) Added selectedLanguage state pre-filled from detectedLanguage on analysis completion, (3) Added Language card in preview step with Select dropdown showing all 65 SUPPORTED_LANGUAGES (flag, name, nativeName), auto-detected badge, and user-override capability, (4) buildAgentPrompt includes Language line with resolved language name and code, (5) Imported Languages icon, Select components, and SUPPORTED_LANGUAGES/getLanguageByCode from data module. English websites default correctly (en). TypeScript typecheck passes on both frontend (zero errors) and backend (pre-existing errors only in unrelated services)."
     },
     {
       "id": "US-404",
