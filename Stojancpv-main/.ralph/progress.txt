@@ -643,3 +643,38 @@
 - Command palette includes Memory tab entry
 - No changes needed to schema (MemoryTab manages its own state independently)
 
+## Iteration 22: US-305 - Agent card grid consistency
+
+**Status**: COMPLETE
+
+**Problems Identified**:
+1. Grid cards had no uniform height — cards with descriptions were taller than those without
+2. VirtualGrid cell wrapper `<div>` didn't stretch to fill grid cell height
+3. Card footer (timestamp) wasn't pinned to bottom, causing visual misalignment across cards in same row
+4. Description was conditionally rendered (`{agent.description && ...}`), causing height differences
+5. AgentListSkeleton used `gap-4` (16px) while actual grid used `gap={24}` (24px)
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/pages/AgentsPage.tsx`:
+   - Grid card: Added `h-full flex flex-col` to Card component so cards stretch to fill cell height
+   - Grid card: Added `mt-auto` to CardContent so footer pins to bottom regardless of content length
+   - Grid card: Changed conditional `{agent.description && <CardDescription>}` to always render `<CardDescription>` with `{agent.description || "\u00A0"}` (nbsp fallback ensures uniform height even for cards without descriptions)
+   - List card: Applied same description fix for consistency (always render CardDescription with fallback)
+
+2. `ventus-voice/frontend/src/components/ui/virtual-list.tsx`:
+   - Added `className="h-full"` to grid cell wrapper `<div>` so card children can stretch to full cell height
+   - Added `items-stretch` class to grid row container so all cells in a row match the tallest cell's height
+
+3. `ventus-voice/frontend/src/components/skeletons/AgentCardSkeleton.tsx`:
+   - Changed AgentListSkeleton grid gap from `gap-4` to `gap-6` to match actual grid gap (24px)
+
+**Verification**:
+- All cards in a row now have uniform height (flex stretch + h-full)
+- Cards without descriptions show invisible placeholder (nbsp) maintaining consistent height
+- Long descriptions truncate via existing `line-clamp-2`
+- Long names truncate via existing `truncate` class
+- Grid has consistent 24px gap between cards (matching skeleton)
+- Empty state (no agents) rendering is unchanged
+- Grid is responsive via VirtualGrid columns=3 with responsive container max-w-7xl
+- TypeScript typecheck passes (zero errors)
+

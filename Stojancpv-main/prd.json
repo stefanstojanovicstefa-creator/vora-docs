@@ -92,8 +92,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": "Depends on 3.1"
+      "passes": true,
+      "notes": "COMPLETE: (1) Added h-full flex flex-col to grid Card so cards stretch to fill cell height. (2) Added mt-auto to CardContent so footer pins to bottom regardless of content length. (3) Changed conditional description rendering to always render CardDescription with nbsp fallback for cards without description, ensuring uniform height. (4) Added h-full to VirtualGrid cell wrapper divs so children fill the grid cell. (5) Added items-stretch to VirtualGrid row container so all cells in a row match the tallest cell's height. (6) Applied same description fix to list view cards for consistency. (7) Updated AgentListSkeleton gap from gap-4 to gap-6 to match actual grid gap (24px). Grid responsive via VirtualGrid columns=3, list view uses flex-col. Empty state unchanged. Typecheck passes."
     },
     {
       "id": "US-306",
