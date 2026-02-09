@@ -216,7 +216,14 @@ async function processBrandAnalysisJob(job: BrandAnalysisJob, signal?: AbortSign
       data: {
         status: finalStatus,
         brandBook: result.brandBook as any,
-        systemPrompt: { ...result.systemPrompt as any, detectedLanguage: result.detectedLanguage || undefined } as any,
+        systemPrompt: {
+          ...result.systemPrompt as any,
+          detectedLanguage: result.detectedLanguage || undefined,
+          audienceAnalysis: result.audienceAnalysis || undefined,
+          competitorAnalysis: result.competitorAnalysis || undefined,
+          vocabulary: result.vocabulary || undefined,
+          useCaseScenarios: result.useCaseScenarios || undefined,
+        } as any,
         knowledgeBase: result.knowledgeBase as any,
         recommendedIntegrations: result.recommendedIntegrations as any,
         pagesScraped: result.pagesScraped,

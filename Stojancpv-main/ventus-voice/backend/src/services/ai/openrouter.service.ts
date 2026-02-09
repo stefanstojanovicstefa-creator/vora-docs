@@ -101,6 +101,25 @@ export interface OpenRouterAnalysisResponse {
   recommended_integrations?: RecommendedIntegrations;
   // Auto-detected website language (ISO 639-1 code)
   detected_language?: string;
+  // Enriched analysis: audience, competitors, jargon, scenarios
+  audience_analysis?: {
+    demographics: string;
+    pain_points: string[];
+    goals: string[];
+  };
+  competitor_analysis?: {
+    competitors: string[];
+    differentiators: string[];
+  };
+  vocabulary?: {
+    jargon: string[];
+    acronyms: Array<{ term: string; definition: string }>;
+  };
+  use_case_scenarios?: Array<{
+    title: string;
+    description: string;
+    example_dialogue: string;
+  }>;
 }
 
 export interface OpenRouterConfig {
@@ -344,7 +363,7 @@ Respond with ONLY valid JSON in this exact structure:
       "topicRestrictions": ["restricted topic1", "restricted topic2"],
       "responseConstraints": ["constraint1", "constraint2"]
     },
-    "promptTemplate": "You are a [role] for [company]. [Full system prompt text here...]"
+    "promptTemplate": "You are a [role] for [company]. You specialize in [expertise areas]. Your typical customers are [target audience demographics]. You use domain-specific vocabulary like [key jargon terms]. [Full system prompt text here with personality, guidelines, and domain context...]"
   },
   "knowledge_base": {
     "companyInfo": {
@@ -395,7 +414,50 @@ Respond with ONLY valid JSON in this exact structure:
 - Respond with ONLY the JSON object, no markdown code blocks, no explanations
 - Ensure all fields are filled with meaningful data based on the website content
 - If information is not available for a field, use reasonable defaults or omit optional fields
-- The system_prompt.promptTemplate should be a complete, production-ready prompt for a voice AI agent
+- The system_prompt.promptTemplate should be a complete, production-ready prompt for a voice AI agent that references the brand's domain expertise, audience, and specific scenarios
+
+## Enriched Analysis: Audience, Competitors, Vocabulary, Scenarios
+
+Also provide these additional top-level sections in the JSON output for richer, more domain-aware agent configuration:
+
+\`\`\`json
+{
+  "audience_analysis": {
+    "demographics": "Brief description of who the customers are (age range, profession, location, etc.)",
+    "pain_points": ["pain point 1", "pain point 2", "pain point 3"],
+    "goals": ["what customers want to achieve 1", "what customers want to achieve 2"]
+  },
+  "competitor_analysis": {
+    "competitors": ["competitor 1", "competitor 2", "competitor 3"],
+    "differentiators": ["what makes this brand different from competitor 1", "unique advantage 2"]
+  },
+  "vocabulary": {
+    "jargon": ["domain-specific term 1", "industry term 2", "technical term 3"],
+    "acronyms": [
+      {"term": "ABC", "definition": "What ABC stands for in this domain"},
+      {"term": "XYZ", "definition": "What XYZ means"}
+    ]
+  },
+  "use_case_scenarios": [
+    {
+      "title": "Scenario name (e.g. Product inquiry)",
+      "description": "When a customer asks about a specific product or service",
+      "example_dialogue": "Customer: Do you have X? Agent: Yes, we offer X with features A, B, and C. Would you like more details?"
+    },
+    {
+      "title": "Scenario name 2",
+      "description": "Another common conversation the agent should handle",
+      "example_dialogue": "Customer: ... Agent: ..."
+    }
+  ]
+}
+\`\`\`
+
+Guidelines for enriched analysis:
+- **audience_analysis**: Infer from website copy who visits the site. Be specific — "small business owners aged 30-50" not just "businesses"
+- **competitor_analysis**: Look for comparison pages, "why us" sections, or infer from industry. List actual competitor names if found. Differentiators should be concrete — "24/7 live support" not "better service"
+- **vocabulary**: Extract domain-specific terms, acronyms, and industry jargon from the content. These help the AI agent speak the customer's language. Include 5-15 terms.
+- **use_case_scenarios**: Generate 3-5 realistic conversations the agent should handle, based on the business type. Each should have a title, description, and example exchange. Make them practical — booking, pricing inquiry, support issue, etc.
 
 ## Additional Analysis: Industry & Integration Detection
 

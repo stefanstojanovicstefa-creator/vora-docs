@@ -74,8 +74,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Enriched the brand analysis pipeline with 4 new extraction categories. Backend: (1) Added audience_analysis (demographics, pain_points, goals), competitor_analysis (competitors, differentiators), vocabulary (jargon, acronyms with definitions), and use_case_scenarios (title, description, example_dialogue) fields to OpenRouterAnalysisResponse in openrouter.service.ts, (2) Added matching AudienceAnalysis, CompetitorAnalysis, DomainVocabulary, UseCaseScenario interfaces to brand-analysis.types.ts, (3) Added audienceAnalysis, competitorAnalysis, vocabulary, useCaseScenarios fields to BrandAnalysisResult, (4) brand-analyzer.service.ts passes all new fields from AI response to result, (5) brand-analysis.job.ts stores new fields in systemPrompt JSON blob (no schema migration needed), (6) brands.controller.ts extracts and returns new fields at top level of GET response. AI Prompt: (7) Added detailed 'Enriched Analysis' section to AI prompt with examples for each category and specific extraction guidelines (e.g., 'small business owners aged 30-50' not just 'businesses', 5-15 vocabulary terms, 3-5 realistic conversation scenarios), (8) Updated promptTemplate example to reference audience, expertise, and jargon. Frontend: (9) Added AudienceAnalysis, CompetitorAnalysis, DomainVocabulary, UseCaseScenario types to UrlCreationWizard, (10) buildAgentPrompt now includes Target Audience, Customer Pain Points, Customer Goals, Key Differentiators, Domain Vocabulary (jargon + acronyms), and Key Conversation Scenarios sections, (11) Added two new prompt requirements: 'Use domain-specific vocabulary naturally' and 'Address customer pain points proactively'. No regression in analysis speed (same LLM call, enriched prompt output). TypeScript typecheck passes on frontend (zero errors) and backend (pre-existing errors only in unrelated services)."
     },
     {
       "id": "US-405",

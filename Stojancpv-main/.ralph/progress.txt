@@ -952,3 +952,74 @@ Website URL → brand analysis AI prompt → AI detects "ja" → stored in syste
 - User can override detected language
 - TypeScript typecheck passes on both frontend (zero errors) and backend (pre-existing errors only)
 
+## Iteration 30: US-404 - Brand Analyzer Prompt Quality Improvement
+
+**Status**: COMPLETE
+
+**Problem**: Brand analysis produced generic agent configurations. The AI prompt only extracted basic brand book, system prompt, and knowledge base fields. Missing: target audience details, competitor analysis, domain-specific vocabulary, and realistic conversation scenarios.
+
+**Approach**: Enriched the existing LLM analysis prompt with 4 new structured extraction categories. Same single API call — no additional cost or latency. The enriched data flows through the full pipeline and gets incorporated into the agent prompt for more domain-aware personalities.
+
+**Changes Made**:
+
+### Backend - Type System
+1. `ventus-voice/backend/src/services/ai/openrouter.service.ts`:
+   - Added `audience_analysis`, `competitor_analysis`, `vocabulary`, `use_case_scenarios` fields to `OpenRouterAnalysisResponse`
+   - Each field has full type structure: audience has demographics/pain_points/goals, competitors has competitors/differentiators, vocabulary has jargon/acronyms with definitions, scenarios has title/description/example_dialogue
+
+2. `ventus-voice/backend/src/types/brand-analysis.types.ts`:
+   - Added `AudienceAnalysis`, `CompetitorAnalysis`, `DomainVocabulary`, `UseCaseScenario` interfaces
+   - Added matching fields to `BrandAnalysisResult`: audienceAnalysis, competitorAnalysis, vocabulary, useCaseScenarios
+   - Added same fields to `DeepSeekAnalysisResponse` for compatibility
+
+### Backend - AI Prompt
+3. `ventus-voice/backend/src/services/ai/openrouter.service.ts` (prompt):
+   - Added "Enriched Analysis" section with JSON schema examples for all 4 categories
+   - Added extraction guidelines: be specific ("small business owners aged 30-50" not "businesses"), include 5-15 vocabulary terms, generate 3-5 realistic conversation scenarios
+   - Updated `promptTemplate` example to reference audience, expertise, and domain vocabulary
+   - Prompt now instructs the AI to make system prompts domain-specific and incorporate extracted data
+
+### Backend - Pipeline
+4. `ventus-voice/backend/src/services/ai/brand-analyzer.service.ts`:
+   - Passes all 4 new fields from `analysis` response to `BrandAnalysisResult` (with `|| undefined` fallback)
+
+5. `ventus-voice/backend/src/jobs/brand-analysis.job.ts`:
+   - Stores `audienceAnalysis`, `competitorAnalysis`, `vocabulary`, `useCaseScenarios` in the `systemPrompt` JSON blob (same pattern as `detectedLanguage` — no schema migration needed)
+
+6. `ventus-voice/backend/src/controllers/brands.controller.ts`:
+   - Extracts all 4 new fields from `systemPrompt` JSON blob
+   - Returns them at top level of GET `/api/brands/:brandId` response
+
+### Frontend - Prompt Builder
+7. `ventus-voice/frontend/src/pages/UrlCreationWizard.tsx`:
+   - Added `AudienceAnalysis`, `CompetitorAnalysis`, `DomainVocabulary`, `UseCaseScenario` types
+   - Added 4 new optional fields to `BrandAnalysisResult` type
+   - `buildAgentPrompt()` now includes:
+     - Target Audience section (demographics + pain points + goals)
+     - Key Differentiators section (from competitor analysis)
+     - Domain Vocabulary section (jargon terms + acronyms with definitions)
+     - Key Conversation Scenarios section (numbered list of scenario titles + descriptions)
+   - Added 2 new prompt requirements:
+     - "Use domain-specific vocabulary and terminology naturally in conversations"
+     - "Address customer pain points proactively when relevant"
+
+**Data Flow**:
+```
+Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 categories
+→ stored in systemPrompt JSON blob alongside existing fields
+→ GET /api/brands/:id returns audienceAnalysis, competitorAnalysis, vocabulary, useCaseScenarios
+→ frontend buildAgentPrompt incorporates all enriched data into agent creation prompt
+→ agent compiler creates more domain-aware, specific agent personality
+```
+
+**Before vs After (example for a dental clinic)**:
+- Before: "Create a voice agent for SmileDental. Tone: professional, friendly."
+- After: "Create a voice agent for SmileDental. Target Audience: Adults 25-55 with dental insurance, families with children. Customer Pain Points: Fear of dental procedures, unclear pricing, difficulty scheduling. Domain Vocabulary: crown, veneer, scaling, root canal, PPO, in-network, co-pay. Key Conversation Scenarios: 1. Appointment Scheduling, 2. Insurance Verification, 3. Emergency Dental Pain."
+
+**Verification**:
+- No additional API calls (enriched extraction in same prompt)
+- No schema migration needed (stored in existing JSON blob)
+- TypeScript typecheck passes on frontend (zero errors) and backend (pre-existing errors only)
+- English websites unaffected (no regression)
+- All new fields are optional — graceful fallback if AI doesn't return them
+

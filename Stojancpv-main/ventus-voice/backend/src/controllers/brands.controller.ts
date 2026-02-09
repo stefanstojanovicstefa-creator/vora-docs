@@ -140,9 +140,13 @@ export async function getBrand(req: Request, res: Response): Promise<void> {
     // Calculate if stale
     const isStale = brand.expiresAt && brand.expiresAt < new Date();
 
-    // Extract detectedLanguage from systemPrompt JSON (stored there to avoid schema migration)
+    // Extract enriched analysis fields from systemPrompt JSON (stored there to avoid schema migration)
     const systemPromptData = brand.systemPrompt as Record<string, unknown> | null;
     const detectedLanguage = systemPromptData?.detectedLanguage as string | undefined;
+    const audienceAnalysis = systemPromptData?.audienceAnalysis ?? null;
+    const competitorAnalysis = systemPromptData?.competitorAnalysis ?? null;
+    const vocabulary = systemPromptData?.vocabulary ?? null;
+    const useCaseScenarios = systemPromptData?.useCaseScenarios ?? null;
 
     sendSuccess(res, {
       id: brand.id,
@@ -153,6 +157,10 @@ export async function getBrand(req: Request, res: Response): Promise<void> {
       knowledgeBase: brand.knowledgeBase,
       recommendedIntegrations: brand.recommendedIntegrations,
       detectedLanguage: detectedLanguage || null,
+      audienceAnalysis,
+      competitorAnalysis,
+      vocabulary,
+      useCaseScenarios,
       pagesScraped: brand.pagesScraped,
       analysisCost: brand.analysisCost ? parseFloat(brand.analysisCost.toString()) : null,
       tokensUsed: brand.tokensUsed,

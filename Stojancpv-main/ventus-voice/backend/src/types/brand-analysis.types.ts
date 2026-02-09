@@ -214,6 +214,40 @@ export interface RecommendedIntegrations {
 }
 
 /**
+ * Audience Analysis - Target customer demographics and needs
+ */
+export interface AudienceAnalysis {
+  demographics: string;
+  pain_points: string[];
+  goals: string[];
+}
+
+/**
+ * Competitor Analysis - Market positioning
+ */
+export interface CompetitorAnalysis {
+  competitors: string[];
+  differentiators: string[];
+}
+
+/**
+ * Vocabulary - Domain-specific terms and acronyms
+ */
+export interface DomainVocabulary {
+  jargon: string[];
+  acronyms: Array<{ term: string; definition: string }>;
+}
+
+/**
+ * Use Case Scenario - Realistic conversation the agent should handle
+ */
+export interface UseCaseScenario {
+  title: string;
+  description: string;
+  example_dialogue: string;
+}
+
+/**
  * DeepSeek Analysis Response (now used with OpenRouter/GPT-OSS-120B)
  */
 export interface DeepSeekAnalysisResponse {
@@ -222,6 +256,10 @@ export interface DeepSeekAnalysisResponse {
   knowledge_base: KnowledgeBase;
   recommended_integrations?: RecommendedIntegrations;
   detected_language?: string; // ISO 639-1 code
+  audience_analysis?: AudienceAnalysis;
+  competitor_analysis?: CompetitorAnalysis;
+  vocabulary?: DomainVocabulary;
+  use_case_scenarios?: UseCaseScenario[];
 }
 
 /**
@@ -251,6 +289,10 @@ export interface BrandAnalysisResult {
   knowledgeBase: KnowledgeBase;
   recommendedIntegrations?: RecommendedIntegrations; // Industry-based MCP suggestions
   detectedLanguage?: string; // ISO 639-1 code of the website's primary language
+  audienceAnalysis?: AudienceAnalysis; // Target audience demographics and pain points
+  competitorAnalysis?: CompetitorAnalysis; // Competitors and differentiators
+  vocabulary?: DomainVocabulary; // Domain-specific terms and acronyms
+  useCaseScenarios?: UseCaseScenario[]; // Top conversation scenarios
   pagesScraped: number; // Matches Prisma schema field
   analysisCost: number; // Matches Prisma schema field (stored as Decimal)
   tokensUsed: number; // Matches Prisma schema field

@@ -86,6 +86,28 @@ type BrandAnalysisStatus =
   | "COMPLETED_PARTIAL"
   | "FAILED";
 
+type AudienceAnalysis = {
+  demographics: string;
+  pain_points: string[];
+  goals: string[];
+};
+
+type CompetitorAnalysis = {
+  competitors: string[];
+  differentiators: string[];
+};
+
+type DomainVocabulary = {
+  jargon: string[];
+  acronyms: Array<{ term: string; definition: string }>;
+};
+
+type UseCaseScenario = {
+  title: string;
+  description: string;
+  example_dialogue: string;
+};
+
 type BrandAnalysisResult = {
   id: string;
   websiteUrl: string;
@@ -95,6 +117,10 @@ type BrandAnalysisResult = {
   knowledgeBase?: Record<string, unknown> | null;
   recommendedIntegrations?: RecommendedIntegrations | null;
   detectedLanguage?: string | null; // ISO 639-1 code
+  audienceAnalysis?: AudienceAnalysis | null;
+  competitorAnalysis?: CompetitorAnalysis | null;
+  vocabulary?: DomainVocabulary | null;
+  useCaseScenarios?: UseCaseScenario[] | null;
   pagesScraped?: number | null;
   analysisCost?: number | null;
   tokensUsed?: number | null;
@@ -311,6 +337,50 @@ export default function UrlCreationWizard() {
       }
     }
 
+    // Build enriched analysis sections
+    let audienceSection = "";
+    if (analysis.audienceAnalysis) {
+      const aa = analysis.audienceAnalysis;
+      audienceSection = `\n\nTarget Audience: ${aa.demographics}`;
+      if (aa.pain_points?.length) {
+        audienceSection += `\nCustomer Pain Points:\n- ${aa.pain_points.join("\n- ")}`;
+      }
+      if (aa.goals?.length) {
+        audienceSection += `\nCustomer Goals:\n- ${aa.goals.join("\n- ")}`;
+      }
+    }
+
+    let competitorSection = "";
+    if (analysis.competitorAnalysis) {
+      const ca = analysis.competitorAnalysis;
+      if (ca.differentiators?.length) {
+        competitorSection = `\n\nKey Differentiators:\n- ${ca.differentiators.join("\n- ")}`;
+      }
+    }
+
+    let vocabularySection = "";
+    if (analysis.vocabulary) {
+      const v = analysis.vocabulary;
+      const terms: string[] = [];
+      if (v.jargon?.length) {
+        terms.push(...v.jargon);
+      }
+      if (v.acronyms?.length) {
+        terms.push(...v.acronyms.map(a => `${a.term} (${a.definition})`));
+      }
+      if (terms.length) {
+        vocabularySection = `\n\nDomain Vocabulary:\n- ${terms.join("\n- ")}`;
+      }
+    }
+
+    let scenariosSection = "";
+    if (analysis.useCaseScenarios?.length) {
+      const scenarios = analysis.useCaseScenarios.slice(0, 5);
+      scenariosSection = `\n\nKey Conversation Scenarios:\n${scenarios
+        .map((s, i) => `${i + 1}. ${s.title}: ${s.description}`)
+        .join("\n")}`;
+    }
+
     // Resolve language name for prompt
     const langInfo = language ? getLanguageByCode(language) : null;
     const languageLine = langInfo
@@ -328,13 +398,19 @@ export default function UrlCreationWizard() {
       `Tone: ${content.tone}`,
       "",
       `Company description: ${content.description}`,
+      audienceSection,
+      competitorSection,
       offerings,
+      vocabularySection,
       faqs,
+      scenariosSection,
       integrationsSection,
       "",
       "Requirements:",
       "- Be helpful and accurate; if unsure, ask clarifying questions.",
       "- Keep answers concise by default.",
+      "- Use domain-specific vocabulary and terminology naturally in conversations.",
+      "- Address customer pain points proactively when relevant.",
       "- If the user asks about pricing/policies, reference the knowledge base content above; if missing, say you do not know and offer to connect them with support.",
       "- Use the available tools to complete tasks like booking, scheduling, or looking up information.",
     ]
