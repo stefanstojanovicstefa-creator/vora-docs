@@ -110,8 +110,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Root cause: useTutorial hook accessed response.data.data instead of response.data when parsing API response. The apiClient.get() returns the raw JSON body (not an Axios-like wrapper), and the backend sendSuccess() wraps data in {success, data, timestamp}. So response.data is the TutorialState, but response.data.data was always undefined — causing shouldShowTutorial to always be falsy. Fix: Changed getTutorialState() and updateTutorialState() in useTutorial.ts to use response.data instead of response.data.data. Also added proper generic typing to apiClient.get<{success: boolean; data: TutorialState}>(). Backend is correct: tutorial.routes.ts is registered in index.ts (line 665), GET /state creates tutorialState for new users if none exists (auto-start), POST /state handles advance/complete/dismiss/reset actions. TutorialSystem is mounted in App.tsx and gates on shouldShowTutorial = state && !isComplete && !isDismissed. Typecheck passes."
     },
     {
       "id": "US-007",
