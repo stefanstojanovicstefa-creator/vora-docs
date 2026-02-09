@@ -109,8 +109,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": "Depends on 3.1"
+      "passes": true,
+      "notes": "COMPLETE: (1) Wrapped ModeToggle in a fixed-width (w-[180px]) flex-shrink-0 container in TopBar.tsx to isolate it from the flex layout — adjacent elements (search, language, theme, user) no longer shift during animation. (2) Replaced motion.div labels with plain divs — removed scale animation (0.95↔1) on Simple/Advanced labels that caused micro-reflows during spring overshoot. (3) Kept the sliding background motion.div with spring animation (stiffness:500, damping:30) which is purely visual (absolute positioned, no layout impact). (4) Text color transitions remain via CSS transition-colors for smooth visual feedback. Works in both light and dark themes. Typecheck passes."
     },
     {
       "id": "US-307",

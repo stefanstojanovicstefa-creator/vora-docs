@@ -678,3 +678,31 @@
 - Grid is responsive via VirtualGrid columns=3 with responsive container max-w-7xl
 - TypeScript typecheck passes (zero errors)
 
+## Iteration 23: US-306 - Mode toggle alignment fix
+
+**Status**: COMPLETE
+
+**Problem**: ModeToggle's spring animations caused layout shift in the TopBar flex container. Two issues:
+1. No fixed-width container around ModeToggle in TopBar — the flex item could shift during animation spring overshoot
+2. Scale animation (0.95↔1) on label divs caused micro-reflows as they resized during the spring bounce
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/components/layout/TopBar.tsx`:
+   - Wrapped `<ModeToggle />` in a `<div className="w-[180px] flex-shrink-0">` container
+   - The 180px matches the button's own `w-[180px]`, creating a stable layout box
+   - `flex-shrink-0` prevents the container from being compressed by flex layout
+
+2. `ventus-voice/frontend/src/components/mode/ModeToggle.tsx`:
+   - Replaced `motion.div` labels with plain `div` elements (both Simple and Advanced)
+   - Removed `scale: isMomMode ? 1 : 0.95` animation from both labels
+   - Removed spring transition config from labels
+   - Kept the sliding background `motion.div` (absolute positioned, purely visual, no layout impact)
+   - Text color transitions remain via CSS `transition-colors duration-200`
+
+**Verification**:
+- Adjacent elements (CommandPaletteTrigger, LanguageSwitcher, ThemeToggle, UserButton) remain stable during toggle animation
+- Sliding background animation still smooth (spring stiffness:500, damping:30)
+- Toggle functional in both light and dark themes
+- `motion` import still needed for sliding background div
+- TypeScript typecheck passes (zero errors)
+
