@@ -429,3 +429,56 @@
 
 **No broken code paths found. No code changes needed.**
 
+## Iteration 17: US-208 - Verify transcript-to-memory pipeline code
+
+**Status**: COMPLETE (verification only — no code changes needed)
+
+**Complete Pipeline Traced (Dual Storage: Prisma/PG + SQLite)**:
+
+### 1. Transcript Persistence
+- `call-transcription.service.ts`: Multi-provider real-time transcription (Deepgram, AssemblyAI, Google Cloud STT, Whisper). `saveTranscriptSegment()` writes to `transcript_segments` table during calls.
+- `transcript.service.ts`: CRUD/export on same `transcript_segments` table. Supports text/JSON/VTT export formats.
+
+### 2. Session End Trigger (webhooks.routes.ts:260-360)
+- On `session_end` webhook: fetches transcript from `agent_messages` (text chat) or `transcript_segments` (voice STT)
+- Auto-creates customer if no `voraCustomerId` exists (SHA-256 deterministic ID from participant key)
+- Queues BOTH extraction jobs with transcript data
+
+### 3. Dual Extraction Jobs
+**a) Prisma/PG extraction** (`extract-customer-memories.job.ts`):
+- BullMQ queue `extract-customer-memories` with 5 concurrency, 100/min rate limit
+- Uses Gemini 2.0 Flash to extract facts/summary/topics/sentiment/actionItems
+- Stores facts in `user_memories` table with embeddings via `$executeRaw` with `ON CONFLICT` upsert
+- Updates `CustomerMemory` preferences and `conversation_summaries`
+- Invalidates customer cache after extraction
+- Fallback: `setImmediate()` if Redis/BullMQ unavailable
+
+**b) SQLite extraction** (`sqlite/extract-memories.job.ts`):
+- BullMQ queue `extract-memories-sqlite`
+- Same LLM extraction, stores in per-customer SQLite DB with initial RIF scores
+- FTS5 index rebuild for full-text search
+
+### 4. Worker Registration
+- `sqlite.workers.ts`: `startSqliteWorkers()` starts 3 workers (extract/prune/recalculate-rif)
+- Called from `index.ts:925` on server startup
+- Graceful shutdown via `stopSqliteWorkers()` on SIGTERM
+
+### 5. RIF (Recency-Importance-Frequency) Scoring
+- `rif-scoring.service.ts`: Formula = `(0.40 × Recency) + (0.35 × Importance) + (0.25 × Frequency)`
+- Recency: Exponential decay with 90-day half-life (`2^(-days/90)`)
+- Importance: Direct from memory confidence (0-1)
+- Frequency: Log-normalized access count
+- Prune threshold: RIF < 0.1
+- `recalculate-rif-scores.job.ts`: Weekly job (Sundays 2AM UTC) via `scheduleWeeklyRIFRecalculation()` called from `index.ts:915`
+- Health alerts when >30% prunable or >50% at-risk
+
+### 6. Memory Retrieval/Injection at Call Start
+- `customer-memory-injection.service.ts`: `injectMemories()` fetches user_memories + conversation_summaries, does pgvector semantic search (`embedding <=> query::vector`), records access for RIF frequency, formats for system prompt (max 2000 tokens), caches in Redis (15min TTL)
+- Used by `hierarchical-rag.service.ts` as Tier 2: Customer Memory
+- `sqlite/memory-injection.service.ts`: Parallel injection from per-customer SQLite DBs, prioritized by RIF score
+
+### 7. Long-Term Memory
+- `long-term-memory.service.ts`: Semantic deduplication (cosine similarity > 0.9), confidence scoring (0-1), memory consolidation
+
+**No broken code paths. No code changes needed. Typecheck passes (pre-existing errors in short-term-memory.service.ts only).**
+
