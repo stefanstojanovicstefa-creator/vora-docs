@@ -132,7 +132,7 @@
       ],
       "priority": 7,
       "passes": true,
-      "notes": "Replaced turn-count progress (turnCount/12) with 7 logical blueprint stages: basic_info (industry+name+role), goals (main_goal+primary_tasks), personality (personality_vibe+opening_message), language, handoff (destinations or rules), knowledge (knowledge_base_plan), review (shouldComplete). Incomplete sessions capped at 99%. Added firstIncompleteStage field for navigation. Frontend types updated in Dashboard.tsx, AgentCreationHub.tsx, agent-forge.service.ts. Backend route handler rewritten in agent-forge.routes.ts. Typecheck clean."
+      "notes": "Renamed 7 stages to match AC specification: basic_info (agent_name+role+industry), system_prompt (main_goal+primary_tasks), llm_model (personality_vibe), voice_config (opening_message), stt_config (language), knowledge_base (knowledge_base_plan), tested (shouldComplete). Each stage checks specific Forge blueprint fields. Incomplete sessions capped at 99% (never 100%). Dashboard card updated to display 'X/7 steps (Y%)' format replacing i18n interpolation. Continue button now navigates to /agents/create/interview?stage={firstIncompleteStage}. Backend route in agent-forge.routes.ts. Frontend Dashboard.tsx updated. Typecheck passes."
     },
     {
       "id": "US-008",
@@ -150,8 +150,8 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Audit found ~180 unique process.env refs in backend, 38 in .env. No name mismatches—code uses defensive fallback chains (e.g. GOOGLE_AI_API_KEY→GEMINI_API_KEY→GOOGLE_GEMINI_API_KEY→GOOGLE_API_KEY). KB embedding vars: working due to fallbacks. Paddle billing: 12 vars missing from .env (billing non-operational until configured). CRM/Calendar OAuth: ~32 vars missing (features disabled by design). Updated .env.example: added PADDLE_API_KEY, PADDLE_SANDBOX, PADDLE_PRODUCT_* IDs, PADDLE_MINUTE_PACK_* IDs, OPENROUTER_API_KEY, VOYAGE_API_KEY. All var names in code match .env.example exactly. Typecheck clean."
     },
     {
       "id": "US-009",

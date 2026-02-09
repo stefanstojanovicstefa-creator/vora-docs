@@ -210,3 +210,33 @@
 - Incomplete sessions always show ≤99% progress (capped in backend)
 - TypeScript typecheck passes on both frontend and backend
 
+## Iteration 8: US-008 - Targeted env var audit for critical services
+
+**Status**: COMPLETE
+
+**Audit Results**:
+- Grepped ~180 unique process.env references across ventus-voice/backend/src/
+- Cross-referenced against 38 vars in .env file
+- **No name mismatches found** — code uses defensive fallback chains throughout
+
+**Key Findings**:
+1. **KB/Embeddings**: Working via fallback chains (GOOGLE_AI_API_KEY → GEMINI_API_KEY → GOOGLE_GEMINI_API_KEY → GOOGLE_API_KEY). Both GOOGLE_API_KEY and GOOGLE_GEMINI_API_KEY present in .env.
+2. **Paddle Billing**: 12 vars referenced in code, NONE present in .env — billing system entirely non-operational until configured. Vars are in .env.example for setup guidance.
+3. **CRM OAuth** (HubSpot, Salesforce, Pipedrive, Zoho): ~23 vars missing — features disabled by design until OAuth is configured.
+4. **Calendar OAuth** (Google, Outlook, Calendly): ~9 vars missing — same pattern.
+
+**Changes Made**:
+1. `ventus-voice/backend/.env.example`:
+   - Added `PADDLE_API_KEY` (was missing — critical for Paddle API calls)
+   - Added `PADDLE_SANDBOX` (environment flag)
+   - Added `PADDLE_PRODUCT_STARTER`, `PADDLE_PRODUCT_PRO`, `PADDLE_PRODUCT_ENTERPRISE` (product-to-tier mapping)
+   - Added `PADDLE_MINUTE_PACK_100_PRICE_ID`, `PADDLE_MINUTE_PACK_500_PRICE_ID`, `PADDLE_MINUTE_PACK_1000_PRICE_ID` (minute pack pricing)
+   - Added `OPENROUTER_API_KEY` (used by brand analyzer and agent compiler)
+   - Added `VOYAGE_API_KEY` (optional embedding provider)
+   - All vars grouped by service with descriptions and example formats
+
+**Verification**:
+- All code-side process.env.PADDLE_* names match .env.example exactly
+- No code changes needed (no mismatched var names to fix)
+- TypeScript typecheck passes
+
