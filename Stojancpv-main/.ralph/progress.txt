@@ -1067,6 +1067,57 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 - Model selection persists via existing agent config save mechanism (AgentConfigSchema)
 - TypeScript typecheck passes on frontend (zero errors) and backend (pre-existing errors only in unrelated services)
 
+## Iteration 33: US-407 - Platform Policies Pages
+
+**Status**: COMPLETE
+
+**Problem**: No legal policy pages existed on the platform. Users couldn't access Privacy Policy, Terms of Service, Cookie Policy, DPA, or AUP — required for launch compliance.
+
+**Changes Made**:
+
+### New File
+1. `ventus-voice/frontend/src/pages/PoliciesPage.tsx`:
+   - Single component handling all 5 policy types via `useParams<{ policyType: string }>`
+   - Policy navigation tabs with icons (Shield, FileText, Cookie, Scale, AlertTriangle)
+   - Table of contents sidebar (desktop, sticky top-24, hidden on mobile)
+   - Bold text rendering via `**text**` markdown-like parser
+   - AI-generated template warning banner with amber styling
+   - Cross-links at bottom of each policy to other policies
+   - Back button via `navigate(-1)`
+   - Last-updated date formatted with `toLocaleDateString`
+
+### Policy Content (5 policies, 38 sections total):
+- **Privacy Policy** (9 sections): Overview, Data Collected, Voice Data Processing, Transcripts & Memory, Third-Party Sharing (specific providers), Data Retention, Your Rights (GDPR), Security Measures, Contact
+- **Terms of Service** (9 sections): Acceptance, Service Description, User Accounts, Service Levels (SLA tiers), Usage Limits, Intellectual Property, Liability, Termination, Governing Law
+- **Cookie Policy** (5 sections): What Are Cookies, Cookies We Use (essential/analytics/performance), Third-Party Cookies, Managing Cookies, Retention
+- **DPA** (8 sections): Scope (GDPR Article 28), Definitions, Processor Obligations, Sub-processors, Security Measures, International Transfers, Breach Notification, Duration
+- **AUP** (7 sections): Purpose, Prohibited Content, Prohibited Uses, Voice-Specific Requirements, Compliance, Enforcement, Reporting
+
+### Route Wiring
+2. `ventus-voice/frontend/src/App.tsx`:
+   - Added lazy import: `const PoliciesPage = lazy(() => import("./pages/PoliciesPage"))`
+   - Added public routes: `/policies/:policyType` and `/policies` (redirects to `/policies/privacy`)
+   - Policies are public (no auth required) — placed alongside landing, sign-in, sign-up routes
+
+### Footer Links
+3. `ventus-voice/frontend/src/pages/LandingPage.tsx`:
+   - Added 5 policy links in footer: Privacy Policy, Terms of Service, Cookie Policy, DPA, Acceptable Use
+   - Links styled with text-text-muted hover:text-white transition
+
+4. `ventus-voice/frontend/src/components/layout/Sidebar.tsx`:
+   - Added Privacy and Terms links in footer section (visible when sidebar expanded)
+   - Links use `<Link to="/policies/privacy">` for SPA navigation
+   - Styled with hover:text-[hsl(var(--text-high))]
+
+**Verification**:
+- TypeScript typecheck passes (zero errors)
+- All 5 sub-routes accessible: /policies/privacy, /policies/terms, /policies/cookies, /policies/dpa, /policies/aup
+- /policies redirects to /policies/privacy
+- Policies render correctly in light/dark themes (uses CSS variable classes)
+- Landing page footer has all 5 policy links
+- Sidebar footer has Privacy and Terms links
+- AI-generated template warning banner displayed on every policy page
+
 ## Iteration 32: US-406 - Implement Model Routing Layer
 
 **Status**: COMPLETE

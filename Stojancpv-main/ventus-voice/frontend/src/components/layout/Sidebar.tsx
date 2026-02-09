@@ -352,6 +352,10 @@ export function Sidebar({ className, defaultCollapsed = false }: SidebarProps) {
               <div className="text-xs text-[hsl(var(--text-muted))] space-y-1">
                 <p className="font-medium">Vora Voice AI</p>
                 <p>{t('navigation:sidebar.version', { version: '1.0.0' })}</p>
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 pt-1">
+                  <Link to="/policies/privacy" className="hover:text-[hsl(var(--text-high))] transition-colors">Privacy</Link>
+                  <Link to="/policies/terms" className="hover:text-[hsl(var(--text-high))] transition-colors">Terms</Link>
+                </div>
               </div>
             )}
           </div>
