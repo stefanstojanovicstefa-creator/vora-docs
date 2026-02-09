@@ -111,7 +111,7 @@
       ],
       "priority": 6,
       "passes": true,
-      "notes": "Root cause: useTutorial hook accessed response.data.data instead of response.data when parsing API response. The apiClient.get() returns the raw JSON body (not an Axios-like wrapper), and the backend sendSuccess() wraps data in {success, data, timestamp}. So response.data is the TutorialState, but response.data.data was always undefined — causing shouldShowTutorial to always be falsy. Fix: Changed getTutorialState() and updateTutorialState() in useTutorial.ts to use response.data instead of response.data.data. Also added proper generic typing to apiClient.get<{success: boolean; data: TutorialState}>(). Backend is correct: tutorial.routes.ts is registered in index.ts (line 665), GET /state creates tutorialState for new users if none exists (auto-start), POST /state handles advance/complete/dismiss/reset actions. TutorialSystem is mounted in App.tsx and gates on shouldShowTutorial = state && !isComplete && !isDismissed. Typecheck passes."
+      "notes": "Multiple issues found and fixed: (1) Step count mismatch: Backend MOM_MODE_STEPS had 3 steps but frontend TUTORIAL_STEPS defines 4 (Welcome, Create Agent, Test Agent, Connect Number). Step indicators showed 4 dots but backend only tracked 3, making step 4 unreachable in mom mode. GOD_MODE_STEPS had different step semantics (step 3 = Configure, step 4 = Test Agent) vs frontend (step 3 = Test Agent, step 4 = Connect Number). Fix: Updated both MOM_MODE_STEPS and GOD_MODE_STEPS in tutorial.routes.ts to have 4 steps matching frontend: Welcome → Create Agent → Test Agent → Connect Number. (2) Dual overlay conflict: Both TutorialOverlay (z-9998) and TutorialSystem (z-50) rendered simultaneously in App.tsx. TutorialOverlay's backdrop captured all clicks, blocking TutorialSystem interaction. Fix: Removed TutorialOverlay from App.tsx (and its import). TutorialSystem handles the full tutorial experience as a standalone modal. (3) Gate condition verified correct: shouldShowTutorial = state && !isComplete && !isDismissed works for new users. Backend auto-creates tutorialState (currentStep: 1, mode: mom) on first GET /state. apiClient correctly unwraps {success, data} wrapper via response.data. Tutorial routes registered in index.ts. POST /state supports advance/complete/dismiss/reset. Typecheck passes on both frontend and backend."
     },
     {
       "id": "US-007",
@@ -131,8 +131,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Replaced turn-count progress (turnCount/12) with 7 logical blueprint stages: basic_info (industry+name+role), goals (main_goal+primary_tasks), personality (personality_vibe+opening_message), language, handoff (destinations or rules), knowledge (knowledge_base_plan), review (shouldComplete). Incomplete sessions capped at 99%. Added firstIncompleteStage field for navigation. Frontend types updated in Dashboard.tsx, AgentCreationHub.tsx, agent-forge.service.ts. Backend route handler rewritten in agent-forge.routes.ts. Typecheck clean."
     },
     {
       "id": "US-008",

@@ -172,3 +172,41 @@
 - Prisma `TutorialState` model has all required fields (currentStep, completedSteps, completedAt, dismissedAt, mode)
 - TypeScript typecheck passes
 
+## Iteration 7: US-007 - Rewrite step counter to use 7 logical stages
+
+**Status**: COMPLETE
+
+**Root Cause**: Progress was calculated from turn counts (turnCount/12) which was meaningless — a user could have 8 turns but zero useful configuration, or 3 turns but complete blueprint. The progress bar showed "8 of 12 steps completed (67%)" when no actual agent setup stages were done.
+
+**7 Logical Stages Defined** (based on ForgeBlueprint fields):
+1. `basic_info` — industry + agent_name + role filled
+2. `goals` — main_goal + primary_tasks filled
+3. `personality` — personality_vibe + opening_message filled
+4. `language` — language set (drives voice config)
+5. `handoff` — handoff_destinations OR handoff_rules filled
+6. `knowledge` — knowledge_base_plan filled
+7. `review` — shouldComplete is true (AI confirmed wrap-up ready)
+
+**Changes Made**:
+1. `ventus-voice/backend/src/routes/agent-forge.routes.ts`:
+   - Rewrote GET `/incomplete` handler to compute stages from blueprint fields
+   - Each stage checks `hasValue()` on required blueprint fields
+   - `completedStages` = count of true stages (0-7)
+   - Incomplete sessions capped at 99% (never 100%)
+   - Added `firstIncompleteStage` field in response for navigation hints
+
+2. `ventus-voice/frontend/src/services/agent-forge.service.ts`:
+   - Added `firstIncompleteStage?: string` to `IncompleteForgeSessionResponse.session`
+
+3. `ventus-voice/frontend/src/pages/Dashboard.tsx`:
+   - Added `firstIncompleteStage?: string` to local `IncompleteSession` interface
+
+4. `ventus-voice/frontend/src/pages/AgentCreationHub.tsx`:
+   - Added `firstIncompleteStage?: string` to local `IncompleteSession` interface
+
+**Verification**:
+- i18n string already uses `"{{current}} of {{total}} steps completed ({{percent}}%)"` format
+- With new logic: shows "3 of 7 steps completed (43%)" instead of "8 of 12 steps completed (67%)"
+- Incomplete sessions always show ≤99% progress (capped in backend)
+- TypeScript typecheck passes on both frontend and backend
+
