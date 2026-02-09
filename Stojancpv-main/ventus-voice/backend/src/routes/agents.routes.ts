@@ -9,6 +9,7 @@ import { createAgentManagerService } from '../services/agent-manager.service';
 import { generateEmbedCode } from '../utils/embed-code-generator';
 // REMOVED: pythonCodeGenerator - per-agent deployment deprecated (PRD-002)
 import { getAgentKnowledgeHelper } from '../services/agent-knowledge-helper.service';
+import { getDocumentProcessor } from '../services/document-processor.service';
 import { getVersionManagementService } from '../services/version-management.service';
 import { getCustomerMemoryInjectionService } from '../services/customer-memory-injection.service';
 import { getCustomerMemoryService } from '../services/customer-memory.service';
@@ -496,7 +497,6 @@ router.post(
             if (brand && brand.knowledgeBase) {
               // Create knowledge_bases record linked to the new agent
               const kbContent = JSON.stringify(brand.knowledgeBase, null, 2);
-              const kbSize = Buffer.byteLength(kbContent, 'utf-8');
 
               const kb = await prisma.knowledge_bases.create({
                 data: {
@@ -506,28 +506,29 @@ router.post(
                   type: 'brand',
                   userId,
                   agentId: agent.id,
-                  totalDocuments: 1,
-                  totalSize: kbSize,
                   updatedAt: new Date(),
                 },
               });
 
-              // Store KB content as a document for RAG retrieval
-              await prisma.documents.create({
-                data: {
-                  id: cuid(),
-                  knowledgeBaseId: kb.id,
-                  filename: `brand-kb-${brand.websiteUrl.replace(/[^a-z0-9]/gi, '-')}.json`,
-                  fileType: 'application/json',
-                  fileSize: kbSize,
-                  rawContent: kbContent,
-                  status: 'COMPLETED',
-                  chunkCount: 1,
-                  updatedAt: new Date(),
-                },
+              // Process document through document processor for chunking + embeddings
+              const docProcessor = getDocumentProcessor();
+              const processingResult = await docProcessor.processDocument({
+                knowledgeBaseId: kb.id,
+                filename: `brand-kb-${brand.websiteUrl.replace(/[^a-z0-9]/gi, '-')}.json`,
+                fileContent: kbContent,
+                fileType: 'json',
+                chunkingStrategy: { strategy: 'semantic', chunkSize: 500 },
               });
 
-              logger.info(`✅ [Job ${jobId}] KB created: ${kb.id} linked to agent ${agent.id}`);
+              if (processingResult.status === 'COMPLETED') {
+                logger.info(
+                  `✅ [Job ${jobId}] KB created: ${kb.id} with ${processingResult.chunkCount} chunks linked to agent ${agent.id}`
+                );
+              } else {
+                logger.warn(
+                  `⚠️ [Job ${jobId}] KB created but document processing failed: ${processingResult.error}`
+                );
+              }
             } else {
               logger.warn(`⚠️ [Job ${jobId}] Brand ${brandId} not found or has no KB data`);
             }

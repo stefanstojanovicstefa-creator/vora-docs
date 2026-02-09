@@ -71,8 +71,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": "Depends on US-003 (KB creation must work first)"
+      "passes": true,
+      "notes": "Verified: embeddings.service.ts line 258 uses `process.env.GOOGLE_API_KEY || process.env.GOOGLE_GEMINI_API_KEY` — both vars exist in .env with matching values. No env var mismatch. Key fix: updated US-003's KB creation in agents.routes.ts to use DocumentProcessorService instead of raw document insertion — now properly chunks brand KB content with semantic strategy and generates vector embeddings via Gemini text-embedding-004. Document processor handles: text extraction → chunking → embedding generation → pgvector storage. Typecheck passes."
     },
     {
       "id": "US-005",

@@ -88,3 +88,30 @@
 - `documents.rawContent` stores the brand KB JSON for RAG retrieval
 - Ownership verified: brand must belong to same userId as agent creator
 
+## Iteration 4: US-004 - Fix KB embedding env var and verify embedding generation
+
+**Status**: COMPLETE
+
+**Env Var Verification**:
+- `embeddings.service.ts` line 258: `process.env.GOOGLE_API_KEY || process.env.GOOGLE_GEMINI_API_KEY`
+- `.env` has both: `GOOGLE_API_KEY=AIza...` and `GOOGLE_GEMINI_API_KEY=AIza...` (same value)
+- **No mismatch** — env vars are correctly configured
+
+**Key Fix** (extending US-003):
+- US-003 created KB documents with raw `prisma.documents.create()` but skipped embedding generation
+- Updated `agents.routes.ts` to use `DocumentProcessorService.processDocument()` instead
+- Document processor pipeline: text extraction → semantic chunking → embedding generation → pgvector storage
+- Added import for `getDocumentProcessor` from `document-processor.service.ts`
+- Using semantic chunking strategy (500 tokens) for brand KB content
+
+**Changes Made**:
+1. `ventus-voice/backend/src/routes/agents.routes.ts`:
+   - Added import: `getDocumentProcessor` from `document-processor.service.ts`
+   - Replaced raw `prisma.documents.create()` with `docProcessor.processDocument()` call
+   - Uses `fileType: 'json'` and `strategy: 'semantic'` for brand KB content
+
+**Verification**:
+- TypeScript typecheck passes
+- Document processor generates embeddings via Google text-embedding-004 model
+- Chunks stored in pgvector via `document_chunks` table with vector embeddings
+
