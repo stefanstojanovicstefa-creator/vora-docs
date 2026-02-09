@@ -1067,6 +1067,52 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 - Model selection persists via existing agent config save mechanism (AgentConfigSchema)
 - TypeScript typecheck passes on frontend (zero errors) and backend (pre-existing errors only in unrelated services)
 
+## Iteration 34: US-408 - Deploy UI for Embed Snippets
+
+**Status**: COMPLETE
+
+**Problem**: No dedicated page for generating embed code snippets. Users had no self-serve way to get deployment snippets for embedding voice agents on their websites.
+
+**Changes Made**:
+
+### New File
+1. `ventus-voice/frontend/src/pages/EmbedSnippetsPage.tsx`:
+   - Full deploy/embed page at `/deploy/embed` (protected route, requires auth)
+   - Agent selector dropdown fetches active agents via `GET /api/agents?limit=100`
+   - Three embed format tabs with descriptions:
+     - **Script Tag**: Auto-creates div + iframe with configurable positioning (fixed/centered/full)
+     - **Iframe**: Single sandboxed iframe tag, simplest isolated embed
+     - **React**: TypeScript component with `VoraAgent` interface + className prop
+   - Customization options:
+     - **Theme**: dark / light / auto (system)
+     - **Position**: bottom-right / bottom-left / center / full-page
+     - **Size**: small (350x500) / medium (400x600) / large (500x700)
+   - Code snippets update dynamically based on selected agent ID + all options
+   - Copy button with Check icon + "Copied!" feedback + sonner toast
+   - Syntax highlighting: token-based with color-coded keywords (violet), strings (amber), comments (emerald), braces (sky). Works for HTML and JSX/TSX
+   - Preview panel:
+     - Desktop/mobile device toggle
+     - Adapts to selected theme (dark bg, light bg, or muted)
+     - Shows widget position (fixed corners, centered, full page)
+     - Bot icon in primary gradient circle
+     - Simulated website content (gray bars) behind widget
+     - Dimensions summary below preview
+   - Integration notes panel with HTTPS, microphone, responsive notes
+   - Light/dark theme support via CSS variable classes
+
+### Route Wiring
+2. `ventus-voice/frontend/src/App.tsx`:
+   - Added lazy import: `const EmbedSnippetsPage = lazy(() => import("./pages/EmbedSnippetsPage"))`
+   - Added protected route: `/deploy/embed` inside `ProtectedLayoutWrapper`
+
+**Verification**:
+- TypeScript typecheck passes (zero errors)
+- Agent list filtered to ACTIVE status only
+- All 3 embed formats generate valid code with correct agent ID and options
+- Copy button works with clipboard API + toast
+- Preview adapts to theme/position/size changes
+- Page renders correctly in both light and dark themes
+
 ## Iteration 33: US-407 - Platform Policies Pages
 
 **Status**: COMPLETE

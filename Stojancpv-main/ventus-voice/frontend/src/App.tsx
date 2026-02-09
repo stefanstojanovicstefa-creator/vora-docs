@@ -64,6 +64,7 @@ const FlowStudioPage = lazy(() => import("./pages/FlowStudioPage"));
 const BuilderCreateRedirect = lazy(() => import("./pages/BuilderCreateRedirect"));
 const MCPMarketplacePage = lazy(() => import("./pages/MCPMarketplacePage"));
 const PoliciesPage = lazy(() => import("./pages/PoliciesPage"));
+const EmbedSnippetsPage = lazy(() => import("./pages/EmbedSnippetsPage"));
 
 // Loading component
 function PageLoader() {
@@ -227,6 +228,7 @@ function App() {
                     }
                   />
                   <Route path="/agents/:agentId" element={<AgentDetailPage />} />
+                  <Route path="/deploy/embed" element={<EmbedSnippetsPage />} />
                   <Route
                     path="/function-schemas"
                     element={<Navigate to="/custom-functions" replace />}

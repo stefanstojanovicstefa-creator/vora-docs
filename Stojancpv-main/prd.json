@@ -149,8 +149,8 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created EmbedSnippetsPage.tsx in ventus-voice/frontend/src/pages/ as a full deploy/embed page. Features: (1) Agent selector dropdown that fetches active agents via GET /api/agents?limit=100, filters to ACTIVE status only. (2) Three embed format tabs — Script tag (simplest, auto-creates div + iframe with positioning), Iframe (sandboxed embed, single iframe tag), React component (TypeScript component with props interface). Each tab has a description explaining the use case. (3) Customization options: Theme (dark/light/auto), Position (bottom-right/bottom-left/center/full-page), Size (small 350x500, medium 400x600, large 500x700). Code snippets update dynamically based on selected agent ID and all customization options. (4) Copy button with Check icon + 'Copied!' feedback + sonner toast. (5) Preview panel showing widget mock on simulated website background — supports desktop and mobile device toggle, adapts to selected theme (dark/light/auto), shows widget position (fixed bottom-right/left, centered, full), shows Bot icon in primary color gradient circle. (6) Syntax highlighting: simple token-based highlighting with color-coded keywords (violet), strings (amber), comments (emerald), and braces (sky). Works for both HTML and JSX/TSX. (7) Integration notes panel (blue info box) with HTTPS requirement, microphone permission, responsive design notes. (8) Light/dark theme support via CSS variable classes (text-foreground, text-muted-foreground, bg-muted, border). Route: Added lazy import and protected route /deploy/embed in App.tsx (inside ProtectedLayoutWrapper, requires auth). Accessible from agent management or sidebar navigation. TypeScript typecheck passes (zero errors)."
     }
   ]
 }
