@@ -19,7 +19,6 @@ import {
   LayoutDashboard,
   Sparkles,
   Bot,
-  Activity,
   Link2,
   KeyRound,
   Server,
@@ -93,12 +92,6 @@ export function Sidebar({ className, defaultCollapsed = false }: SidebarProps) {
       to: '/voices',
       labelKey: 'voices',
       icon: Mic,
-    },
-    {
-      to: '/monitoring',
-      labelKey: 'monitoring',
-      icon: Activity,
-      godModeOnly: true, // Technical monitoring
     },
     {
       to: '/integrations',

@@ -34,8 +34,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Removed /monitoring nav entry from Sidebar.tsx links array. Removed unused Activity import from lucide-react. Route /monitoring and MonitoringDashboard page component preserved (accessible via direct URL). Typecheck passes."
     },
     {
       "id": "US-203",

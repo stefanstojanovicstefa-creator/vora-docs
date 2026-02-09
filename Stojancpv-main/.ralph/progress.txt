@@ -295,3 +295,19 @@
 - CostAnalyticsDashboard page component still exists
 - TypeScript typecheck passes (zero errors)
 
+## Iteration 11: US-202 - Remove 'Monitoring' from sidebar
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/components/layout/Sidebar.tsx`:
+   - Removed the `/monitoring` nav entry (labelKey: 'monitoring', icon: Activity, godModeOnly: true)
+   - Removed unused `Activity` import from lucide-react
+   - Route `/monitoring` and MonitoringDashboard page component preserved (accessible via direct URL)
+
+**Verification**:
+- Sidebar links array now has 12 entries (was 13), no layout gap
+- `/monitoring` route still exists in App.tsx (line 199)
+- MonitoringDashboard page component still exists
+- TypeScript typecheck passes (zero errors)
+
