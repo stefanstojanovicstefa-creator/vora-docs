@@ -115,3 +115,40 @@
 - Document processor generates embeddings via Google text-embedding-004 model
 - Chunks stored in pgvector via `document_chunks` table with vector embeddings
 
+## Iteration 5: US-005 - Fix session detail data pipeline
+
+**Status**: COMPLETE
+
+**Root Cause**: Frontend session service called 3 non-existent backend endpoints and mishandled response formats for existing endpoints:
+1. `getSessionDetail()` called `GET /api/sessions/:id/detail` — endpoint didn't exist
+2. `getSessionMessages()` called `GET /api/sessions/:id/messages` — endpoint didn't exist
+3. `getSessionTimeline()` called `GET /api/sessions/:id/timeline` — endpoint didn't exist
+4. `getSession()` parsed `{ success, session }` wrapper as raw Session — Zod validation failed
+5. `getSessionParticipants()` parsed `{ success, data, count }` wrapper as raw array
+6. `endSession()` parsed `{ success, session }` wrapper as raw Session
+
+**Changes Made**:
+1. `ventus-voice/backend/src/routes/sessions.routes.ts`:
+   - Added `GET /:sessionId/detail` — returns full `SessionDetail` shape with participants, messages, timeline, analytics
+   - Added `GET /:sessionId/messages` — returns `agent_messages` mapped to `SessionMessage[]`
+   - Added `GET /:sessionId/timeline` — returns `agent_logs` mapped to `SessionTimelineEvent[]`
+   - `/detail` builds response from `sessionManager.getSessionDetails()` with proper field mapping:
+     - agentName from related agent, duration calculated from timestamps
+     - participants mapped with identity/role/joinedAt fields
+     - messages mapped with role/content/timestamp
+     - timeline mapped from logs with LogLevel enum (ERROR/CRITICAL → ERROR_OCCURRED)
+     - analytics from session aggregates (avgResponseTime, totalTokensUsed)
+
+2. `ventus-voice/frontend/src/services/session.service.ts`:
+   - `getSession()`: unwraps `{ success, session }` before Zod parse
+   - `getSessionParticipants()`: unwraps `{ success, data, count }` to return raw array
+   - `endSession()`: unwraps `{ success, session }` before Zod parse
+
+**Verification**:
+- TypeScript typecheck passes on both frontend and backend
+- All 5 hooks in `useSessionDetailPage` now hit existing endpoints with correct response handling
+- Details tab gets data from `/detail` endpoint (session metadata, agent name, duration, status)
+- Transcript tab gets data from TranscriptViewer (uses separate `/transcript` endpoint — already existed)
+- Timeline tab gets data from `/timeline` endpoint (agent_logs mapped to events)
+- Pre-existing errors in knowledge-injection and short-term-memory services unchanged
+

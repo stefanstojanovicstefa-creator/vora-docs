@@ -72,7 +72,7 @@
       ],
       "priority": 4,
       "passes": true,
-      "notes": "Verified: embeddings.service.ts line 258 uses `process.env.GOOGLE_API_KEY || process.env.GOOGLE_GEMINI_API_KEY` — both vars exist in .env with matching values. No env var mismatch. Key fix: updated US-003's KB creation in agents.routes.ts to use DocumentProcessorService instead of raw document insertion — now properly chunks brand KB content with semantic strategy and generates vector embeddings via Gemini text-embedding-004. Document processor handles: text extraction → chunking → embedding generation → pgvector storage. Typecheck passes."
+      "notes": "Root cause: embeddings.service.ts used Google Gemini text-embedding-004 (768 dims) but DB schema has vector(1536). Dimension mismatch caused embedding inserts to fail silently. Fix: rewrote EmbeddingsService to use OpenAI text-embedding-3-small (1536 dims) via direct fetch API calls. Updated getEmbeddingsService() to use OPENAI_API_KEY (present in .env). Kept all chunking logic (fixed/paragraph/semantic), batch embedding, and the same exported types (EmbeddingsService, EmbeddingResult, ChunkingOptions, DocumentChunk). All consumers (document-processor, rag-search, semantic-cache, working-memory, long-term-memory, compress-conversation job, extract-customer-memories job) work without changes since the interface is identical. Also cleaned dead code from brand-analysis.job.ts (removed unused KnowledgeBase/cuid imports and unimplemented createKnowledgeBaseFromBrand call). Typecheck passes for all changed files."
     },
     {
       "id": "US-005",
@@ -91,8 +91,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Root cause: Frontend session service called 3 non-existent backend endpoints (GET /detail, /messages, /timeline) and mishandled response formats for existing endpoints. Backend wrapped responses in {success, session/data} but frontend parsed the wrapper as the data itself. Fix: (1) Added 3 missing backend routes to sessions.routes.ts: GET /:sessionId/detail (returns full SessionDetail with participants, messages, timeline, analytics), GET /:sessionId/messages (returns agent_messages as SessionMessage[]), GET /:sessionId/timeline (returns agent_logs mapped to SessionTimelineEvent[]). (2) Fixed frontend session.service.ts: getSession() now unwraps {success, session} before Zod parse, getSessionParticipants() unwraps {success, data}, endSession() unwraps {success, session}. (3) /detail endpoint builds complete SessionDetail shape matching frontend type including agentName, duration calculation, participant/message/timeline mapping, and analytics from session aggregates. Typecheck passes on both frontend and backend (pre-existing errors in knowledge-injection and short-term-memory services unchanged)."
     },
     {
       "id": "US-006",
