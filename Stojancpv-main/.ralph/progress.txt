@@ -311,3 +311,31 @@
 - MonitoringDashboard page component still exists
 - TypeScript typecheck passes (zero errors)
 
+## Iteration 12: US-203 - Rename 'Ventus Voice' to 'Vora Voice' in user-facing UI
+
+**Status**: COMPLETE
+
+**Approach**: Grepped `ventus-voice/frontend/src/` for all case-insensitive "Ventus Voice" occurrences. Found 8 instances across 3 files. Replaced all with "Vora Voice". Did NOT rename internal identifiers, file names, directory names, or backend references (that's Phase 5).
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/components/Onboarding/OnboardingWizard.tsx`:
+   - Line 42: title "Welcome to Vora Voice"
+   - Line 48: description "Vora Voice is a complete platform..."
+   - Line 232: completion message "...with Vora Voice."
+
+2. `ventus-voice/frontend/src/pages/DocumentationPage.tsx`:
+   - Line 42: FAQ question "What is Vora Voice?"
+   - Line 44: FAQ answer "Vora Voice is a comprehensive platform..."
+   - Line 68: FAQ answer "Yes! Vora Voice supports multiple..."
+   - Line 223: subtitle "...with Vora Voice"
+
+3. `ventus-voice/frontend/src/components/Navigation.tsx`:
+   - Line 48: aria-label "Vora Voice home"
+   - Line 50: visible text "Vora Voice"
+
+**Verification**:
+- Zero remaining "Ventus Voice" occurrences in frontend/src/ (case-insensitive grep confirms)
+- No internal code identifiers changed (only user-facing strings)
+- No file/directory names changed
+- TypeScript typecheck passes (zero errors)
+
