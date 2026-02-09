@@ -754,3 +754,34 @@
 
 **Conclusion**: The orb components are already fully RTL-compatible. No CSS logical property conversions needed because no physical direction properties exist. The sphere renders in a Canvas that fills its container symmetrically regardless of text direction.
 
+## Iteration 26: US-309 - Dashboard stat cards link to Analytics
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/components/Dashboard/StatCard.tsx`:
+   - Added `Link` import from `react-router-dom`
+   - Added optional `href?: string` prop to `StatCardProps` interface
+   - When `href` provided: wraps card in `<Link to={href}>` (SPA navigation, no page reload)
+   - When `href` not provided: wraps card in `<div>` (backwards-compatible, no behavioral change)
+   - Uses `className="block"` on wrapper for consistent block-level layout
+
+2. `ventus-voice/frontend/src/pages/Dashboard.tsx`:
+   - Total Calls card: `href="/analytics?tab=overview"` (call stats are on overview)
+   - Active Sessions card: `href="/analytics?tab=activity"` (session activity)
+   - Active Agents card: `href="/analytics?tab=performance"` (agent performance)
+   - Success Rate card: `href="/analytics?tab=overview"` (key overview stat)
+
+**How Tab Pre-Selection Works**:
+- AnalyticsHubPage reads `searchParams.get('tab')` → sets as `activeTab`
+- `<Tabs value={activeTab}>` pre-selects the matching tab
+- `onValueChange` updates search params when user switches tabs
+- Back navigation works via browser history (React Router Link pushes to history stack)
+
+**Verification**:
+- React Router Link used (no full page reloads)
+- Query param `?tab=` pre-selects correct Analytics tab
+- Browser back button returns to Dashboard
+- StatCard still works without href (backwards-compatible)
+- TypeScript typecheck passes (zero errors)
+

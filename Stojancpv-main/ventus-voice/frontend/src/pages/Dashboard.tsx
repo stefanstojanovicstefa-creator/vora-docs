@@ -209,17 +209,20 @@ export default function Dashboard() {
           value={stats?.totalCalls.toLocaleString() || '0'}
           icon={Phone}
           trend={{ value: 12.5, label: t('analytics:dashboard.trend.fromLastWeek') }}
+          href="/analytics?tab=overview"
         />
         <StatCard
           title={t('analytics:dashboard.activeSessions')}
           value={stats?.activeSessions || 0}
           icon={Activity}
           iconColor="text-[hsl(var(--success))]"
+          href="/analytics?tab=activity"
         />
         <StatCard
           title={activeAgentsLabel}
           value={stats?.totalAgents || 0}
           icon={Bot}
+          href="/analytics?tab=performance"
         />
         <StatCard
           title={successRateLabel}
@@ -227,6 +230,7 @@ export default function Dashboard() {
           icon={TrendingUp}
           trend={{ value: 2.1, label: t('analytics:dashboard.trend.improvement') }}
           iconColor="text-[hsl(var(--success))]"
+          href="/analytics?tab=overview"
         />
       </div>
 

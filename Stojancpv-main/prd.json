@@ -160,8 +160,8 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": "Depends on 3.1"
+      "passes": true,
+      "notes": "COMPLETE: (1) Added optional href prop to StatCard component. When provided, wraps the card in a React Router Link for SPA navigation (no full page reloads). When not provided, wraps in a plain div (backwards-compatible). (2) Dashboard stat cards now link to Analytics Hub tabs: Total Calls → /analytics?tab=overview, Active Sessions → /analytics?tab=activity, Active Agents → /analytics?tab=performance, Success Rate → /analytics?tab=overview. (3) AnalyticsHubPage reads tab from useSearchParams and pre-selects via Tabs value={activeTab}. (4) Back navigation works via browser history (Link uses pushState). Typecheck passes."
     },
     {
       "id": "US-310",
