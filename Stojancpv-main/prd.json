@@ -126,8 +126,8 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": "Depends on 3.1"
+      "passes": true,
+      "notes": "COMPLETE: (1) Removed FuelGauge from TopBar.tsx (removed import and SignedIn wrapper). (2) Added FuelGauge to Sidebar.tsx bottom, above the footer version section. (3) Added fuel-gauge-details class to FuelGauge progress bar container div for targeted CSS hiding. (4) Expanded sidebar: FuelGauge renders full-width with progress bar and label. (5) Collapsed sidebar: FuelGauge hides the details div via [&_.fuel-gauge-details]:hidden, showing only the Fuel icon. (6) Wrapped in SignedIn for auth gating. (7) Both light and dark themes work (FuelGauge uses CSS variables). (8) No layout shift in TopBar after removal. Typecheck passes."
     },
     {
       "id": "US-308",

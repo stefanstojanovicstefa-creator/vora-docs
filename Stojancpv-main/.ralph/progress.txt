@@ -706,3 +706,32 @@
 - `motion` import still needed for sliding background div
 - TypeScript typecheck passes (zero errors)
 
+## Iteration 24: US-307 - FuelGauge relocation to sidebar
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/components/layout/TopBar.tsx`:
+   - Removed `FuelGauge` import from `@/components/billing`
+   - Removed `<SignedIn><FuelGauge /></SignedIn>` block from right actions section
+   - TopBar is now cleaner: CommandPaletteTrigger, LanguageSwitcher, ThemeToggle, ModeToggle, UserButton
+
+2. `ventus-voice/frontend/src/components/layout/Sidebar.tsx`:
+   - Added `SignedIn` import from `@clerk/clerk-react`
+   - Added `FuelGauge` import from `@/components/billing`
+   - Added FuelGauge section between nav and footer, wrapped in `<SignedIn>` for auth gating
+   - Expanded sidebar: FuelGauge renders `w-full` with full progress bar and label
+   - Collapsed sidebar: FuelGauge renders with `[&_.fuel-gauge-details]:hidden` to hide progress bar/label, showing only the Fuel icon centered
+
+3. `ventus-voice/frontend/src/components/billing/FuelGauge.tsx`:
+   - Added `fuel-gauge-details` class to the progress bar container div
+   - Enables targeted CSS hiding from parent via `[&_.fuel-gauge-details]:hidden`
+
+**Verification**:
+- FuelGauge visible in both expanded and collapsed sidebar states
+- Expanded: full progress bar with remaining minutes label
+- Collapsed: icon-only display, centered in narrow sidebar
+- Both light and dark themes work (FuelGauge uses CSS variables for colors)
+- No layout shift in TopBar after removal (one fewer flex item)
+- TypeScript typecheck passes (zero errors)
+

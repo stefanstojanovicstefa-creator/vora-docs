@@ -35,7 +35,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
+import { SignedIn } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
+import { FuelGauge } from '@/components/billing';
 import { useLabels } from '@/hooks/useLabel';
 import { useViewMode } from '@/hooks/useViewMode';
 import type { LabelKey } from '@/constants/modeLabels';
@@ -326,6 +328,20 @@ export function Sidebar({ className, defaultCollapsed = false }: SidebarProps) {
               );
             })}
           </nav>
+
+          {/* Fuel Gauge */}
+          <SignedIn>
+            <div className={cn(
+              "border-t border-[hsl(var(--border))] px-3 py-3",
+              isCollapsed && "px-2 flex justify-center"
+            )}>
+              {isCollapsed ? (
+                <FuelGauge className="w-auto px-2 [&_.fuel-gauge-details]:hidden" />
+              ) : (
+                <FuelGauge className="w-full" />
+              )}
+            </div>
+          </SignedIn>
 
           {/* Footer Section */}
           <div className={cn(

@@ -18,7 +18,6 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { ModeToggle } from '@/components/mode';
-import { FuelGauge } from '@/components/billing';
 import { LanguageSwitcher } from '@/components/language/LanguageSwitcher';
 
 interface TopBarProps {
@@ -87,11 +86,6 @@ export function TopBar({ className, sidebarCollapsed = false }: TopBarProps) {
             <div className="w-[180px] flex-shrink-0">
               <ModeToggle />
             </div>
-          </SignedIn>
-
-          {/* Fuel Gauge - Only show when authenticated */}
-          <SignedIn>
-            <FuelGauge />
           </SignedIn>
 
           {/* Authentication */}
