@@ -30,6 +30,7 @@ import { languageDetectorService, type DetectionResult } from './language-detect
 import { correctConfig, type CorrectionResult } from './semantic-corrector.service';
 import { AGENT_CONFIG_RESPONSE_FORMAT, AGENT_CONFIG_JSON_MODE } from '../schemas/agent-config.json-schema';
 import { validateConfigSecurity, type SecurityIssue } from '../security/config-security-validator';
+import { modelRouter } from './ai/model-router.service';
 
 /**
  * Error codes for agent compilation failures
@@ -192,10 +193,14 @@ export class AgentCompilerService {
     // Fill the prompt template
     const fullPrompt = fillAgentCompilerPrompt(userPrompt);
 
+    // Use model router for task-type-aware model selection
+    const routed = modelRouter.getModel('compilation');
     const modelName = this.backend === 'gemini' ? GEMINI_MODEL : ROUTEWAY_MODEL;
     logger.info(`Compiling agent with ${this.backend} (${modelName})`, {
       promptLength: fullPrompt.length,
       model: modelName,
+      routedModel: routed.route.model,
+      routedTier: routed.route.tier,
       priority,
       backend: this.backend,
     });

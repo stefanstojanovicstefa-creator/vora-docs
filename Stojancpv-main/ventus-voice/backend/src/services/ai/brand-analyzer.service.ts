@@ -10,6 +10,7 @@ import { getPlaywrightScraperService } from '../scraping/playwright-scraper.serv
 import { createOpenRouterService, OpenRouterService } from './openrouter.service';
 import { Logger } from '../../utils/simple-logger';
 import { createLogger } from '../../utils/logger';
+import { modelRouter } from './model-router.service';
 
 const logger = createLogger('BrandAnalyzerService');
 import {
@@ -38,9 +39,25 @@ export class BrandAnalyzerService {
 
   constructor(options: BrandAnalyzerOptions = {}) {
     this.scraper = getPlaywrightScraperService();
-    this.openRouter = createOpenRouterService({
-      apiKey: options.routewayApiKey,
-    });
+
+    // Use model router to select appropriate model for brand analysis
+    const routed = modelRouter.getModel('brand-analysis');
+    const routewayKey = options.routewayApiKey || process.env.ROUTEWAY_API_KEY;
+
+    // If routed to routeway/openrouter providers, use OpenRouterService with routed model
+    // Otherwise fall back to default OpenRouterService (which handles its own model config)
+    if (routewayKey && (routed.route.provider === 'routeway' || routed.route.provider === 'openrouter')) {
+      this.openRouter = createOpenRouterService({
+        apiKey: routewayKey,
+        baseURL: routed.route.baseUrl,
+        model: routed.route.model,
+      });
+    } else {
+      this.openRouter = createOpenRouterService({
+        apiKey: options.routewayApiKey,
+      });
+    }
+
     this.logger = new Logger('BrandAnalyzerService');
 
     this.options = {
