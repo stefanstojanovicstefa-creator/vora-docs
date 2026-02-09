@@ -518,3 +518,43 @@
 - Glass effects have theme-appropriate backgrounds for both modes
 - TypeScript typecheck passes (zero errors)
 
+## Iteration 19: US-302 - Login page Clerk theming
+
+**Status**: COMPLETE
+
+**Analysis**: AuthPortal.tsx already had the correct structure:
+- Split-screen layout (left: auth form, right: HeroSphere visual)
+- VoraLogo component rendered above the Clerk form
+- Clerk `appearance` prop set via `voraClerkAppearance`
+- Login -> `/dashboard` redirect via `forceRedirectUrl`
+- Signup -> `/onboarding` redirect via `forceRedirectUrl`
+- Left panel uses CSS variable classes (bg-void, text-text-high, text-text-muted) that auto-adapt
+
+**Gap**: Clerk appearance used hardcoded dark colors (#050505 bg, #121212 inputs, white text, neon glow) that look wrong in light mode.
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/lib/clerk-theme.ts`:
+   - Added `voraClerkAppearanceLight` const with full light-mode styling:
+     - Primary: #2563EB (blue, matching --primary in light mode)
+     - Background: #FFFFFF, Input: #F4F4F5, Text: #09090B
+     - Borders: #E4E4E7, Secondary text: #71717A
+     - Subtle shadows instead of neon glows on focus/hover
+     - All element overrides adapted (social buttons, form fields, OTP, alerts, etc.)
+   - Added `getVoraClerkAppearance(theme: 'light' | 'dark')` factory function
+   - Kept existing `voraClerkAppearance` const unchanged (dark-mode default for ClerkProvider in main.tsx, AccountPage, AuthModal)
+
+2. `ventus-voice/frontend/src/pages/AuthPortal.tsx`:
+   - Replaced `voraClerkAppearance` import with `getVoraClerkAppearance`
+   - Added `useResolvedTheme` import from ThemeProvider
+   - LeftPanel now calls `useResolvedTheme()` and `getVoraClerkAppearance(resolvedTheme)`
+   - Both SignIn and SignUp components receive the theme-aware appearance
+
+**Verification**:
+- Dark mode: Clerk form uses dark backgrounds, white text, neon blue glow (unchanged)
+- Light mode: Clerk form uses white backgrounds, dark text, subtle blue accents
+- Login -> /dashboard redirect confirmed in SignIn props
+- Signup -> /onboarding redirect confirmed in SignUp props
+- VoraLogo renders above auth form (uses text-primary which auto-adapts)
+- Right panel (HeroSphere + testimonial) uses CSS variables that auto-adapt
+- TypeScript typecheck passes (zero errors)
+

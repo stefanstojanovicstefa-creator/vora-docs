@@ -37,8 +37,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Depends on 3.1"
+      "passes": true,
+      "notes": "COMPLETE: AuthPortal.tsx already had Vora logo (VoraLogo component), split-screen layout with HeroSphere, and Clerk appearance prop. Added theme-aware Clerk styling: created getVoraClerkAppearance(theme) function in clerk-theme.ts with full light-mode appearance (white backgrounds, dark text, blue accents #2563EB, subtle shadows instead of neon glows). AuthPortal now uses useResolvedTheme() to pass correct theme to Clerk. Left panel (bg-void, text-text-high, text-text-muted) already adapts via CSS variables. Login redirects to /dashboard, signup redirects to /onboarding. Typecheck passes."
     },
     {
       "id": "US-303",
