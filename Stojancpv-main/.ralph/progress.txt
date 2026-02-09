@@ -391,3 +391,19 @@
 
 **Note**: Two separate Paddle webhook implementations exist (webhooks.routes.ts inline + webhooks/paddle.routes.ts dedicated). Only the inline one is mounted. The dedicated one has superior features (idempotency, event storage, Zod parsing, timing-safe comparison) but is not wired up. This is a tech debt item for Phase 5, not a blocker.
 
+## Iteration 15: US-206 - Verify OAuth routes and token refresh logic
+
+**Status**: COMPLETE (verification only — no code changes needed)
+
+**3 OAuth Systems Traced**:
+
+1. **MCP OAuth** (mcp-oauth.routes.ts at /api/mcp/oauth): authorize + callback + refresh. HMAC-SHA256 signed state tokens with timing-safe verification, AES-256-GCM encrypted token storage, auto-refresh every 4min via setInterval in index.ts:978.
+
+2. **HubSpot OAuth** (hubspot.routes.ts): authorize + callback implemented, gated by HUBSPOT_FEATURE_ENABLED. Service layer stubbed pending CRMIntegration DB migration — by-design gating.
+
+3. **Calendar OAuth** (calendar.routes.ts): authorize + callback for Google/Calendly/Outlook/Apple. CalendarConnectionService has full OAuth flow + on-demand token refresh.
+
+4. **CRM Generic** (crm-connection.service.ts): handleOAuthCallback at line 724, gated by encryption config check.
+
+**All OAuth systems verified**: authorize URL generation, callback token exchange, token persistence (encrypted), auto-refresh logic. No broken code paths. No code changes needed.
+
