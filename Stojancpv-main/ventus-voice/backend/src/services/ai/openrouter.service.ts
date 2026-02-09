@@ -139,7 +139,7 @@ export interface OpenRouterUsage {
 
 const DEFAULT_CONFIG: Partial<OpenRouterConfig> = {
   baseURL: 'https://api.routeway.ai/v1', // Routeway API (OpenAI-compatible)
-  model: 'minimax-m2:free', // MiniMax M2 - good instruction following, handles complex JSON
+  model: 'minimax-m2:free', // MiniMax M2 (FREE TIER) - good instruction following, handles complex JSON
   maxTokens: 8000,
   temperature: 0.7,
 };

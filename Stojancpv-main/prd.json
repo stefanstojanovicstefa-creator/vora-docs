@@ -91,8 +91,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Updated model list across 5 files to include current-generation models. Backend model-capabilities.ts: Added Gemini 2.5 Pro (1M context, 65K output, reasoning), Gemini 2.5 Flash (1M context, 65K output, reasoning), Claude 4 Sonnet (200K context, 16K output), Claude 4 Haiku (200K context, 8K output), Llama 4 Maverick (1M context via OpenRouter), Llama 4 Scout (512K context via OpenRouter). All entries include supportsJsonMode, supportsToolCalls, supportsStreaming, reasoning flags. Backend model-providers.ts: Updated Anthropic models (added Claude 4 Sonnet + Haiku, kept Claude 3 as previous gen), updated Groq models (added Llama 4 Maverick + Scout). Frontend provider-info.ts: Updated Anthropic (Claude 4 Sonnet + Haiku with pricing), Google Gemini (2.5 Pro + 2.5 Flash with pricing, kept 1.5 Pro), Groq (Llama 4 Maverick + Scout with pricing, kept Llama 3.1 70B). MiniMax M2 retained as default free tier in agent-compiler.service.ts (ROUTEWAY_MODEL), openrouter.service.ts, and forge.config.ts with clear 'FREE TIER' labeling. Updated compiler service doc comment to list all supported models. TypeScript typecheck passes on frontend (zero errors) and backend (pre-existing errors only in unrelated services)."
     },
     {
       "id": "US-406",

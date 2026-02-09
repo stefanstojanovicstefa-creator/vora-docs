@@ -1023,3 +1023,47 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 - English websites unaffected (no regression)
 - All new fields are optional — graceful fallback if AI doesn't return them
 
+## Iteration 31: US-405 - Update Compiler Model List
+
+**Status**: COMPLETE
+
+**Problem**: Model selector only offered MiniMax M2 and some older models. Missing current-generation models: Gemini 2.5, Claude 4, latest Llama.
+
+**Changes Made**:
+
+### Backend - Model Capabilities Registry
+1. `ventus-voice/backend/src/config/model-capabilities.ts`:
+   - Added `gemini-2.5-pro`: 1M context, 65K output, reasoning model with `<think>` token stripping
+   - Added `gemini-2.5-flash`: 1M context, 65K output, reasoning model with `<think>` token stripping
+   - Added `claude-4-sonnet`: 200K context, 16K output, JSON mode + tool calls
+   - Added `claude-4-haiku`: 200K context, 8K output, JSON mode + tool calls
+   - Added `meta-llama/llama-4-maverick`: 1M context, 65K output, via OpenRouter
+   - Added `meta-llama/llama-4-scout`: 512K context, 65K output, via OpenRouter
+   - All existing models preserved (minimax-m2:free, gpt-oss-120b:free, deepseek variants, grok-2, gpt-4o, gpt-4o-mini, gemini-2.0-flash-exp)
+
+### Backend - Provider Type Registry
+2. `ventus-voice/backend/src/types/model-providers.ts`:
+   - Anthropic: Added Claude 4 Sonnet + Claude 4 Haiku at top of model list, kept Claude 3 variants as previous gen
+   - Groq: Added Llama 4 Maverick + Llama 4 Scout at top, kept Llama 3.1 70B and Mixtral 8x7B
+
+### Frontend - Provider Info Data
+3. `ventus-voice/frontend/src/data/provider-info.ts`:
+   - Anthropic: Added Claude 4 Sonnet ($3/$15 per M tokens) and Claude 4 Haiku ($0.80/$4), kept Claude 3.5 Sonnet as previous gen
+   - Google Gemini: Added Gemini 2.5 Pro ($1.25/$10, reasoning tag) and Gemini 2.5 Flash ($0.15/$0.60, reasoning tag), kept Gemini 1.5 Pro
+   - Groq: Added Llama 4 Maverick (1M context, $0.50/$0.75) and Llama 4 Scout (512K context, $0.20/$0.35), kept Llama 3.1 70B
+
+### Backend - Comments & Labels
+4. `ventus-voice/backend/src/services/agent-compiler.service.ts`: Updated doc comment to list all supported models across free tier, Gemini, Claude, Llama, OpenAI, and xAI
+5. `ventus-voice/backend/src/services/ai/openrouter.service.ts`: Labeled MiniMax M2 as "(FREE TIER)" in default config comment
+6. `ventus-voice/backend/src/config/forge.config.ts`: Added "free tier" label to compiler model property comment
+
+**Model Tier Structure**:
+- **Free tier**: minimax-m2:free (default), gpt-oss-120b:free, deepseek-chat:free, deepseek-r1:free — MiniMax M2 clearly labeled as free tier option
+- **Premium**: gemini-2.5-pro, gemini-2.5-flash, claude-4-sonnet, claude-4-haiku, meta-llama/llama-4-maverick, meta-llama/llama-4-scout, gpt-4o, gpt-4o-mini, grok-2
+- Each model entry has: name (via registry), provider (via registry), pricing tier (via frontend DetailedProviderInfo), capability tags (via model-capabilities.ts)
+
+**Verification**:
+- MiniMax M2 remains default free tier in ROUTEWAY_MODEL, openrouter.service.ts, and forge.config.ts
+- Model selection persists via existing agent config save mechanism (AgentConfigSchema)
+- TypeScript typecheck passes on frontend (zero errors) and backend (pre-existing errors only in unrelated services)
+
