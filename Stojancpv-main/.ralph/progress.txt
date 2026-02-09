@@ -850,3 +850,50 @@
 - Toast notifications used for results display (sonner)
 - Publish runs validation as pre-check before any publish action
 
+## Iteration 28: US-402 - Flow Studio Test Handler
+
+**Status**: COMPLETE
+
+**Problem**: Test button in FlowStudioPage.tsx had no onClick handler. Users couldn't simulate flow execution with test input.
+
+**Changes Made**:
+1. `ventus-voice/frontend/src/pages/FlowStudioPage.tsx`:
+   - Added new icon imports: ChevronRight, Circle, XCircle, Clock, RotateCcw, MessageSquare
+   - Added Input component import from ui/input
+   - Added test panel state: testPanelOpen, testInput, testRunning, testResults, testError, testVariables, testAbortRef
+   - Implemented `TestStepResult` interface for tracking each step's node, action, variables, branch, output, status
+   - Implemented `evaluateCondition()` — evaluates edge/condition operators (equals, notEquals, contains, greaterThan, isEmpty, matches regex, etc.) against variable values
+   - Implemented `resolveNextNode()` — finds next node by evaluating outgoing edge conditions with priority sorting, fallback to unconditional edges
+   - Implemented `simulateFlow()` — main simulation engine:
+     - Walks from Start node through the graph
+     - 30-second timeout detection for infinite loops
+     - Per-node visit cap (50) to catch cycles not caught by timeout
+     - Handles all 30 node types with simulated behavior
+     - Updates variables map as nodes modify them (question→targetVariable, capture→variableName, setVariable→assignments, apiCall→responseMapping, function→outputVariable, etc.)
+     - GoTo and abTest nodes follow their target node directly
+     - endCall nodes terminate execution cleanly
+     - Each step yields to UI via setTimeout(50ms) for real-time rendering
+   - Implemented `handleTest()` — runs US-401 validation as pre-check, blocks test if errors found, opens test panel
+   - Implemented `handleRunTest()` — resets state, runs simulateFlow with testInput
+   - Implemented `handleStopTest()` — sets abort flag to stop running simulation
+   - Wired Test button `onClick={handleTest}`
+   - Added test panel modal overlay with:
+     - Header with running indicator badge
+     - Input field with Enter-to-run and disabled state during execution
+     - Run Test / Stop / Reset buttons
+     - Step-by-step results list: numbered steps with status icons (green check / red X / gray circle for skipped), node label + type badge, branch decision indicator, action description, code output block
+     - Error display panel with AlertTriangle icon
+     - Variable state footer showing all variables at end of execution (excluding __user_input__)
+     - Summary footer with visited count, error count, total steps
+
+**Node Types Supported** (30 total):
+start, endCall, message, question, capture, setVariable, condition, router, menu, confirm, wait, delay, apiCall, function, transfer, hold, voicemail, dtmf, log, goTo, knowledgeSearch, tool, mcpTool, asyncTask, agent, choice, abTest, loop, component, note
+
+**Verification**:
+- TypeScript typecheck passes (zero errors)
+- Test button runs validation pre-check (US-401 requirement)
+- Step-by-step results display node visits, branches, variable values
+- 30-second timeout + 50-visit-per-node cap prevents infinite loops
+- Errors caught and displayed per-step and globally
+- Test panel is a modal overlay that doesn't interfere with flow canvas
+

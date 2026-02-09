@@ -30,11 +30,18 @@ import {
   Component,
   X,
   AlertTriangle,
+  ChevronRight,
+  Circle,
+  XCircle,
+  Clock,
+  RotateCcw,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { apiClient } from "@/lib/api-client";
@@ -371,6 +378,421 @@ function FlowStudioInner({ agentName, initialFlow }: FlowStudioInnerProps) {
     toast.success("Flow published successfully");
   }, [validateFlow]);
 
+  // --------------- Flow Test Simulation (US-402) ---------------
+  const [testPanelOpen, setTestPanelOpen] = useState(false);
+  const [testInput, setTestInput] = useState("");
+  const [testRunning, setTestRunning] = useState(false);
+  const [testResults, setTestResults] = useState<TestStepResult[]>([]);
+  const [testError, setTestError] = useState<string | null>(null);
+  const [testVariables, setTestVariables] = useState<Record<string, string>>({});
+  const testAbortRef = useRef(false);
+
+  interface TestStepResult {
+    nodeId: string;
+    nodeLabel: string;
+    nodeType: string;
+    action: string;
+    variables?: Record<string, string>;
+    branch?: string;
+    output?: string;
+    status: "visited" | "skipped" | "error";
+  }
+
+  const evaluateCondition = useCallback(
+    (field: string | undefined, operator: string, value: string | undefined, vars: Record<string, string>): boolean => {
+      const fieldValue = field ? (vars[field] ?? "") : "";
+      const cmpValue = value ?? "";
+      switch (operator) {
+        case "equals": return fieldValue === cmpValue;
+        case "notEquals": return fieldValue !== cmpValue;
+        case "contains": return fieldValue.includes(cmpValue);
+        case "notContains": return !fieldValue.includes(cmpValue);
+        case "greaterThan": return Number(fieldValue) > Number(cmpValue);
+        case "lessThan": return Number(fieldValue) < Number(cmpValue);
+        case "isEmpty": return fieldValue.trim() === "";
+        case "isNotEmpty": return fieldValue.trim() !== "";
+        case "matches": try { return new RegExp(cmpValue).test(fieldValue); } catch { return false; }
+        default: return false;
+      }
+    },
+    []
+  );
+
+  const resolveNextNode = useCallback(
+    (currentNodeId: string, nodes: any[], edges: any[], vars: Record<string, string>): string | null => {
+      const outEdges = edges
+        .filter((e: any) => e.source === currentNodeId)
+        .sort((a: any, b: any) => (b.priority ?? 0) - (a.priority ?? 0));
+
+      for (const edge of outEdges) {
+        const conditions: any[] = edge.conditions ?? edge.data?.conditions ?? [];
+        if (conditions.length === 0) return edge.target;
+        const allMatch = conditions.every((c: any) =>
+          evaluateCondition(c.field, c.operator, c.value, vars)
+        );
+        if (allMatch) return edge.target;
+      }
+
+      // Fallback: pick first unconditional edge
+      const fallback = outEdges.find((e: any) => {
+        const conds: any[] = e.conditions ?? e.data?.conditions ?? [];
+        return conds.length === 0;
+      });
+      return fallback?.target ?? null;
+    },
+    [evaluateCondition]
+  );
+
+  const simulateFlow = useCallback(
+    async (userInput: string) => {
+      const { nodes, edges, variables: flowVars } = ctx.flowState;
+      const vars: Record<string, string> = { ...flowVars, __user_input__: userInput };
+      const steps: TestStepResult[] = [];
+      const visitCount = new Map<string, number>();
+
+      const startNode = nodes.find(n => n.type === "start");
+      if (!startNode) {
+        setTestError("No Start node found in flow");
+        return;
+      }
+
+      let currentNodeId: string | null = startNode.id;
+      const startTime = Date.now();
+      const TIMEOUT_MS = 30_000;
+      const MAX_VISITS_PER_NODE = 50;
+
+      while (currentNodeId && !testAbortRef.current) {
+        // Timeout check
+        if (Date.now() - startTime > TIMEOUT_MS) {
+          setTestError(`Execution timed out after 30 seconds. Possible infinite loop.`);
+          break;
+        }
+
+        const node = nodes.find(n => n.id === currentNodeId);
+        if (!node) {
+          setTestError(`Node ${currentNodeId} not found`);
+          break;
+        }
+
+        // Loop detection
+        const visits = (visitCount.get(node.id) ?? 0) + 1;
+        visitCount.set(node.id, visits);
+        if (visits > MAX_VISITS_PER_NODE) {
+          steps.push({
+            nodeId: node.id,
+            nodeLabel: String((node.data as any)?.label || node.type || node.id),
+            nodeType: node.type || "unknown",
+            action: `Infinite loop detected (visited ${visits} times)`,
+            variables: { ...vars },
+            status: "error",
+          });
+          setTestError(`Infinite loop detected at node "${(node.data as any)?.label || node.id}" (visited ${visits} times)`);
+          break;
+        }
+
+        const data = (node.data ?? {}) as Record<string, any>;
+        const label = String(data.label || node.type || node.id);
+        let action = "";
+        let branch: string | undefined;
+        let output: string | undefined;
+        let status: TestStepResult["status"] = "visited";
+
+        try {
+          switch (node.type) {
+            case "start":
+              action = "Flow started";
+              break;
+
+            case "endCall":
+              action = `Flow ended${data.reason ? `: ${data.reason}` : ""}`;
+              steps.push({ nodeId: node.id, nodeLabel: label, nodeType: node.type, action, variables: { ...vars }, status: "visited" });
+              setTestResults([...steps]);
+              setTestVariables({ ...vars });
+              return; // Execution complete
+
+            case "message":
+              action = `Speak: "${data.message || "(empty)"}"`;
+              output = data.message;
+              break;
+
+            case "question":
+              action = `Ask: "${data.questionText || "(empty)"}"`;
+              if (data.targetVariable) {
+                vars[data.targetVariable] = userInput;
+                action += ` → stored "${userInput}" in $${data.targetVariable}`;
+              }
+              break;
+
+            case "capture":
+              if (data.variableName) {
+                vars[data.variableName] = userInput;
+                action = `Captured input into $${data.variableName} = "${userInput}"`;
+              } else {
+                action = "Capture node (no variable set)";
+              }
+              break;
+
+            case "setVariable":
+              if (Array.isArray(data.assignments)) {
+                for (const assignment of data.assignments) {
+                  if (assignment.variable) {
+                    const val = assignment.source === "variable"
+                      ? (vars[assignment.value] ?? "")
+                      : (assignment.value ?? "");
+                    vars[assignment.variable] = val;
+                  }
+                }
+                action = `Set ${data.assignments.length} variable(s)`;
+              } else {
+                action = "Set variable (no assignments)";
+              }
+              break;
+
+            case "condition": {
+              const rules: any[] = data.conditions ?? [];
+              const matchedRule = rules.find((r: any) =>
+                evaluateCondition(r.variable, r.operator, r.value, vars)
+              );
+              if (matchedRule) {
+                branch = `Matched: ${matchedRule.label || matchedRule.variable}`;
+                action = `Condition evaluated → ${branch}`;
+              } else {
+                branch = "No match (default path)";
+                action = `Condition evaluated → ${branch}`;
+              }
+              break;
+            }
+
+            case "router": {
+              const outEdges = edges.filter(e => e.source === node.id);
+              let matchedEdge: any = null;
+              for (const edge of outEdges) {
+                const conds: any[] = edge.conditions ?? (edge.data as any)?.conditions ?? [];
+                if (conds.length > 0 && conds.every((c: any) => evaluateCondition(c.field, c.operator, c.value, vars))) {
+                  matchedEdge = edge;
+                  break;
+                }
+              }
+              branch = matchedEdge
+                ? `Routed via edge ${matchedEdge.label || matchedEdge.id}`
+                : "Default route";
+              action = `Router → ${branch}`;
+              break;
+            }
+
+            case "menu":
+              action = `Menu: "${data.introMessage || "(no intro)"}" with ${(data.options ?? []).length} options`;
+              break;
+
+            case "confirm":
+              action = `Confirm: "${data.confirmPrompt || "(empty)"}"`;
+              break;
+
+            case "wait":
+              action = `Wait ${data.timeout ?? 10}s`;
+              if (data.storeUtteranceIn) {
+                vars[data.storeUtteranceIn] = userInput;
+                action += ` → stored input in $${data.storeUtteranceIn}`;
+              }
+              break;
+
+            case "delay":
+              action = `Delay ${data.duration ?? 1000}ms`;
+              break;
+
+            case "apiCall":
+              action = `API ${data.method || "GET"} ${data.url || "(no URL)"}`;
+              if (Array.isArray(data.responseMapping)) {
+                for (const mapping of data.responseMapping) {
+                  if (mapping.variable) vars[mapping.variable] = "(simulated API response)";
+                }
+              }
+              output = "(simulated response)";
+              break;
+
+            case "function":
+              action = `Function: ${data.functionName || "(unnamed)"}`;
+              if (data.outputVariable) vars[data.outputVariable] = "(simulated result)";
+              output = "(simulated result)";
+              break;
+
+            case "transfer":
+              action = `Transfer (${data.transferType || "cold"}) to ${data.destination || "(no destination)"}`;
+              break;
+
+            case "hold":
+              action = `Hold — music: ${data.holdMusic || "default"}, max ${data.maxDuration ?? 300}s`;
+              break;
+
+            case "voicemail":
+              action = `Voicemail — max ${data.maxDuration ?? 120}s`;
+              break;
+
+            case "dtmf":
+              action = `DTMF — max ${data.maxDigits ?? 1} digits`;
+              break;
+
+            case "log":
+              action = `Log [${data.level || "info"}]: ${data.message || "(empty)"}`;
+              break;
+
+            case "goTo":
+              if (data.targetNodeId) {
+                action = `Go To → ${data.targetNodeLabel || data.targetNodeId}`;
+                steps.push({ nodeId: node.id, nodeLabel: label, nodeType: node.type || "unknown", action, variables: { ...vars }, branch, status: "visited" });
+                currentNodeId = data.targetNodeId;
+                setTestResults([...steps]);
+                continue;
+              }
+              action = "Go To (no target set)";
+              status = "error";
+              break;
+
+            case "knowledgeSearch":
+              action = `KB Search: "${data.querySource || userInput}" → top ${data.resultCount ?? 3} results`;
+              if (data.resultVariable) vars[data.resultVariable] = "(simulated KB result)";
+              break;
+
+            case "tool":
+            case "mcpTool":
+              action = `Tool: ${data.toolName || data.serverName || "(unnamed)"}`;
+              break;
+
+            case "asyncTask":
+              action = `Async Task: ${data.taskType || "apiCall"}`;
+              if (data.callbackVariable) vars[data.callbackVariable] = "(pending)";
+              break;
+
+            case "agent":
+              action = `Sub-agent: ${data.agentName || data.agentId || "(unnamed)"}`;
+              break;
+
+            case "choice": {
+              const intents: any[] = data.intents ?? [];
+              action = `Choice: ${intents.length} intents (threshold ${data.confidenceThreshold ?? 70}%)`;
+              branch = intents.length > 0 ? `Simulated: ${intents[0].name}` : "No intents defined";
+              break;
+            }
+
+            case "abTest": {
+              const variants: any[] = data.variants ?? [];
+              if (variants.length > 0) {
+                const picked = variants[0];
+                action = `A/B Test "${data.testName || ""}" → Variant: ${picked.name}`;
+                branch = picked.name;
+                if (picked.targetNodeId) {
+                  steps.push({ nodeId: node.id, nodeLabel: label, nodeType: node.type || "unknown", action, variables: { ...vars }, branch, status: "visited" });
+                  currentNodeId = picked.targetNodeId;
+                  setTestResults([...steps]);
+                  continue;
+                }
+              } else {
+                action = `A/B Test (no variants)`;
+              }
+              break;
+            }
+
+            case "loop":
+              action = `Loop (${data.loopType || "fixed"}) — max ${data.maxIterations ?? 10} iterations`;
+              break;
+
+            case "component":
+              action = `Component: ${data.componentId || "(unnamed)"} v${data.version || "latest"}`;
+              break;
+
+            case "note":
+              // Notes are decorative, skip
+              action = "Note (decorative — skipped)";
+              status = "skipped";
+              break;
+
+            default:
+              action = `Unknown node type: ${node.type}`;
+              break;
+          }
+        } catch (err) {
+          action = `Error executing node: ${err instanceof Error ? err.message : String(err)}`;
+          status = "error";
+        }
+
+        steps.push({
+          nodeId: node.id,
+          nodeLabel: label,
+          nodeType: node.type || "unknown",
+          action,
+          variables: { ...vars },
+          branch,
+          output,
+          status,
+        });
+        setTestResults([...steps]);
+
+        // Resolve next node
+        if (node.type === "note") {
+          // Notes have no outgoing connections in the flow path
+          currentNodeId = resolveNextNode(node.id, nodes, edges, vars);
+          if (!currentNodeId) {
+            // If note is orphan, break
+            break;
+          }
+        } else {
+          currentNodeId = resolveNextNode(node.id, nodes, edges, vars);
+        }
+
+        if (!currentNodeId) {
+          steps.push({
+            nodeId: "flow-end",
+            nodeLabel: "Flow",
+            nodeType: "end",
+            action: "Flow ended — no more connected nodes",
+            variables: { ...vars },
+            status: "visited",
+          });
+          setTestResults([...steps]);
+          break;
+        }
+
+        // Yield to UI for rendering
+        await new Promise(r => setTimeout(r, 50));
+      }
+
+      setTestVariables({ ...vars });
+    },
+    [ctx.flowState, evaluateCondition, resolveNextNode]
+  );
+
+  const handleTest = useCallback(() => {
+    // Run validation first (US-401 pre-check)
+    const errors = validateFlow();
+    if (errors.length > 0) {
+      toast.error("Cannot test — fix validation errors first", {
+        description: `${errors.length} issue${errors.length !== 1 ? "s" : ""} found. Click Validate for details.`,
+      });
+      return;
+    }
+    setTestPanelOpen(true);
+  }, [validateFlow]);
+
+  const handleRunTest = useCallback(async () => {
+    testAbortRef.current = false;
+    setTestRunning(true);
+    setTestResults([]);
+    setTestError(null);
+    setTestVariables({});
+
+    try {
+      await simulateFlow(testInput);
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setTestRunning(false);
+    }
+  }, [testInput, simulateFlow]);
+
+  const handleStopTest = useCallback(() => {
+    testAbortRef.current = true;
+  }, []);
+
   // --------------- Save status label + icon ---------------
   const saveLabel =
     ctx.saveStatus === "saving"
@@ -455,7 +877,7 @@ function FlowStudioInner({ agentName, initialFlow }: FlowStudioInnerProps) {
               <CheckCircle className="h-3.5 w-3.5 me-1" />
               Validate
             </Button>
-            <Button variant="ghost" size="sm" className="text-xs">
+            <Button variant="ghost" size="sm" className="text-xs" onClick={handleTest}>
               <Play className="h-3.5 w-3.5 me-1" />
               Test
             </Button>
@@ -684,6 +1106,196 @@ function FlowStudioInner({ agentName, initialFlow }: FlowStudioInnerProps) {
           onOpenChange={setShortcutsOpen}
           currentBuilder="flow-studio"
         />
+
+        {/* ================================================================== */}
+        {/* FLOW TEST PANEL (US-402)                                            */}
+        {/* ================================================================== */}
+        {testPanelOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+            <div className="bg-[hsl(var(--surface))] border border-[hsl(var(--border))] rounded-xl shadow-2xl flex flex-col w-[680px] max-h-[80vh]">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))] shrink-0">
+                <div className="flex items-center gap-2">
+                  <Play className="h-4 w-4 text-[hsl(var(--primary))]" />
+                  <span className="text-sm font-semibold text-[hsl(var(--text-high))]">Flow Test Runner</span>
+                  {testRunning && (
+                    <Badge variant="outline" className="text-xs animate-pulse">
+                      Running...
+                    </Badge>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    testAbortRef.current = true;
+                    setTestPanelOpen(false);
+                  }}
+                  className="text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-high))]"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Input area */}
+              <div className="px-4 py-3 border-b border-[hsl(var(--border))] shrink-0">
+                <label className="text-xs font-medium text-[hsl(var(--text-muted))] mb-1.5 block">
+                  Test User Message
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={testInput}
+                    onChange={e => setTestInput(e.target.value)}
+                    placeholder="Enter a sample user message..."
+                    className="flex-1 text-sm"
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && !testRunning) handleRunTest();
+                    }}
+                    disabled={testRunning}
+                  />
+                  {testRunning ? (
+                    <Button size="sm" variant="destructive" onClick={handleStopTest} className="text-xs">
+                      <XCircle className="h-3.5 w-3.5 me-1" />
+                      Stop
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={handleRunTest} className="text-xs bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
+                      <Play className="h-3.5 w-3.5 me-1" />
+                      Run Test
+                    </Button>
+                  )}
+                  {testResults.length > 0 && !testRunning && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => { setTestResults([]); setTestError(null); setTestVariables({}); }}
+                      className="text-xs"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 me-1" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Results area */}
+              <div className="flex-1 overflow-y-auto min-h-0">
+                {testResults.length === 0 && !testError && (
+                  <div className="flex flex-col items-center justify-center py-12 text-[hsl(var(--text-subtle))]">
+                    <MessageSquare className="h-8 w-8 mb-2 opacity-30" />
+                    <p className="text-sm">Enter a test message and click Run Test</p>
+                    <p className="text-xs mt-1">The flow will be simulated step by step</p>
+                  </div>
+                )}
+
+                {testResults.length > 0 && (
+                  <div className="px-4 py-3 space-y-1">
+                    {testResults.map((step, i) => (
+                      <div
+                        key={`${step.nodeId}-${i}`}
+                        className={cn(
+                          "flex items-start gap-2 p-2 rounded-lg text-xs transition-colors",
+                          step.status === "error"
+                            ? "bg-red-500/10 border border-red-500/20"
+                            : step.status === "skipped"
+                              ? "bg-[hsl(var(--surface-2))]/50 opacity-60"
+                              : "bg-[hsl(var(--surface-2))]/50"
+                        )}
+                      >
+                        {/* Step number */}
+                        <span className="shrink-0 w-5 h-5 rounded-full bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] flex items-center justify-center text-[10px] font-medium mt-0.5">
+                          {i + 1}
+                        </span>
+
+                        <div className="flex-1 min-w-0">
+                          {/* Node info */}
+                          <div className="flex items-center gap-1.5">
+                            {step.status === "error" ? (
+                              <XCircle className="h-3 w-3 text-red-400 shrink-0" />
+                            ) : step.status === "skipped" ? (
+                              <Circle className="h-3 w-3 text-[hsl(var(--text-subtle))] shrink-0" />
+                            ) : (
+                              <CheckCircle className="h-3 w-3 text-emerald-400 shrink-0" />
+                            )}
+                            <span className="font-medium text-[hsl(var(--text-high))]">{step.nodeLabel}</span>
+                            <Badge variant="outline" className="text-[10px] px-1 py-0">
+                              {step.nodeType}
+                            </Badge>
+                            {step.branch && (
+                              <span className="flex items-center gap-0.5 text-[hsl(var(--primary))]">
+                                <ChevronRight className="h-2.5 w-2.5" />
+                                {step.branch}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Action description */}
+                          <p className="mt-0.5 text-[hsl(var(--text-muted))]">{step.action}</p>
+
+                          {/* Output */}
+                          {step.output && (
+                            <div className="mt-1 px-2 py-1 rounded bg-[hsl(var(--void))] text-[hsl(var(--text-high))] font-mono text-[11px] border border-[hsl(var(--border))]">
+                              {step.output}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Error display */}
+                {testError && (
+                  <div className="mx-4 mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                      <span className="text-xs font-medium text-red-400">Execution Error</span>
+                    </div>
+                    <p className="text-xs text-red-300 mt-1">{testError}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer: variable state */}
+              {Object.keys(testVariables).length > 0 && (
+                <div className="border-t border-[hsl(var(--border))] px-4 py-2 shrink-0">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Variable className="h-3 w-3 text-[hsl(var(--text-subtle))]" />
+                    <span className="text-[10px] font-medium text-[hsl(var(--text-muted))] uppercase tracking-wider">
+                      Variables at end
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(testVariables)
+                      .filter(([key]) => key !== "__user_input__")
+                      .map(([key, val]) => (
+                        <span
+                          key={key}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[hsl(var(--primary))]/10 text-[10px] font-mono"
+                        >
+                          <span className="text-[hsl(var(--primary))]">${key}</span>
+                          <span className="text-[hsl(var(--text-muted))]">=</span>
+                          <span className="text-[hsl(var(--text-high))] max-w-[120px] truncate">{val}</span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Summary footer */}
+              {testResults.length > 0 && !testRunning && (
+                <div className="border-t border-[hsl(var(--border))] px-4 py-2 flex items-center justify-between text-xs text-[hsl(var(--text-subtle))] shrink-0">
+                  <div className="flex items-center gap-3">
+                    <span>{testResults.filter(s => s.status === "visited").length} nodes visited</span>
+                    <span>{testResults.filter(s => s.status === "error").length} errors</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{testResults.length} steps total</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );
