@@ -68,8 +68,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added requireAuth + requireAdmin middleware to POST /, PUT /:id, and DELETE /:id pricing endpoints. requireAdmin checks isAdminUser() from RATE_LIMIT_ADMIN_USERS env var (same pattern as admin-tools). GET/list and POST /calculate endpoints remain accessible to regular users. Note: pricing routes are not yet mounted in index.ts, but the auth guards are in place for when they are. Typecheck passes (no new errors)."
     },
     {
       "id": "US-205",

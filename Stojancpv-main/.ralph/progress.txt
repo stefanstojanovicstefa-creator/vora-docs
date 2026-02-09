@@ -339,3 +339,31 @@
 - No file/directory names changed
 - TypeScript typecheck passes (zero errors)
 
+## Iteration 13: US-204 - Fix admin pricing auth middleware (security)
+
+**Status**: COMPLETE
+
+**Problem**: Pricing CRUD endpoints (POST /, PUT /:id, DELETE /:id) in `pricing.routes.ts` had no authentication or authorization middleware. All three had `TODO: Add admin authentication middleware` comments.
+
+**Pattern Used**: Same admin check pattern as `admin-tools.routes.ts`:
+- `requireAuth` from `auth.middleware.ts` — validates Clerk JWT, sets `req.auth.userId`
+- `isAdminUser()` from `admin-rate-limit.middleware.ts` — checks userId against `RATE_LIMIT_ADMIN_USERS` env var
+
+**Changes Made**:
+1. `ventus-voice/backend/src/routes/pricing.routes.ts`:
+   - Added imports: `NextFunction` from express, `requireAuth` from auth middleware, `isAdminUser` from admin-rate-limit middleware
+   - Added `requireAdmin` middleware function that checks `isAdminUser(req.auth.userId)` and returns 403 if not admin
+   - POST `/` (create): Added `requireAuth, requireAdmin` before `validateBody`
+   - PUT `/:id` (update): Added `requireAuth, requireAdmin` before `validateBody`
+   - DELETE `/:id` (delete): Added `requireAuth, requireAdmin` before handler
+   - Removed all 3 `TODO: Add admin authentication middleware` comments
+   - GET endpoints (list, by type, by provider, history, by ID) remain public — no auth needed for read-only pricing data
+   - POST `/calculate` remains public — it's a utility endpoint, not a modification
+
+**Note**: Pricing routes are NOT yet mounted in `index.ts` (no `app.use('/api/pricing', ...)` line exists), so these endpoints are not currently reachable. But the auth guards are in place for when the routes are mounted.
+
+**Verification**:
+- TypeScript typecheck passes (no errors from pricing.routes.ts)
+- Pre-existing errors in knowledge-injection and auto-injection services unchanged
+- Middleware chain order: requireAuth → requireAdmin → validateBody → handler
+
