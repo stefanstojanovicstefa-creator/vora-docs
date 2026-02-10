@@ -309,10 +309,10 @@ export default function Dashboard() {
                   'cursor-pointer group relative overflow-hidden'
                 )}
                 style={{
-                  boxShadow: '0 0 0 rgba(153, 205, 255, 0)',
+                  boxShadow: '0 0 0 hsl(var(--primary) / 0)',
                 }}
                 whileHoverStyle={{
-                  boxShadow: '0 0 15px rgba(153, 205, 255, 0.1)',
+                  boxShadow: '0 0 15px hsl(var(--primary) / 0.1)',
                 }}
               >
                 <div className="flex items-center gap-3 flex-1">
@@ -491,7 +491,7 @@ export default function Dashboard() {
             <motion.div
               className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               style={{
-                background: 'radial-gradient(circle at top right, rgba(153, 205, 255, 0.05), transparent)',
+                background: 'radial-gradient(circle at top right, hsl(var(--primary) / 0.05), transparent)',
               }}
             />
             <div className="flex items-center justify-between mb-2 relative z-10">

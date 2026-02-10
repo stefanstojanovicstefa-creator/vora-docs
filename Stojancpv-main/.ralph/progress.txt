@@ -13,6 +13,12 @@
 - No secondary Toaster found in ThemeToggle.tsx (no changes needed)
 - Typecheck passes ✅
 
+## Iteration 5: US-005 - Audit and fix hardcoded rgba in Dashboard and StatCard
+- Dashboard.tsx: replaced 3 rgba(153,205,255) instances with hsl(var(--primary) / N)
+- StatCard.tsx: replaced 2 rgba instances + hex gradient colors with --primary variable
+- Both components will adapt to light/dark theme colors
+- Typecheck passes ✅
+
 ## Iteration 4: US-004 - Add light-mode neon glow variants in animations.css
 - Added `.light .neon-glow` with rgba(37, 99, 235, 0.2)
 - Added `.light .neon-glow-hover:hover` with rgba(37, 99, 235, 0.4)

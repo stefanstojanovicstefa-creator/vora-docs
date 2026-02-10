@@ -80,12 +80,12 @@ export function StatCard({
         >
         {/* Hover glow effect */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-[#99CDFF]/0 to-[#4A9EFF]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))]/0 to-[hsl(var(--primary))]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           style={{
-            boxShadow: '0 0 20px rgba(153, 205, 255, 0)',
+            boxShadow: '0 0 20px hsl(var(--primary) / 0)',
           }}
           whileHover={{
-            boxShadow: '0 0 20px rgba(153, 205, 255, 0.15)',
+            boxShadow: '0 0 20px hsl(var(--primary) / 0.15)',
           }}
         />
 

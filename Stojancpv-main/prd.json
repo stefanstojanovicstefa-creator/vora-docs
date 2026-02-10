@@ -88,8 +88,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Replaced all rgba(153, 205, 255) instances with hsl(var(--primary) / N) in Dashboard.tsx (3 instances: boxShadow hover, radial-gradient) and StatCard.tsx (2 instances: boxShadow hover + gradient hex colors). Typecheck passes."
     },
     {
       "id": "US-006",
