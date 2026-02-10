@@ -1495,3 +1495,21 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 - Script tables sourced from actual package.json files
 - Seed data description matches seed-local.ts implementation
 
+## Iteration (Phase 3 cont.): US-L10 - Update Backend README with Local Dev Reference
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/backend/README.md`:
+   - Added "Local Development" section with link to ../LOCAL_DEVELOPMENT.md
+   - Added "Quick Start (Backend Only)" subsection: npm install, cp .env.example, db:setup-local, dev
+   - Added "Database Commands" subsection with table of 6 commands: db:setup-local, db:reset-local, db:seed-local, db:generate, db:migrate, db:studio
+   - All existing content preserved intact
+   - No emoji in new additions
+
+**Verification**:
+- All 6 database commands listed match actual scripts in backend/package.json
+- Link to ../LOCAL_DEVELOPMENT.md is correct relative path from backend/
+- Quick Start steps are minimal and correct for backend-only setup
+- Existing README content (Serbian language sections) untouched
+
