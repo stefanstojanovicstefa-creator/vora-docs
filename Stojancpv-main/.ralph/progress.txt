@@ -1,29 +1,32 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 04 - Phase 1 - UX Cleanup
-# Branch: ralph/audit-04-phase-1-ux-cleanup
+# Feature: Audit 04 - Phase 2 - Prompt Enrichment
+# Branch: ralph/audit-04-phase-2-prompt-enrichment
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 - US-001: Wire AgentCreationOverlay into UrlCreationWizard
-- Imported AgentCreationOverlay from @/components/Forge/AgentCreationOverlay
-- Added showForgeOverlay (default false) and forgeComplete (default false) state variables
-- When entering creating step (handleCreateAgent), set showForgeOverlay=true, forgeComplete=false
-- On sync success (startResponse.agent?.id): set forgeComplete=true (removed old setTimeout navigate)
-- On async polling success (statusResponse.status === "completed"): set forgeComplete=true (removed old setTimeout navigate)
-- On error in handleCreateAgent catch block: set showForgeOverlay=false before error handling
-- On cancel (handleCancel): set showForgeOverlay=false
-- Added <AgentCreationOverlay> JSX with onComplete callback that dismisses overlay and navigates to /agents/${createdAgentId}
-- Kept existing renderCreatingStep as underlying content (overlay covers at z-50)
-- Typecheck passes
+## Iteration 1 — US-001, US-002, US-003 (All Complete)
 
-## Iteration 2 - US-002: Delete dead old brand-analysis.service.ts
-- Grepped for imports of brand-analysis.service across ventus-voice/backend/src/
-- Found imports only in: test-brand-analysis.ts (scratch script), brand-analysis-error-integration.test.ts (old test), and BRAND_ERROR_HANDLING.md (doc)
-- Confirmed production job (brand-analysis.job.ts) uses new ai/brand-analyzer.service.ts
-- Deleted ventus-voice/backend/src/services/brand-analysis.service.ts (dead old service)
-- Deleted ventus-voice/backend/src/services/test-brand-analysis.ts (orphaned scratch test)
-- Deleted ventus-voice/backend/src/services/__tests__/brand-analysis-error-integration.test.ts (orphaned test)
-- No new TS errors introduced (pre-existing errors in knowledge-injection.routes.ts are unrelated)
+All three user stories were already fully implemented in the codebase:
+
+**US-001 (Target audience + competitor context)**:
+- openrouter.service.ts: AI prompt already requests audience_analysis and competitor_analysis (lines 419-461)
+- OpenRouterAnalysisResponse type includes audience_analysis and competitor_analysis fields
+- brand-analysis.types.ts: AudienceAnalysis and CompetitorAnalysis interfaces defined
+- brand-analyzer.service.ts: maps audienceAnalysis and competitorAnalysis from AI response
+
+**US-002 (Vocabulary/jargon extraction)**:
+- openrouter.service.ts: AI prompt already requests vocabulary with jargon + acronyms
+- OpenRouterAnalysisResponse type includes vocabulary field
+- brand-analysis.types.ts: DomainVocabulary interface defined (jargon: string[], acronyms)
+- brand-analyzer.service.ts: maps vocabulary from AI response
+
+**US-003 (Use-case scenarios)**:
+- openrouter.service.ts: AI prompt already requests use_case_scenarios (3-5 scenarios)
+- OpenRouterAnalysisResponse type includes use_case_scenarios array
+- brand-analysis.types.ts: UseCaseScenario interface defined (title, description, example_dialogue)
+- brand-analyzer.service.ts: maps useCaseScenarios from AI response
+
+Typecheck: All three target files pass with zero errors. Pre-existing errors in unrelated files (knowledge-injection, sandbox-execution) are not affected.
 

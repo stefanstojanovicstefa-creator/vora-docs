@@ -1,45 +1,59 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-04-phase-1-ux-cleanup",
-  "description": "Phase 1: Wire AgentCreationOverlay into UrlCreationWizard for consistent creation UX + delete dead old brand-analysis.service.ts. IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/).",
+  "branchName": "ralph/audit-04-phase-2-prompt-enrichment",
+  "description": "Phase 2: Enrich brand analyzer AI prompt for richer extraction -- target audience, vocabulary/jargon, and use-case scenarios. IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Wire AgentCreationOverlay into UrlCreationWizard creating step",
-      "description": "As a user, I want the URL wizard to show the same polished creation animation as the Forge flow instead of a plain spinner.",
+      "title": "Add target audience and competitor context to AI analysis prompt",
+      "description": "As a user, I want the AI to extract information about who the business serves and how it positions against competitors.",
       "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In UrlCreationWizard.tsx, import AgentCreationOverlay from @/components/Forge/AgentCreationOverlay",
-        "Add two boolean state variables: showForgeOverlay (default false) and forgeComplete (default false)",
-        "When entering the creating step (where handleCreateAgent is called), set showForgeOverlay to true",
-        "When agent creation succeeds (the polling returns a created agent with an ID), set forgeComplete to true",
-        "Add <AgentCreationOverlay isVisible={showForgeOverlay} isComplete={forgeComplete} onComplete={() => { setShowForgeOverlay(false); navigate to the agent page }} /> to the component JSX",
-        "The onComplete callback should navigate to /agents/${createdAgentId} (same as current success redirect)",
-        "Keep the existing renderCreatingStep as the underlying content -- the overlay covers the full screen at z-50 anyway",
-        "On cancel or error, set showForgeOverlay to false to dismiss the overlay",
-        "Files: ventus-voice/frontend/src/pages/UrlCreationWizard.tsx",
+        "IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/)",
+        "In openrouter.service.ts, find the AI analysis prompt (around line 505-521 area) that generates the brand analysis",
+        "Add a section to the prompt asking for: targetAudience (demographics, pain points, typical questions they would ask), competitorContext (industry landscape, how this brand differentiates)",
+        "Add these fields to the expected JSON output structure in the prompt",
+        "In brand-analysis.types.ts, add targetAudience and competitorContext to the appropriate type (BrandAnalysisResult or the analysis response type)",
+        "In brand-analyzer.service.ts, map the new fields from the AI response to the result object",
+        "Files: ventus-voice/backend/src/services/ai/openrouter.service.ts, ventus-voice/backend/src/types/brand-analysis.types.ts, ventus-voice/backend/src/services/ai/brand-analyzer.service.ts",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Imported AgentCreationOverlay, added showForgeOverlay/forgeComplete state, trigger overlay on creating step, set forgeComplete on success (both sync and async paths), dismiss overlay on cancel/error, onComplete navigates to /agents/${id}. Typecheck passes."
+      "notes": "Already implemented. openrouter.service.ts prompt (lines 419-461) already requests audience_analysis (demographics, pain_points, goals) and competitor_analysis (competitors, differentiators). OpenRouterAnalysisResponse type (lines 105-113) includes these fields. brand-analysis.types.ts defines AudienceAnalysis (line 219) and CompetitorAnalysis (line 228), and BrandAnalysisResult (lines 292-293) maps them. brand-analyzer.service.ts (lines 157-158) maps audienceAnalysis and competitorAnalysis from AI response. Typecheck passes."
     },
     {
       "id": "US-002",
-      "title": "Delete dead old brand-analysis.service.ts",
-      "description": "As a developer, I want to remove the dead old brand analysis service that is no longer used by the production job flow.",
+      "title": "Add vocabulary and jargon extraction to AI analysis prompt",
+      "description": "As a user, I want the AI agent to speak using industry-specific terminology from my website.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/)",
-        "Check if ventus-voice/backend/src/services/brand-analysis.service.ts is imported anywhere (grep for brand-analysis.service)",
-        "If it has NO imports other than itself, delete the file",
-        "If it IS imported somewhere, do NOT delete -- instead add a TODO comment at the top explaining it uses the old scrapeWebsite() path and should be migrated",
-        "The NEW service at ventus-voice/backend/src/services/ai/brand-analyzer.service.ts is the production one used by brand-analysis.job.ts",
-        "Files: ventus-voice/backend/src/services/brand-analysis.service.ts (DELETE if safe)",
+        "In the same AI analysis prompt in openrouter.service.ts, add a section asking for: vocabulary (array of industry-specific terms, jargon, brand-specific words the agent should know and use correctly)",
+        "Add vocabulary field (string array) to the systemPrompt section of the output structure in the prompt",
+        "In brand-analysis.types.ts, add vocabulary: string[] to the SystemPrompt type",
+        "In brand-analyzer.service.ts, map the vocabulary field from AI response",
+        "Files: ventus-voice/backend/src/services/ai/openrouter.service.ts, ventus-voice/backend/src/types/brand-analysis.types.ts, ventus-voice/backend/src/services/ai/brand-analyzer.service.ts",
         "Typecheck passes"
       ],
       "priority": 2,
       "passes": true,
-      "notes": "Grepped for imports: only test-brand-analysis.ts, brand-analysis-error-integration.test.ts, and a markdown doc imported the old service. No production code uses it. Deleted brand-analysis.service.ts plus the two orphaned test files. The new production service at ai/brand-analyzer.service.ts is used by brand-analysis.job.ts. No new TS errors introduced."
+      "notes": "Already implemented. openrouter.service.ts prompt (lines 432-440) requests vocabulary with jargon array and acronyms array. OpenRouterAnalysisResponse (lines 114-117) defines vocabulary field. brand-analysis.types.ts defines DomainVocabulary interface (lines 236-239) with jargon: string[] and acronyms. BrandAnalysisResult (line 294) includes vocabulary. brand-analyzer.service.ts (line 159) maps vocabulary from AI response. Typecheck passes."
+    },
+    {
+      "id": "US-003",
+      "title": "Add use-case scenarios to AI analysis prompt",
+      "description": "As a user, I want the AI agent to be prepared for common customer interaction scenarios.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/)",
+        "In the same AI analysis prompt in openrouter.service.ts, add a section asking for: useCaseScenarios (array of 3-5 realistic customer interaction scenarios the agent should handle well, each with scenario description, expected customer question, ideal agent response approach)",
+        "Add useCaseScenarios field to the systemPrompt section of the output structure in the prompt",
+        "In brand-analysis.types.ts, add useCaseScenarios: Array<{ scenario: string; customerQuestion: string; responseApproach: string }> to the SystemPrompt type",
+        "In brand-analyzer.service.ts, map the useCaseScenarios field from AI response",
+        "Files: ventus-voice/backend/src/services/ai/openrouter.service.ts, ventus-voice/backend/src/types/brand-analysis.types.ts, ventus-voice/backend/src/services/ai/brand-analyzer.service.ts",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Already implemented. openrouter.service.ts prompt (lines 441-453) requests use_case_scenarios with title, description, example_dialogue for 3-5 realistic scenarios. OpenRouterAnalysisResponse (lines 118-122) defines use_case_scenarios array. brand-analysis.types.ts defines UseCaseScenario interface (lines 244-248). BrandAnalysisResult (line 295) includes useCaseScenarios. brand-analyzer.service.ts (line 160) maps useCaseScenarios from AI response. Typecheck passes."
     }
   ]
 }
