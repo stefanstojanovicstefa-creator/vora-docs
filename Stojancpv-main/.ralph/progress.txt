@@ -15,3 +15,10 @@
 - Provider, Language, Recognition already had correct `space-y-4 pt-2`
 - Typecheck passes ✅
 
+## Iteration 2 — US-002: Normalize fallback item padding across Voice and Ears tabs
+- Changed VoiceTab fallback voice row className:
+  - FROM: `flex items-center gap-2 p-2 border rounded`
+  - TO: `flex items-center gap-3 p-3 rounded-lg border border-border bg-background`
+- Now matches EarsTab FallbackItem styling exactly
+- Typecheck passes ✅
+
