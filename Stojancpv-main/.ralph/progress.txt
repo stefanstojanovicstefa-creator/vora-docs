@@ -13,6 +13,13 @@
 - No secondary Toaster found in ThemeToggle.tsx (no changes needed)
 - Typecheck passes ✅
 
+## Iteration 4: US-004 - Add light-mode neon glow variants in animations.css
+- Added `.light .neon-glow` with rgba(37, 99, 235, 0.2)
+- Added `.light .neon-glow-hover:hover` with rgba(37, 99, 235, 0.4)
+- Added `.light .neon-glow-active` with rgba(37, 99, 235, 0.3)
+- prefers-reduced-motion rule at line ~353 (now) unchanged
+- Typecheck passes ✅
+
 ## Iteration 3: US-003 - Fix hardcoded neon rgba in CSS buttons and inputs
 - Replaced rgba(153, 205, 255, 0.4) with hsl(var(--primary) / 0.4) in .btn-primary:hover
 - Replaced rgba(153, 205, 255, 0.4) with hsl(var(--primary) / 0.4) in .btn-primary:active

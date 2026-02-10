@@ -71,8 +71,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added .light .neon-glow, .light .neon-glow-hover:hover, and .light .neon-glow-active variants using rgba(37, 99, 235, N) after the existing dark-mode neon-glow rules. prefers-reduced-motion rule left unchanged. Typecheck passes."
     },
     {
       "id": "US-005",
