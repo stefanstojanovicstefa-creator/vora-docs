@@ -36,8 +36,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'agent_created' } })) in InterviewBot.tsx handleOverlayComplete and EnhancedAgentWizard.tsx handleDeploy, both after toast.success and before navigate."
     },
     {
       "id": "US-003",

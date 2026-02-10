@@ -13,3 +13,9 @@
 - Query now only fires when user is authenticated (not on public routes)
 - Typecheck passes ✅
 
+## Iteration 2 - US-002: Add tutorial validation events to agent creation flows
+- Added `tutorial:validation` CustomEvent dispatch with `key: 'agent_created'` in InterviewBot.tsx handleOverlayComplete (after toast.success, before navigate)
+- Added same dispatch in EnhancedAgentWizard.tsx handleDeploy (after toast.success, before navigate)
+- TutorialSystem.tsx not modified (listener already correct)
+- Typecheck passes ✅
+

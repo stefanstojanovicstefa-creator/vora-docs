@@ -142,6 +142,7 @@ export function EnhancedAgentWizard({ userId }: EnhancedAgentWizardProps) {
       setDeployProgress(100);
       setDeployStatus('Complete!');
       toast.success(t('agent:wizard.deploy.successStandard'));
+      window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'agent_created' } }));
 
       // Redirect directly to test page instead of showing success step
       navigate(`/agents/${agent.id}/test`);

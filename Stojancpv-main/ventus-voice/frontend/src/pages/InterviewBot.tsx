@@ -869,6 +869,7 @@ export default function InterviewBot() {
       toast.success(t("agent:forge.createAgent.successTitle"), {
         description: t("agent:forge.createAgent.successDescription"),
       });
+      window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'agent_created' } }));
       navigate(`/agents/${agentId}?tab=test&autostart=1`);
       pendingAgentIdRef.current = null;
     }
