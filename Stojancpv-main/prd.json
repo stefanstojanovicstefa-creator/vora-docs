@@ -106,8 +106,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Deleted ventus-voice/frontend/src/pages/AccountPage.tsx. Verified no imports reference it (grep found only the file itself). Typecheck passes."
     }
   ]
 }

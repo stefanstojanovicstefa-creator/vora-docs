@@ -42,3 +42,8 @@
 - Cancel button resets from current Clerk metadata instead of hardcoded values
 - Typecheck passes ✅
 
+## Iteration 6 - US-006: Delete orphaned AccountPage
+- Deleted `ventus-voice/frontend/src/pages/AccountPage.tsx`
+- Verified no imports reference AccountPage anywhere in the codebase (grep confirmed only self-reference)
+- Typecheck passes ✅
+
