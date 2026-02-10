@@ -62,6 +62,7 @@ import {
   GlobalHandlersPanel,
 } from "@/components/FlowStudio";
 import type { SidebarTab } from "@/components/FlowStudio";
+import { ComponentLibrarySidebar } from "@/components/FlowStudio/ComponentLibrarySidebar";
 import { BuilderSwitchButton } from "@/components/CommandCenter/BuilderSwitchButton";
 import { SyncIndicator } from "@/components/CommandCenter/SyncIndicator";
 import { UnifiedShortcutsPanel } from "@/components/CommandCenter/UnifiedShortcutsPanel";
@@ -935,13 +936,7 @@ function FlowStudioInner({ agentName, initialFlow }: FlowStudioInnerProps) {
                 />
               )}
               {sidebarTab === "components" && (
-                <div className="p-4 text-center text-xs text-[hsl(var(--text-subtle))]">
-                  <Component className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p>Reusable components</p>
-                  <p className="mt-1 text-xs">
-                    Save node groups as components to reuse across flows.
-                  </p>
-                </div>
+                <ComponentLibrarySidebar />
               )}
             </div>
           </div>

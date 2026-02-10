@@ -22,3 +22,11 @@
 - Typecheck passes cleanly
 - Status: ✅ DONE
 
+## Iteration 3 — US-003: Replace Components tab stub with ComponentLibrarySidebar
+- Replaced placeholder div (Component icon + "Reusable components" text) with <ComponentLibrarySidebar />
+- Added import from @/components/FlowStudio/ComponentLibrarySidebar
+- No onDragStart prop needed — FlowStudioPage doesn't have a component drag handler
+- Component lucide icon still used for sidebar tab, import retained
+- Typecheck passes cleanly
+- Status: ✅ DONE
+
