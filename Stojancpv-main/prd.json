@@ -38,8 +38,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Rewrote useComponentLibrary to use useQuery (GET /api/components) with queryKeys.components.lists(). Added useMutation for delete (DELETE /api/components/:id) and duplicate (POST /api/components). Mapped API response to FlowComponent interface. Kept same return interface. Typecheck passes."
     },
     {
       "id": "US-003",
