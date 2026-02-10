@@ -38,8 +38,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Grepped for imports: only test-brand-analysis.ts, brand-analysis-error-integration.test.ts, and a markdown doc imported the old service. No production code uses it. Deleted brand-analysis.service.ts plus the two orphaned test files. The new production service at ai/brand-analyzer.service.ts is used by brand-analysis.job.ts. No new TS errors introduced."
     }
   ]
 }

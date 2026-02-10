@@ -18,3 +18,12 @@
 - Kept existing renderCreatingStep as underlying content (overlay covers at z-50)
 - Typecheck passes
 
+## Iteration 2 - US-002: Delete dead old brand-analysis.service.ts
+- Grepped for imports of brand-analysis.service across ventus-voice/backend/src/
+- Found imports only in: test-brand-analysis.ts (scratch script), brand-analysis-error-integration.test.ts (old test), and BRAND_ERROR_HANDLING.md (doc)
+- Confirmed production job (brand-analysis.job.ts) uses new ai/brand-analyzer.service.ts
+- Deleted ventus-voice/backend/src/services/brand-analysis.service.ts (dead old service)
+- Deleted ventus-voice/backend/src/services/test-brand-analysis.ts (orphaned scratch test)
+- Deleted ventus-voice/backend/src/services/__tests__/brand-analysis-error-integration.test.ts (orphaned test)
+- No new TS errors introduced (pre-existing errors in knowledge-injection.routes.ts are unrelated)
+
