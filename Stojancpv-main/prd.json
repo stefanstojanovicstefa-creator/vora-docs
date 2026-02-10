@@ -120,8 +120,8 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "VoiceCallButton.tsx: replaced 4 rgba(153,205,255) instances in glow variants with hsl(var(--primary) / N). VoiceVisualizer.tsx: replaced 2 rgba glow values and 2 hex active colors with --primary variable. Typecheck passes."
     },
     {
       "id": "US-008",
