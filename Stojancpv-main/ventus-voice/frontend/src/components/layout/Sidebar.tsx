@@ -31,7 +31,8 @@ import {
   Settings,
   BarChart3,
   Mic,
-  Phone
+  Phone,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
@@ -78,6 +79,12 @@ export function Sidebar({ className, defaultCollapsed = false }: SidebarProps) {
       to: '/analytics',
       labelKey: 'analytics',
       icon: BarChart3,
+    },
+    {
+      to: '/monitoring',
+      labelKey: 'monitoring',
+      icon: Activity,
+      godModeOnly: true,
     },
     {
       to: '/knowledge-base',

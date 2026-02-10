@@ -33,3 +33,11 @@
 - Typecheck passes ✅
 - File: ventus-voice/frontend/src/pages/Dashboard.tsx
 
+## Iteration 4 - US-004: Add monitoring link to sidebar in God Mode
+- Added monitoring nav link after Analytics in Sidebar.tsx links array
+- Uses Activity icon from lucide-react (newly imported)
+- Set godModeOnly: true so it only shows in God Mode (hidden in Mom Mode)
+- labelKey 'monitoring' already exists in modeLabels constants
+- Typecheck passes ✅
+- File: ventus-voice/frontend/src/components/layout/Sidebar.tsx
+
