@@ -516,6 +516,11 @@
     direction: rtl;
   }
 
+  /* Mirror directional icons in RTL */
+  [dir="rtl"] .rtl-mirror {
+    transform: scaleX(-1);
+  }
+
   /* Neon Text Utility */
   .text-neon {
     color: hsl(var(--primary));

@@ -26,3 +26,8 @@
 - Changed `lg:ml-64` → `lg:ms-64` (expanded sidebar margin)
 - Typecheck passes ✅
 
+## Iteration 4 - US-004: Define rtl-mirror CSS utility class
+- Added `[dir="rtl"] .rtl-mirror { transform: scaleX(-1); }` in index.css utilities section
+- The class was already referenced in Sidebar.tsx line 223 on the collapse chevron - now it works
+- Typecheck passes ✅
+
