@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   Book,
   HelpCircle,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
   Bot,
@@ -16,6 +15,13 @@ import {
   Play,
   Layers,
   Wallet,
+  Puzzle,
+  GitBranch,
+  Database,
+  Wand2,
+  BookOpen,
+  BarChart3,
+  ArrowRight,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -133,6 +139,66 @@ const faqItems: FAQItem[] = [
     answer:
       'You can monitor costs in real-time through the Cost Analytics dashboard. Setting hard budget limits requires configuration in each provider\'s dashboard (OpenAI, ElevenLabs, etc.).',
   },
+  {
+    category: 'MCP',
+    question: 'How do I browse and connect MCP tools from the Marketplace?',
+    answer:
+      'Go to Integrations > MCP Marketplace to browse available tool servers organized by category and industry. Click on any server to view its tools, then hit "Connect" to add it to your organization. Once connected, you can assign the server\'s tools to individual agents.',
+  },
+  {
+    category: 'Flow Studio',
+    question: 'How do I create and test conversation flows in Flow Studio?',
+    answer:
+      'Open an agent and navigate to its Flow Studio tab. Use the drag-and-drop canvas to add nodes for messages, conditions, and actions. Connect them to define conversation paths. Use the built-in simulator to test your flow before deploying by clicking the play button in the top toolbar.',
+  },
+  {
+    category: 'Memory',
+    question: 'How does the Memory System work with layers and RIF scoring?',
+    answer:
+      'Vora uses a multi-layer memory system: short-term memory holds context within a single call, working memory persists across calls in a session, and long-term memory stores key facts about returning customers. RIF (Recency, Importance, Frequency) scoring automatically prioritizes which memories to surface during a conversation.',
+  },
+  {
+    category: 'Forge',
+    question: 'What is the difference between Forge URL Wizard and Interview Bot?',
+    answer:
+      'The URL Wizard scrapes a website to auto-generate an agent\'s system prompt, voice, and personality from your brand content. The Interview Bot walks you through a guided conversation, asking questions about your business to build the agent step by step. Both produce a ready-to-deploy agent, but URL Wizard is faster while Interview Bot gives more control.',
+  },
+  {
+    category: 'Knowledge Base',
+    question: 'How do I upload documents and use RAG search in the Knowledge Base?',
+    answer:
+      'Navigate to your agent\'s Knowledge Base section and click "Upload Document" to add PDFs, text files, or URLs. Vora automatically chunks and embeds the content. During calls, the agent uses RAG (Retrieval-Augmented Generation) to search the knowledge base and include relevant information in its responses.',
+  },
+  {
+    category: 'Functions',
+    question: 'How do I create and assign Custom Functions to my agent?',
+    answer:
+      'Go to the Custom Functions page and click "Create Function." Define the function name, description, parameters (JSON Schema), and the execution code or API endpoint. Once saved, open your agent\'s configuration and attach the function so the agent can call it during conversations when relevant.',
+  },
+  {
+    category: 'Analytics',
+    question: 'Where can I view call data, session transcripts, and performance metrics?',
+    answer:
+      'The Analytics hub provides a unified view of your platform. The Sessions tab shows individual call recordings and transcripts. The Performance tab tracks success rates, latency, and error breakdowns per agent. The Costs tab displays spending across LLM, TTS, and STT providers over time.',
+  },
+  {
+    category: 'Voice',
+    question: 'How do I choose TTS and STT providers in the Voice Library?',
+    answer:
+      'Open your agent\'s configuration and navigate to the Voice section. You can preview available voices from providers like ElevenLabs, Deepgram, and Google, filtering by language and style. For STT, select a provider based on your latency and accuracy needs. Each provider displays supported languages and estimated cost per minute.',
+  },
+  {
+    category: 'Billing',
+    question: 'How are minutes calculated and how do I upgrade my plan?',
+    answer:
+      'Minutes are measured by the duration of active voice sessions between your agents and callers. Each plan includes a monthly minute allowance. You can view your current usage on the Subscription page and upgrade to a higher tier at any time. Unused minutes do not roll over to the next billing cycle.',
+  },
+  {
+    category: 'Deployment',
+    question: 'How do I embed and deploy my agent to a website?',
+    answer:
+      'After creating your agent, go to its Deploy tab to get the embed code. Copy the script tag and paste it into your website\'s HTML. The Vora widget will appear as a floating button your visitors can click to start a voice conversation. You can customize the widget\'s appearance and position from the deploy settings.',
+  },
 ];
 
 const docSections: DocSection[] = [
@@ -194,7 +260,48 @@ const categoryIcons: Record<string, React.ComponentType<{ className?: string }>>
   Deployment: Zap,
   Monitoring: Brain,
   Billing: Wallet,
+  MCP: Puzzle,
+  'Flow Studio': GitBranch,
+  Memory: Database,
+  Forge: Wand2,
+  'Knowledge Base': BookOpen,
+  Functions: Code2,
+  Analytics: BarChart3,
 };
+
+interface GuideCard {
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  link: string;
+}
+
+const guideCards: GuideCard[] = [
+  {
+    title: 'Create Your First Agent',
+    description: 'Build and configure a voice AI agent in minutes with our step-by-step wizard.',
+    icon: Bot,
+    link: '/agents/create',
+  },
+  {
+    title: 'Build a Conversation Flow',
+    description: 'Design branching dialogue paths with the drag-and-drop Flow Studio canvas.',
+    icon: GitBranch,
+    link: '/agents',
+  },
+  {
+    title: 'Connect External Tools',
+    description: 'Browse the MCP Marketplace and connect third-party tool servers to your agents.',
+    icon: Puzzle,
+    link: '/integrations/marketplace',
+  },
+  {
+    title: 'Understand Your Calls',
+    description: 'Review session transcripts, latency metrics, and cost breakdowns in Analytics.',
+    icon: BarChart3,
+    link: '/analytics',
+  },
+];
 
 export function DocumentationPage() {
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
@@ -222,6 +329,31 @@ export function DocumentationPage() {
         <p className="text-muted-foreground mt-2">
           Learn how to build and deploy powerful voice AI agents with Vora Voice
         </p>
+      </div>
+
+      {/* Guide Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {guideCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Link key={card.title} to={card.link}>
+              <Card className="h-full hover:border-primary/50 hover:bg-muted/50 transition-colors cursor-pointer">
+                <CardHeader className="pb-2">
+                  <div className="p-2 rounded-lg bg-primary/10 w-fit">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-base mt-3">{card.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4">
+                  <CardDescription className="text-sm">{card.description}</CardDescription>
+                  <span className="inline-flex items-center gap-1 text-sm text-primary mt-3 font-medium">
+                    Get started <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
 
       <Tabs defaultValue="guides">
@@ -298,7 +430,7 @@ export function DocumentationPage() {
                             <CardTitle className="text-base font-medium">
                               {item.question}
                             </CardTitle>
-                            <Badge variant="secondary\" className="mt-1">
+                            <Badge variant="secondary" className="mt-1">
                               {item.category}
                             </Badge>
                           </div>

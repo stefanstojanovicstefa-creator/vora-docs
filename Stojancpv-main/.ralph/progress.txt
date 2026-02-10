@@ -108,3 +108,39 @@
 - $ref used for shared schemas: BrandAnalysisResult, MCPCatalogItem, MCPConnection, CustomFunction, KnowledgeBase, Document, Error
 
 ### Status: COMPLETE
+
+---
+
+## Iteration 3: US-503 - In-App FAQ Expansion
+
+### Changes Made:
+1. **ventus-voice/frontend/src/pages/DocumentationPage.tsx**:
+   - Added 10 new FAQ items covering all required topics:
+     1. MCP Marketplace - browsing and connecting tool servers
+     2. Flow Studio - creating and testing conversation flows
+     3. Memory System - multi-layer architecture and RIF scoring
+     4. Forge - URL Wizard vs Interview Bot comparison
+     5. Knowledge Base - uploading documents and RAG search
+     6. Custom Functions - creation, JSON Schema, and agent assignment
+     7. Analytics - call data, session transcripts, performance metrics
+     8. Voice Library - TTS/STT provider selection and previewing
+     9. Billing - minute calculation and plan upgrades
+     10. Embed/Deploy - website widget embed code
+   - Added 4 guide cards at top of page (before Tabs):
+     1. "Create Your First Agent" (Bot icon, links to /agents/create)
+     2. "Build a Conversation Flow" (GitBranch icon, links to /agents)
+     3. "Connect External Tools" (Puzzle icon, links to /integrations/marketplace)
+     4. "Understand Your Calls" (BarChart3 icon, links to /analytics)
+   - Each guide card has: icon, title, description, and "Get started" arrow link
+   - Added category icons for new FAQ categories: MCP (Puzzle), Flow Studio (GitBranch), Memory (Database), Forge (Wand2), Knowledge Base (BookOpen), Functions (Code2), Analytics (BarChart3)
+   - Fixed pre-existing typo: Badge variant="secondary\" -> variant="secondary"
+   - Removed unused icon imports (ExternalLink, Music, CreditCard, Globe)
+   - All text uses 'Vora' branding (no 'Ventus' references)
+
+### Verification:
+- Frontend typecheck: PASS (clean, zero errors)
+- All 10 new FAQ items have clear questions and 2-4 sentence answers
+- All 4 guide cards render with icon, title, description, and link
+- No 'Ventus' branding in any new or existing text
+
+### Status: COMPLETE

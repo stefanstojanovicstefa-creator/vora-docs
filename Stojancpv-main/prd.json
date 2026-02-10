@@ -58,8 +58,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Added 10 new FAQ items covering MCP Marketplace (browsing/connecting), Flow Studio (creating/testing flows), Memory System (layers/RIF scoring), Forge (URL Wizard vs Interview Bot), Knowledge Base (uploading/RAG search), Custom Functions (creation/assignment), Analytics (call data/sessions/metrics), Voice Library (TTS/STT providers), Billing (minutes/plan upgrades), Embed/Deploy (website widget). Added 4 guide cards at top of page: 'Create Your First Agent' (/agents/create), 'Build a Conversation Flow' (/agents), 'Connect External Tools' (/integrations/marketplace), 'Understand Your Calls' (/analytics). Each guide card has icon, title, description, and arrow link. Added category icons for new FAQ categories (MCP, Flow Studio, Memory, Forge, Knowledge Base, Functions, Analytics). Fixed pre-existing typo in Badge variant prop. All text uses 'Vora' branding. Removed unused icon imports. Typecheck passes (clean, no errors)."
     },
     {
       "id": "US-504",
