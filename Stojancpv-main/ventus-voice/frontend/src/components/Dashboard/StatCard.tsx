@@ -75,7 +75,7 @@ export function StatCard({
         whileHover={{ y: -4 }}
       >
         <Card
-          className="p-6 relative overflow-hidden group cursor-pointer"
+          className="p-6 relative overflow-hidden group cursor-pointer hover-lift"
           interactive
         >
         {/* Hover glow effect */}

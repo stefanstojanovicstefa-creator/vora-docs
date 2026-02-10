@@ -54,8 +54,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added hover-lift class to Dashboard StatCard. Added card-hover class to AgentsPage agent cards (both grid and list views). Added neon-glow-hover to 3 primary CTA buttons: Dashboard create-agent, AgentsPage create-agent, and SubscriptionPage upgrade-plan. All classes pre-existing in animations.css, no new keyframes. prefers-reduced-motion already handled. Typecheck passes."
     },
     {
       "id": "US-004",

@@ -31,3 +31,17 @@
 - Subtle 35% opacity ensures accent is visible but not overwhelming in both themes
 - Typecheck passes
 
+---
+
+## Iteration 3 - US-003: Add hover-lift and card-hover animations to key surfaces
+- Added `hover-lift` CSS class to StatCard (Dashboard stat cards) in StatCard.tsx
+- Added `card-hover` CSS class to agent cards on AgentsPage — both grid view (renderAgentCard) and list view (renderAgentListItem)
+- Added `neon-glow-hover` CSS class to primary CTA buttons on 3 pages:
+  - Dashboard: "Create Agent" button
+  - AgentsPage: "Create Agent" header button
+  - SubscriptionPage: "Upgrade Plan" button
+- All classes were already defined in animations.css — no new keyframes created
+- prefers-reduced-motion support already present in animations.css
+- No layout shift from any animation (translateY only, box-shadow only)
+- Typecheck passes
+

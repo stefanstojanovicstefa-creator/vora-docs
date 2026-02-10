@@ -383,7 +383,7 @@ export default function AgentsPage() {
       <ContextMenu>
         <ContextMenuTrigger asChild>
           <Card
-            className="glass-card group hover:border-primary/50 transition-all duration-200 hover:shadow-[0_0_20px_rgba(153,205,255,0.2)] cursor-pointer h-full flex flex-col"
+            className="glass-card card-hover group hover:border-primary/50 transition-all duration-200 hover:shadow-[0_0_20px_rgba(153,205,255,0.2)] cursor-pointer h-full flex flex-col"
             onClick={() => handleCardClick(agent.id)}
           >
             <CardHeader>
@@ -496,7 +496,7 @@ export default function AgentsPage() {
       <ContextMenu key={agent.id}>
         <ContextMenuTrigger asChild>
           <Card
-            className="glass-card group hover:border-primary/50 transition-all duration-200 hover:shadow-[0_0_20px_rgba(153,205,255,0.2)] cursor-pointer"
+            className="glass-card card-hover group hover:border-primary/50 transition-all duration-200 hover:shadow-[0_0_20px_rgba(153,205,255,0.2)] cursor-pointer"
             onClick={() => handleCardClick(agent.id)}
           >
             <CardHeader>
@@ -652,7 +652,7 @@ export default function AgentsPage() {
           </p>
         </div>
         <Link to="/agents/create">
-          <Button className="glow-button">
+          <Button className="glow-button neon-glow-hover">
             <Plus className="h-4 w-4 mr-2" />
             {createAgentLabel}
           </Button>

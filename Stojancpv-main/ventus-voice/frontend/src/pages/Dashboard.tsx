@@ -384,7 +384,7 @@ export default function Dashboard() {
                 >
                   <Button
                     data-tutorial-target="create-agent"
-                    className="w-full justify-start gap-2 relative overflow-hidden group"
+                    className="w-full justify-start gap-2 relative overflow-hidden group neon-glow-hover"
                   >
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-[#99CDFF]/20 to-transparent"
