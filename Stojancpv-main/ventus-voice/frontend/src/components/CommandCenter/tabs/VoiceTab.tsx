@@ -227,6 +227,18 @@ interface VoiceTabProps {
 }
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+function SectionBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-xs bg-[hsl(var(--surface-elevated))] text-[hsl(var(--text-muted))] px-2 py-0.5 rounded-full ml-auto">
+      {children}
+    </span>
+  );
+}
+
+// ============================================================================
 // Component
 // ============================================================================
 
@@ -236,6 +248,11 @@ export function VoiceTab({ config, onChange }: VoiceTabProps) {
   const providerKey = (config.provider || "elevenlabs").toLowerCase();
   const voiceList = useMemo(() => VOICES[providerKey] || [], [providerKey]);
   const isElevenLabs = providerKey === "elevenlabs";
+
+  const selectedVoiceName = useMemo(
+    () => voiceList.find(v => v.id === config.voiceId)?.name ?? "none",
+    [voiceList, config.voiceId]
+  );
 
   const filteredVoices = useMemo(() => {
     if (!voiceSearch) return voiceList;
@@ -298,7 +315,7 @@ export function VoiceTab({ config, onChange }: VoiceTabProps) {
       <Accordion type="multiple" defaultValue={["provider", "voice-selector", "tuning"]}>
         {/* Provider Section */}
         <AccordionItem value="provider">
-          <AccordionTrigger>Provider</AccordionTrigger>
+          <AccordionTrigger>Provider<SectionBadge>{config.provider || "elevenlabs"}</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label>TTS Provider</Label>
@@ -329,14 +346,14 @@ export function VoiceTab({ config, onChange }: VoiceTabProps) {
 
         {/* Voice Selector */}
         <AccordionItem value="voice-selector">
-          <AccordionTrigger>Voice</AccordionTrigger>
+          <AccordionTrigger>Voice<SectionBadge>{selectedVoiceName}</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             <Input
               placeholder="Search voices..."
               value={voiceSearch}
               onChange={e => setVoiceSearch(e.target.value)}
             />
-            <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto">
               {filteredVoices.map(voice => (
                 <button
                   key={voice.id}
@@ -364,7 +381,7 @@ export function VoiceTab({ config, onChange }: VoiceTabProps) {
 
         {/* Tuning Section */}
         <AccordionItem value="tuning">
-          <AccordionTrigger>Tuning</AccordionTrigger>
+          <AccordionTrigger>Tuning<SectionBadge>speed {config.speed ?? 1.0}x</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             {[
               { label: "Speed", field: "speed", min: 0.5, max: 2, step: 0.1, default: 1 },
@@ -568,7 +585,7 @@ export function VoiceTab({ config, onChange }: VoiceTabProps) {
 
         {/* Fallback Voices */}
         <AccordionItem value="fallback-voices">
-          <AccordionTrigger>Fallback Voices</AccordionTrigger>
+          <AccordionTrigger>Fallback Voices<SectionBadge>{fallbacks.length}/3</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             {fallbacks.map((fb, idx) => (
               <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background">

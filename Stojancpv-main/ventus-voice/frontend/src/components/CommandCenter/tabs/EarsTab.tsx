@@ -103,6 +103,18 @@ interface VocabEntry {
 }
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+function SectionBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-xs bg-[hsl(var(--surface-elevated))] text-[hsl(var(--text-muted))] px-2 py-0.5 rounded-full ml-auto">
+      {children}
+    </span>
+  );
+}
+
+// ============================================================================
 // Sub-components
 // ============================================================================
 
@@ -440,12 +452,12 @@ export function EarsTab({ config, onChange }: EarsTabProps) {
         {/* Provider Selection - Card Layout                                 */}
         {/* ================================================================ */}
         <AccordionItem value="provider">
-          <AccordionTrigger>Provider</AccordionTrigger>
+          <AccordionTrigger>Provider<SectionBadge>{providerName}</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             {/* Provider cards */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Select an STT provider</Label>
-              <div className="grid gap-2">
+              <div className="grid gap-3">
                 {Object.entries(STT_PROVIDERS).map(([name, { description, streaming }]) => {
                   const isSelected = name.toLowerCase() === providerName.toLowerCase();
                   return (
@@ -495,7 +507,7 @@ export function EarsTab({ config, onChange }: EarsTabProps) {
         {/* Language - Full names with search                                */}
         {/* ================================================================ */}
         <AccordionItem value="language">
-          <AccordionTrigger>Language</AccordionTrigger>
+          <AccordionTrigger>Language<SectionBadge>{config.language || "en-US"}</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label>Primary Language</Label>
@@ -575,7 +587,7 @@ export function EarsTab({ config, onChange }: EarsTabProps) {
         {/* Recognition Settings                                            */}
         {/* ================================================================ */}
         <AccordionItem value="recognition">
-          <AccordionTrigger>Recognition</AccordionTrigger>
+          <AccordionTrigger>Recognition<SectionBadge>{config.accuracyMode || "balanced"}</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label>Accuracy Mode</Label>
@@ -615,7 +627,7 @@ export function EarsTab({ config, onChange }: EarsTabProps) {
         {/* Custom Vocabulary - Stacked Card Layout                         */}
         {/* ================================================================ */}
         <AccordionItem value="vocabulary">
-          <AccordionTrigger>Custom Vocabulary</AccordionTrigger>
+          <AccordionTrigger>Custom Vocabulary<SectionBadge>{vocab.length} term{vocab.length !== 1 ? "s" : ""}</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             {vocab.length === 0 && (
               <p className="text-xs text-muted-foreground py-2">
@@ -672,7 +684,7 @@ export function EarsTab({ config, onChange }: EarsTabProps) {
         {/* Noise Cancellation                                              */}
         {/* ================================================================ */}
         <AccordionItem value="noise">
-          <AccordionTrigger>Noise Cancellation</AccordionTrigger>
+          <AccordionTrigger>Noise Cancellation<SectionBadge>{config.noiseCancellation || "standard"}</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             <Select
               value={config.noiseCancellation || "standard"}
@@ -693,7 +705,7 @@ export function EarsTab({ config, onChange }: EarsTabProps) {
         {/* Fallback Transcribers - Vertical removable list                 */}
         {/* ================================================================ */}
         <AccordionItem value="fallbacks">
-          <AccordionTrigger>Fallback Transcribers</AccordionTrigger>
+          <AccordionTrigger>Fallback Transcribers<SectionBadge>{fallbacks.length}/2</SectionBadge></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-2">
             {fallbacks.length === 0 && (
               <p className="text-xs text-muted-foreground py-2">
