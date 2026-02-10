@@ -1,82 +1,75 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-02-phase-2-dashboard-routing",
-  "description": "Phase 2: Fix dashboard analytics routing. Bottom metric cards, charts, and session items look clickable but have no navigation. Add proper links and a sidebar entry for monitoring. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
+  "branchName": "ralph/audit-03-phase-1-step-counter",
+  "description": "Phase 1: Fix step counter hallucination and progress accuracy. Legacy interview route has no progress cap (can exceed 100%). Dashboard label is misleading. Continue button doesn't navigate to incomplete stage. IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Add navigation links to bottom metric cards",
-      "description": "As a user, I want the metric cards at the bottom of the Dashboard to navigate to relevant analytics pages when clicked.",
+      "title": "Cap legacy interview progress at 100%",
+      "description": "As a user, I want the progress percentage to never exceed 100% even if data is corrupt.",
       "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In Dashboard.tsx around lines 483-590, find the 3 bottom metric cards: Average Duration, Total Spend, API Calls",
-        "Each card is a motion.div with cursor-pointer but no navigation handler",
-        "Wrap each card in a Link component from react-router-dom (import Link if not already imported)",
-        "Average Duration card: Link to /analytics?tab=overview",
-        "Total Spend card: Link to /analytics?tab=costs",
-        "API Calls card: Link to /analytics?tab=usage",
-        "Style the Link with className block (to maintain card layout) and no text decoration",
-        "Existing hover animations (whileHover={{ y: -4 }}) should still work on the motion.div inside the Link",
-        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx",
+        "IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/)",
+        "In agent-interview.routes.ts around line 330, find the progress calculation: Math.round((session.currentQuestionIndex / 12) * 100)",
+        "Change it to: Math.min(100, Math.round((session.currentQuestionIndex / 12) * 100))",
+        "Also cap currentQuestionIndex for display: Math.min(session.currentQuestionIndex, 12) so it shows at most 12/12 not 33/12",
+        "The totalQuestions field should remain 12",
+        "Files: ventus-voice/backend/src/routes/agent-interview.routes.ts",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Wrapped all 3 bottom metric cards in Link components: Average Duration → /analytics?tab=overview, Total Spend → /analytics?tab=costs, API Calls → /analytics?tab=usage. Link already imported. Used className='block no-underline'. motion.div hover animations preserved inside Links. Typecheck passes."
+      "notes": "Capped progress with Math.min(100, ...) and currentQuestionIndex with Math.min(session.currentQuestionIndex, 12) on line 328-330 of agent-interview.routes.ts. Typecheck passes (38 pre-existing errors in unrelated files)."
     },
     {
       "id": "US-002",
-      "title": "Add View More links to chart components",
-      "description": "As a user, I want to drill down from Dashboard charts to the full analytics view.",
+      "title": "Improve Dashboard progress label from steps to stages",
+      "description": "As a user, I want the incomplete session card to show meaningful stage names instead of raw step counts.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In CallTrendsChart.tsx, after the </ResponsiveContainer> (around line 76) and before the closing </Card> (line 77), add a footer Link",
-        "Use the pattern: <Link to='/analytics?tab=overview' className='block mt-4'><Button variant='ghost' className='w-full justify-center gap-2 text-xs text-muted-foreground'>View All Trends <ArrowRight className='h-3 w-3' /></Button></Link>",
-        "Import Link from react-router-dom, Button from ui/button, ArrowRight from lucide-react",
-        "In CostAnalyticsChart.tsx, add same pattern after </ResponsiveContainer> (around line 64) with Link to /analytics?tab=costs and text View Cost Details",
-        "Files: ventus-voice/frontend/src/components/Dashboard/CallTrendsChart.tsx, ventus-voice/frontend/src/components/Dashboard/CostAnalyticsChart.tsx",
+        "In Dashboard.tsx around line 257, find where it displays currentQuestionIndex/totalQuestions steps (progress%)",
+        "Change the label from 'steps' to 'stages' to match the 7 logical stages concept",
+        "If the session data includes firstIncompleteStage, display it as a subtitle hint (e.g. 'Next: Configure voice')",
+        "If progress is 99 or more, show 'Almost done - test your agent' instead of the percentage",
+        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Added 'View All Trends' link to CallTrendsChart.tsx routing to /analytics?tab=overview, and 'View Cost Details' link to CostAnalyticsChart.tsx routing to /analytics?tab=costs. Both use Button ghost variant with ArrowRight icon. Imports added for Link, Button, ArrowRight. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Make recent session items clickable",
-      "description": "As a user, I want to click on a recent session in the Dashboard to see its details.",
+      "title": "Navigate Continue button to correct incomplete stage",
+      "description": "As a user, I want the Continue button to take me to the right place in the wizard, not always to the start.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In Dashboard.tsx around lines 298-350, each session item is a motion.div with cursor-pointer and key={session.id}",
-        "Wrap each motion.div in a <Link to={`/sessions/${session.id}`}> component",
-        "The Link should have className='block' and no text-decoration (to not affect card styling)",
-        "The motion.div inside can keep its existing hover animations and cursor-pointer",
-        "session.id is available from the RecentSession data structure",
-        "Verify the route /sessions/:sessionId exists in App.tsx (it does at line 279)",
+        "In Dashboard.tsx around lines 265-276, find the Continue button that links to /agents/create/interview",
+        "If the session data includes firstIncompleteStage, append it as a query param: /agents/create/interview?stage={firstIncompleteStage}",
+        "If firstIncompleteStage is not available, keep the existing /agents/create/interview link as fallback",
+        "The session data comes from agentForgeService.getIncompleteSession() which returns firstIncompleteStage as an optional field",
         "Files: ventus-voice/frontend/src/pages/Dashboard.tsx",
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Wrapped each session motion.div in <Link to={`/sessions/${session.id}`}> with className='block no-underline'. Moved key prop to Link. Hover animations and cursor-pointer preserved on inner motion.div. Route /sessions/:sessionId already exists in App.tsx. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Add monitoring link to sidebar in God Mode",
-      "description": "As a technical user in God Mode, I want to access the Monitoring dashboard from the sidebar instead of only through a Dashboard quick action.",
+      "title": "Add progress bar visual cap at 100%",
+      "description": "As a user, I want the progress bar width to never visually exceed 100% even with bad data.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In Sidebar.tsx, find the navigation items array (look for the array of { to, labelKey, icon } objects)",
-        "Add a new entry after the Analytics item: { to: '/monitoring', labelKey: 'monitoring', icon: Activity }",
-        "Import Activity from lucide-react (or use Monitor icon if Activity is already imported for something else)",
-        "This item should only show in God Mode -- check how other God-Mode-only items are conditionally rendered (look for isGodMode or viewMode checks)",
-        "If there is no i18n key for monitoring, use a direct label string 'Monitoring' as fallback",
-        "Files: ventus-voice/frontend/src/components/layout/Sidebar.tsx",
+        "In Dashboard.tsx, find the progress bar element that uses the progress percentage for its width",
+        "Ensure the width style uses Math.min(100, progress) so it never renders wider than 100%",
+        "If using a shadcn Progress component, verify it already caps internally -- if so this is a no-op",
+        "If using a raw div with style={{ width: progress + '%' }}, add the Math.min cap",
+        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx",
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Added monitoring nav link after Analytics in Sidebar.tsx with godModeOnly: true. Uses Activity icon from lucide-react. labelKey 'monitoring' already existed in modeLabels. Typecheck passes."
+      "passes": false,
+      "notes": ""
     }
   ]
 }

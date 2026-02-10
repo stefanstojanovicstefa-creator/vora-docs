@@ -1,43 +1,16 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 02 - Phase 2 - Dashboard Analytics Routing
-# Branch: ralph/audit-02-phase-2-dashboard-routing
+# Feature: Audit 03 - Phase 1 - Step Counter & Progress Fix
+# Branch: ralph/audit-03-phase-1-step-counter
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 - US-001: Add navigation links to bottom metric cards
-- Wrapped 3 bottom metric cards (Average Duration, Total Spend, API Calls) in Link components
-- Average Duration → /analytics?tab=overview
-- Total Spend → /analytics?tab=costs
-- API Calls → /analytics?tab=usage
-- Link was already imported; used className='block no-underline' to preserve layout
-- motion.div whileHover={{ y: -4 }} animations preserved inside Links
-- Typecheck passes ✅
-- File: ventus-voice/frontend/src/pages/Dashboard.tsx
-
-## Iteration 2 - US-002: Add View More links to chart components
-- Added "View All Trends" footer link to CallTrendsChart.tsx → /analytics?tab=overview
-- Added "View Cost Details" footer link to CostAnalyticsChart.tsx → /analytics?tab=costs
-- Both use Button ghost variant with ArrowRight icon, consistent pattern
-- Added imports: Link (react-router-dom), Button (ui/button), ArrowRight (lucide-react)
-- Typecheck passes ✅
-- Files: ventus-voice/frontend/src/components/Dashboard/CallTrendsChart.tsx, CostAnalyticsChart.tsx
-
-## Iteration 3 - US-003: Make recent session items clickable
-- Wrapped each session motion.div in <Link to={`/sessions/${session.id}`}>
-- Used className='block no-underline' on Link to preserve card styling
-- Moved key prop from motion.div to Link (React list rendering requirement)
-- Hover animations (scale: 1.01, x: 4) preserved on inner motion.div
-- Route /sessions/:sessionId already exists in App.tsx
-- Typecheck passes ✅
-- File: ventus-voice/frontend/src/pages/Dashboard.tsx
-
-## Iteration 4 - US-004: Add monitoring link to sidebar in God Mode
-- Added monitoring nav link after Analytics in Sidebar.tsx links array
-- Uses Activity icon from lucide-react (newly imported)
-- Set godModeOnly: true so it only shows in God Mode (hidden in Mom Mode)
-- labelKey 'monitoring' already exists in modeLabels constants
-- Typecheck passes ✅
-- File: ventus-voice/frontend/src/components/layout/Sidebar.tsx
+## Iteration 1 - US-001: Cap legacy interview progress at 100%
+- File: ventus-voice/backend/src/routes/agent-interview.routes.ts (line 328-330)
+- Changed `currentQuestionIndex` display to `Math.min(session.currentQuestionIndex, 12)` so it shows at most 12/12
+- Changed `progress` calculation to `Math.min(100, Math.round((session.currentQuestionIndex / 12) * 100))` to cap at 100%
+- totalQuestions remains 12 (unchanged)
+- Typecheck passes (38 pre-existing errors in unrelated files, none in changed file)
+- Status: DONE
 
