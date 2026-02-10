@@ -1,92 +1,82 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-02-phase-1-tutorial-trigger",
-  "description": "Phase 1: Fix tutorial trigger bug. Three compounding bugs prevent the tutorial from ever showing: missing auth guard on query, zero validation event dispatchers, dead code. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
+  "branchName": "ralph/audit-02-phase-2-dashboard-routing",
+  "description": "Phase 2: Fix dashboard analytics routing. Bottom metric cards, charts, and session items look clickable but have no navigation. Add proper links and a sidebar entry for monitoring. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Add auth guard to tutorial state query",
-      "description": "As a user, I want the tutorial to appear after I sign in for the first time, not fail silently due to unauthenticated API calls.",
+      "title": "Add navigation links to bottom metric cards",
+      "description": "As a user, I want the metric cards at the bottom of the Dashboard to navigate to relevant analytics pages when clicked.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In useTutorial.ts (around line 92-97), add enabled option to the useQuery call",
-        "Import useAuth from @clerk/clerk-react at the top of useTutorial.ts",
-        "Call const { isSignedIn } = useAuth() inside the useTutorial hook",
-        "Set enabled: !!isSignedIn on the useQuery options object so the query only fires when authenticated",
-        "The query should NOT fire on public routes (landing page, sign-in page)",
-        "When authenticated, the query should fetch /api/tutorial/state and shouldShowTutorial should become true for new users",
-        "Files: ventus-voice/frontend/src/hooks/useTutorial.ts",
+        "In Dashboard.tsx around lines 483-590, find the 3 bottom metric cards: Average Duration, Total Spend, API Calls",
+        "Each card is a motion.div with cursor-pointer but no navigation handler",
+        "Wrap each card in a Link component from react-router-dom (import Link if not already imported)",
+        "Average Duration card: Link to /analytics?tab=overview",
+        "Total Spend card: Link to /analytics?tab=costs",
+        "API Calls card: Link to /analytics?tab=usage",
+        "Style the Link with className block (to maintain card layout) and no text decoration",
+        "Existing hover animations (whileHover={{ y: -4 }}) should still work on the motion.div inside the Link",
+        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Added useAuth import from @clerk/clerk-react, destructured isSignedIn, added enabled: !!isSignedIn to useQuery options. Query now only fires when user is authenticated."
+      "notes": "Wrapped all 3 bottom metric cards in Link components: Average Duration → /analytics?tab=overview, Total Spend → /analytics?tab=costs, API Calls → /analytics?tab=usage. Link already imported. Used className='block no-underline'. motion.div hover animations preserved inside Links. Typecheck passes."
     },
     {
       "id": "US-002",
-      "title": "Add tutorial validation events to agent creation flows",
-      "description": "As a user completing the tutorial, I want step 2 (Create Agent) to be validated when I successfully create an agent.",
+      "title": "Add View More links to chart components",
+      "description": "As a user, I want to drill down from Dashboard charts to the full analytics view.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In InterviewBot.tsx, find the handleOverlayComplete function (around line 867-874). After the toast.success and before navigate(), add: window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'agent_created' } }))",
-        "In EnhancedAgentWizard.tsx, find handleDeploy function (around line 144-147). After toast.success and before navigate(), add the same dispatch",
-        "The CustomEvent detail must have key: 'agent_created' exactly (this matches what TutorialSystem.tsx listens for)",
-        "Do NOT modify TutorialSystem.tsx -- the listener is already correct",
-        "Files: ventus-voice/frontend/src/pages/InterviewBot.tsx, ventus-voice/frontend/src/components/AgentWizard/EnhancedAgentWizard.tsx",
+        "In CallTrendsChart.tsx, after the </ResponsiveContainer> (around line 76) and before the closing </Card> (line 77), add a footer Link",
+        "Use the pattern: <Link to='/analytics?tab=overview' className='block mt-4'><Button variant='ghost' className='w-full justify-center gap-2 text-xs text-muted-foreground'>View All Trends <ArrowRight className='h-3 w-3' /></Button></Link>",
+        "Import Link from react-router-dom, Button from ui/button, ArrowRight from lucide-react",
+        "In CostAnalyticsChart.tsx, add same pattern after </ResponsiveContainer> (around line 64) with Link to /analytics?tab=costs and text View Cost Details",
+        "Files: ventus-voice/frontend/src/components/Dashboard/CallTrendsChart.tsx, ventus-voice/frontend/src/components/Dashboard/CostAnalyticsChart.tsx",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Added window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'agent_created' } })) in InterviewBot.tsx handleOverlayComplete and EnhancedAgentWizard.tsx handleDeploy, both after toast.success and before navigate."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Add tutorial validation events to agent test flows",
-      "description": "As a user completing the tutorial, I want step 3 (Test Agent) to be validated when I complete a test call.",
+      "title": "Make recent session items clickable",
+      "description": "As a user, I want to click on a recent session in the Dashboard to see its details.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In AgentTestPage.tsx, find handleEndCall (around line 126-136). After endVoiceSession() resolves, add: if (transcript.length > 0) { window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'agent_tested' } })) }",
-        "In TestPanel.tsx, find handleEndCall (around line 253-266). After endCall() resolves, add the same dispatch with the transcript length check",
-        "Only dispatch if transcript.length > 0 (so just opening and immediately closing doesnt count)",
-        "The CustomEvent detail must have key: 'agent_tested' exactly",
-        "Files: ventus-voice/frontend/src/pages/AgentTestPage.tsx, ventus-voice/frontend/src/components/AgentTesting/TestPanel.tsx",
+        "In Dashboard.tsx around lines 298-350, each session item is a motion.div with cursor-pointer and key={session.id}",
+        "Wrap each motion.div in a <Link to={`/sessions/${session.id}`}> component",
+        "The Link should have className='block' and no text-decoration (to not affect card styling)",
+        "The motion.div inside can keep its existing hover animations and cursor-pointer",
+        "session.id is available from the RecentSession data structure",
+        "Verify the route /sessions/:sessionId exists in App.tsx (it does at line 279)",
+        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx",
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Added tutorial:validation dispatch with key 'agent_tested' in AgentTestPage.tsx and TestPanel.tsx handleEndCall, gated by transcript.length > 0."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Add tutorial validation events to phone connection flows",
-      "description": "As a user completing the tutorial, I want step 4 (Connect Number) to be validated when I connect a phone number.",
+      "title": "Add monitoring link to sidebar in God Mode",
+      "description": "As a technical user in God Mode, I want to access the Monitoring dashboard from the sidebar instead of only through a Dashboard quick action.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In PhoneNumbersPage.tsx, find createTrunkMutation onSuccess callback (around line 161-165). After toast.success, add: window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'phone_connected' } }))",
-        "In SIPSetupWizard.tsx, find createTrunkMutation onSuccess callback (around line 107-113). After toast.success, add the same dispatch",
-        "The CustomEvent detail must have key: 'phone_connected' exactly",
-        "Files: ventus-voice/frontend/src/pages/PhoneNumbersPage.tsx, ventus-voice/frontend/src/components/SIPWizard/SIPSetupWizard.tsx",
+        "In Sidebar.tsx, find the navigation items array (look for the array of { to, labelKey, icon } objects)",
+        "Add a new entry after the Analytics item: { to: '/monitoring', labelKey: 'monitoring', icon: Activity }",
+        "Import Activity from lucide-react (or use Monitor icon if Activity is already imported for something else)",
+        "This item should only show in God Mode -- check how other God-Mode-only items are conditionally rendered (look for isGodMode or viewMode checks)",
+        "If there is no i18n key for monitoring, use a direct label string 'Monitoring' as fallback",
+        "Files: ventus-voice/frontend/src/components/layout/Sidebar.tsx",
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Added tutorial:validation dispatch with key 'phone_connected' in PhoneNumbersPage.tsx and SIPSetupWizard.tsx createTrunkMutation onSuccess callbacks, after toast.success."
-    },
-    {
-      "id": "US-005",
-      "title": "Delete dead useTutorialProgress hook",
-      "description": "As a developer, I want dead code removed so it doesnt confuse future contributors.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "Delete the file ventus-voice/frontend/src/hooks/useTutorialProgress.ts",
-        "Verify no imports reference useTutorialProgress anywhere (grep the entire frontend/src directory)",
-        "If any imports exist, remove them",
-        "Files: ventus-voice/frontend/src/hooks/useTutorialProgress.ts (DELETE)",
-        "Typecheck passes"
-      ],
-      "priority": 5,
-      "passes": true,
-      "notes": "Deleted useTutorialProgress.ts. Confirmed no imports reference it anywhere in frontend/src. Typecheck passes."
+      "passes": false,
+      "notes": ""
     }
   ]
 }

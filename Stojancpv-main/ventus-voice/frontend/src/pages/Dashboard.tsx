@@ -481,112 +481,118 @@ export default function Dashboard() {
 
       {/* Additional Metrics */}
       <div className="grid gap-4 md:grid-cols-3">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          whileHover={{ y: -4 }}
-        >
-          <Card className="p-6 relative overflow-hidden group cursor-pointer">
-            <motion.div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{
-                background: 'radial-gradient(circle at top right, hsl(var(--primary) / 0.05), transparent)',
-              }}
-            />
-            <div className="flex items-center justify-between mb-2 relative z-10">
-              <span className="text-sm text-[hsl(var(--text-muted))]">
-                {averageDurationLabel}
-              </span>
+        <Link to="/analytics?tab=overview" className="block no-underline">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            whileHover={{ y: -4 }}
+          >
+            <Card className="p-6 relative overflow-hidden group cursor-pointer">
               <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-              >
-                <Clock className="h-4 w-4 text-[hsl(var(--primary))]" />
-              </motion.div>
-            </div>
-            <p className="text-xl font-semibold text-[hsl(var(--text-high))] tabular-nums relative z-10">
-              {formatDuration(stats?.avgCallDuration || 0)}
-            </p>
-            <p className="text-xs text-[hsl(var(--text-muted))] mt-1 relative z-10">
-              {t('analytics:dashboard.cost.perSessionAverage')}
-            </p>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          whileHover={{ y: -4 }}
-        >
-          <Card className="p-6 relative overflow-hidden group cursor-pointer">
-            <motion.div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{
-                background: 'radial-gradient(circle at top right, rgba(74, 222, 128, 0.05), transparent)',
-              }}
-            />
-            <div className="flex items-center justify-between mb-2 relative z-10">
-              <span className="text-sm text-[hsl(var(--text-muted))]">
-                {t('analytics:dashboard.cost.totalSpend')}
-              </span>
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <DollarSign className="h-4 w-4 text-[hsl(var(--success))]" />
-              </motion.div>
-            </div>
-            <p className="text-xl font-semibold text-[hsl(var(--text-high))] tabular-nums relative z-10">
-              ${stats?.totalCost.toFixed(2)}
-            </p>
-            <p className="text-xs text-[hsl(var(--text-muted))] mt-1 relative z-10">
-              {t('common:time.thisMonth')}
-            </p>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          whileHover={{ y: -4 }}
-        >
-          <Card className="p-6 relative overflow-hidden group cursor-pointer">
-            <motion.div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{
-                background: 'radial-gradient(circle at top right, rgba(251, 191, 36, 0.05), transparent)',
-              }}
-            />
-            <div className="flex items-center justify-between mb-2 relative z-10">
-              <span className="text-sm text-[hsl(var(--text-muted))]">
-                {t('analytics:dashboard.apiCalls.title')}
-              </span>
-              <motion.div
-                animate={{
-                  rotate: [0, 15, -15, 0],
-                  scale: [1, 1.1, 1.1, 1],
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background: 'radial-gradient(circle at top right, hsl(var(--primary) / 0.05), transparent)',
                 }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  repeatDelay: 1
+              />
+              <div className="flex items-center justify-between mb-2 relative z-10">
+                <span className="text-sm text-[hsl(var(--text-muted))]">
+                  {averageDurationLabel}
+                </span>
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+                >
+                  <Clock className="h-4 w-4 text-[hsl(var(--primary))]" />
+                </motion.div>
+              </div>
+              <p className="text-xl font-semibold text-[hsl(var(--text-high))] tabular-nums relative z-10">
+                {formatDuration(stats?.avgCallDuration || 0)}
+              </p>
+              <p className="text-xs text-[hsl(var(--text-muted))] mt-1 relative z-10">
+                {t('analytics:dashboard.cost.perSessionAverage')}
+              </p>
+            </Card>
+          </motion.div>
+        </Link>
+
+        <Link to="/analytics?tab=costs" className="block no-underline">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            whileHover={{ y: -4 }}
+          >
+            <Card className="p-6 relative overflow-hidden group cursor-pointer">
+              <motion.div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background: 'radial-gradient(circle at top right, rgba(74, 222, 128, 0.05), transparent)',
                 }}
-              >
-                <Zap className="h-4 w-4 text-[hsl(var(--warning))]" />
-              </motion.div>
-            </div>
-            <p className="text-xl font-semibold text-[hsl(var(--text-high))] tabular-nums relative z-10">
-              {((stats?.totalCalls || 0) * 3).toLocaleString()}
-            </p>
-            <p className="text-xs text-[hsl(var(--text-muted))] mt-1 relative z-10">
-              {t('analytics:dashboard.apiCalls.totalRequests')}
-            </p>
-          </Card>
-        </motion.div>
+              />
+              <div className="flex items-center justify-between mb-2 relative z-10">
+                <span className="text-sm text-[hsl(var(--text-muted))]">
+                  {t('analytics:dashboard.cost.totalSpend')}
+                </span>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <DollarSign className="h-4 w-4 text-[hsl(var(--success))]" />
+                </motion.div>
+              </div>
+              <p className="text-xl font-semibold text-[hsl(var(--text-high))] tabular-nums relative z-10">
+                ${stats?.totalCost.toFixed(2)}
+              </p>
+              <p className="text-xs text-[hsl(var(--text-muted))] mt-1 relative z-10">
+                {t('common:time.thisMonth')}
+              </p>
+            </Card>
+          </motion.div>
+        </Link>
+
+        <Link to="/analytics?tab=usage" className="block no-underline">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            whileHover={{ y: -4 }}
+          >
+            <Card className="p-6 relative overflow-hidden group cursor-pointer">
+              <motion.div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background: 'radial-gradient(circle at top right, rgba(251, 191, 36, 0.05), transparent)',
+                }}
+              />
+              <div className="flex items-center justify-between mb-2 relative z-10">
+                <span className="text-sm text-[hsl(var(--text-muted))]">
+                  {t('analytics:dashboard.apiCalls.title')}
+                </span>
+                <motion.div
+                  animate={{
+                    rotate: [0, 15, -15, 0],
+                    scale: [1, 1.1, 1.1, 1],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    repeatDelay: 1
+                  }}
+                >
+                  <Zap className="h-4 w-4 text-[hsl(var(--warning))]" />
+                </motion.div>
+              </div>
+              <p className="text-xl font-semibold text-[hsl(var(--text-high))] tabular-nums relative z-10">
+                {((stats?.totalCalls || 0) * 3).toLocaleString()}
+              </p>
+              <p className="text-xs text-[hsl(var(--text-muted))] mt-1 relative z-10">
+                {t('analytics:dashboard.apiCalls.totalRequests')}
+              </p>
+            </Card>
+          </motion.div>
+        </Link>
       </div>
     </motion.div>
   );

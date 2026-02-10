@@ -1,38 +1,18 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 02 - Phase 1 - Tutorial Trigger Fix
-# Branch: ralph/audit-02-phase-1-tutorial-trigger
+# Feature: Audit 02 - Phase 2 - Dashboard Analytics Routing
+# Branch: ralph/audit-02-phase-2-dashboard-routing
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 - US-001: Add auth guard to tutorial state query
-- Added `useAuth` import from `@clerk/clerk-react` to useTutorial.ts
-- Destructured `isSignedIn` from `useAuth()` inside the hook
-- Added `enabled: !!isSignedIn` to the useQuery options
-- Query now only fires when user is authenticated (not on public routes)
+## Iteration 1 - US-001: Add navigation links to bottom metric cards
+- Wrapped 3 bottom metric cards (Average Duration, Total Spend, API Calls) in Link components
+- Average Duration → /analytics?tab=overview
+- Total Spend → /analytics?tab=costs
+- API Calls → /analytics?tab=usage
+- Link was already imported; used className='block no-underline' to preserve layout
+- motion.div whileHover={{ y: -4 }} animations preserved inside Links
 - Typecheck passes ✅
+- File: ventus-voice/frontend/src/pages/Dashboard.tsx
 
-## Iteration 2 - US-002: Add tutorial validation events to agent creation flows
-- Added `tutorial:validation` CustomEvent dispatch with `key: 'agent_created'` in InterviewBot.tsx handleOverlayComplete (after toast.success, before navigate)
-- Added same dispatch in EnhancedAgentWizard.tsx handleDeploy (after toast.success, before navigate)
-- TutorialSystem.tsx not modified (listener already correct)
-- Typecheck passes ✅
-
-## Iteration 3 - US-003: Add tutorial validation events to agent test flows
-- Added `tutorial:validation` CustomEvent dispatch with `key: 'agent_tested'` in AgentTestPage.tsx handleEndCall (after endVoiceSession resolves)
-- Added same dispatch in TestPanel.tsx handleEndCall (after endCall resolves)
-- Both gated by `transcript.length > 0` so opening/immediately closing doesn't count
-- Typecheck passes ✅
-
-## Iteration 4 - US-004: Add tutorial validation events to phone connection flows
-- Added `tutorial:validation` CustomEvent dispatch with `key: 'phone_connected'` in PhoneNumbersPage.tsx createTrunkMutation onSuccess (after toast.success)
-- Added same dispatch in SIPSetupWizard.tsx createTrunkMutation onSuccess (after toast.success)
-- Typecheck passes ✅
-
-## Iteration 5 - US-005: Delete dead useTutorialProgress hook
-- Deleted `ventus-voice/frontend/src/hooks/useTutorialProgress.ts`
-- Verified no imports reference `useTutorialProgress` anywhere in frontend/src
-- Typecheck passes ✅
-
-ALL STORIES COMPLETE.
