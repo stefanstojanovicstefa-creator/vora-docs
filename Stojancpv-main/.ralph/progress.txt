@@ -29,3 +29,10 @@
 - No code change needed - already satisfies all acceptance criteria
 - Status: DONE (no-op)
 
+## Iteration 4 - US-004: Add progress bar visual cap at 100%
+- File: ventus-voice/frontend/src/pages/Dashboard.tsx (line 267)
+- Changed width style from `${incompleteSession.progress}%` to `${Math.min(100, incompleteSession.progress)}%`
+- Uses raw div with style={{ width }}, so Math.min cap is the correct fix
+- Typecheck passes cleanly (0 errors)
+- Status: DONE
+

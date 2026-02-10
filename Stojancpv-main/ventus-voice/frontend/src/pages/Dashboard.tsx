@@ -266,7 +266,7 @@ export default function Dashboard() {
               <div className="w-full bg-[hsl(var(--surface))] rounded-full h-2 mb-4">
                 <div
                   className="bg-[hsl(var(--primary))] h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${incompleteSession.progress}%` }}
+                  style={{ width: `${Math.min(100, incompleteSession.progress)}%` }}
                 />
               </div>
             </div>

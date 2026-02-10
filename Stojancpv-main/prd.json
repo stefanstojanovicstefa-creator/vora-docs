@@ -68,8 +68,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added Math.min(100, incompleteSession.progress) to progress bar width style. The raw div uses style={{ width }} so the cap is needed as a defensive measure. Typecheck passes."
     }
   ]
 }
