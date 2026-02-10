@@ -1164,6 +1164,37 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 - Sidebar footer has Privacy and Terms links
 - AI-generated template warning banner displayed on every policy page
 
+## Iteration 35: US-L01 - Comprehensive Local Seed Script
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/backend/prisma/seed-local.ts`:
+   - Created comprehensive local seed script with DEMO_USER_ID and DEMO_ORG_ID constants (env-overridable)
+   - Seeds 1 organization via upsert: Vora Demo Workspace with clerkOrgId, slug
+   - Seeds 1 user via upsert: Demo User with email, apiKey, orgId linkage
+   - Seeds 3 agents via upsert: Customer Support (ACTIVE), Sales Outreach (ACTIVE), Interview Screener (DRAFT)
+   - Seeds 5 sessions via createMany/skipDuplicates: durations 30-180s, spread over last 7 days, mix of clean and errored sessions
+   - Seeds 3 credit packs (inline data matching seed-credit-packs.ts pattern)
+   - Seeds 6 core pricing entries (LLM/STT/TTS providers)
+   - main() runs all in order: org → user → agents → sessions → credit packs → pricing
+   - prisma.$disconnect() in finally block
+   - Progress logging with checkmarks
+
+2. `ventus-voice/backend/package.json`:
+   - Added `"seed:local": "tsx prisma/seed-local.ts"` script
+
+**Schema Adaptation Notes**:
+- Prisma `users` model has `name` (not firstName/lastName), `orgId` (not organizationId), no `clerkUserId` field
+- Prisma `agent_sessions` has no `status` enum — uses `endedAt` presence and `errorCount` to distinguish completed/failed
+- All adapted to match actual schema while fulfilling criteria intent
+
+**Verification**:
+- TypeScript typecheck passes (zero errors from seed-local.ts)
+- Pre-existing errors unchanged
+
+---
+
 ## Iteration 32: US-406 - Implement Model Routing Layer
 
 **Status**: COMPLETE
