@@ -1,65 +1,48 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/locally-running-dashboard-phase-2",
-  "description": "Phase 2: DX Polish - Docker Compose alternative, port conflict detection, colored output, and root NPM aliases for the local development environment. IMPORTANT: The codebase is at ventus-voice/frontend/ and ventus-voice/backend/ (NOT at project root frontend/ backend/).",
+  "branchName": "ralph/locally-running-dashboard-phase-3",
+  "description": "Phase 3: Documentation & Onboarding - Create LOCAL_DEVELOPMENT.md with setup guide, troubleshooting, and architecture overview. IMPORTANT: The codebase is at ventus-voice/frontend/ and ventus-voice/backend/ (NOT at project root frontend/ backend/).",
   "userStories": [
     {
-      "id": "US-L06",
-      "title": "Docker Compose for Local Stack",
-      "description": "As a developer who prefers Docker, I want a docker-compose.local.yml that runs the full stack (PostgreSQL, backend, frontend) in containers.",
+      "id": "US-L09",
+      "title": "Create LOCAL_DEVELOPMENT.md Guide",
+      "description": "As a new developer, I want comprehensive documentation for running the Vora dashboard locally so I can go from clone to running in 5 minutes.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
-        "Create ventus-voice/docker-compose.local.yml",
-        "Define 3 services: postgres (image: postgres:15), backend (build from backend/Dockerfile or node:20 image), frontend (node:20 image)",
-        "PostgreSQL service: named volume 'vora-pg-data' for persistence, POSTGRES_DB=vora_dev, POSTGRES_USER=postgres, POSTGRES_PASSWORD=postgres, port 5432, healthcheck using pg_isready",
-        "Backend service: depends_on postgres (condition: service_healthy), working_dir /app, volume mount ./backend:/app and named volume for node_modules, port 3001, command that runs npm install && npx prisma generate && npx prisma migrate deploy && npm run dev",
-        "Frontend service: depends_on backend, working_dir /app, volume mount ./frontend:/app and named volume for node_modules, port 8080, command that runs npm install && npm run dev",
-        "Use env_file for both backend (./backend/.env) and frontend (./frontend/.env)",
-        "Override DATABASE_URL in backend environment to point to Docker postgres: postgresql://postgres:postgres@postgres:5432/vora_dev",
-        "Named volumes defined: vora-pg-data, backend-node-modules, frontend-node-modules",
-        "docker compose -f docker-compose.local.yml up builds and starts everything",
-        "docker compose -f docker-compose.local.yml down -v cleans all volumes"
+        "Create ventus-voice/LOCAL_DEVELOPMENT.md",
+        "Quick Start section at the top: 5-6 shell commands from clone to running (cd ventus-voice, npm run install:all, npm run setup, npm run local)",
+        "Prerequisites section: Node.js 20+, PostgreSQL 15+ (or Docker), npm, Git",
+        "Environment Variables section: table with columns Name, Required, Default, Description for all vars in both frontend/.env and backend/.env",
+        "Bare Metal Setup section: step-by-step for manual setup (install deps, create DB, migrate, seed, start backend, start frontend)",
+        "Docker Setup section: how to use docker-compose.local.yml (docker compose -f docker-compose.local.yml up)",
+        "Architecture Overview section: ASCII diagram showing: Browser -> Frontend (localhost:8080) -> Backend API (localhost:3001) -> PostgreSQL (localhost:5432), and external services (Clerk Auth, LiveKit Cloud, OpenAI/Google APIs)",
+        "Available Scripts section: table of all npm run commands from ventus-voice/package.json with descriptions",
+        "Feature Availability Matrix section: table showing which features work with which API keys (e.g., Voice calls need LIVEKIT keys, Brand analysis needs GOOGLE_API_KEY, etc.)",
+        "Seed Data section: describe what the seed script creates (1 org, 1 user, 3 agents, 5 sessions, credit packs, pricing)",
+        "Troubleshooting section with 10+ common issues: CORS errors, 401 Unauthorized, DB connection failed, migration errors, port in use, blank page, WebSocket failed, Prisma client not generated, missing env vars, Node version mismatch. Each has symptom, cause, fix command",
+        "Nuclear Reset section: complete wipe and rebuild (npm run db:reset, rm -rf node_modules, reinstall)",
+        "No emoji in the document"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Created ventus-voice/docker-compose.local.yml with 3 services: postgres (postgres:15, healthcheck via pg_isready, named volume vora-pg-data), backend (node:20, depends_on postgres healthy, volume mounts for code + named volume for node_modules, port 3001, env_file + DATABASE_URL override pointing to Docker postgres), frontend (node:20, depends_on backend, volume mounts + named node_modules, port 8080, env_file). All 3 named volumes defined. Commands run npm install + prisma generate + migrate deploy + dev for backend, npm install + dev for frontend."
+      "notes": "Created ventus-voice/LOCAL_DEVELOPMENT.md with all required sections: Quick Start (6 commands), Prerequisites table, Environment Variables tables (backend + frontend), Bare Metal Setup (6 steps), Docker Setup with docker-compose.local.yml, ASCII Architecture Overview with external services, Available Scripts tables (root + backend), Feature Availability Matrix, Seed Data table (1 org, 1 user, 3 agents, 5 sessions, 3 credit packs, 6 pricing entries), Troubleshooting with 11 issues (CORS, 401, DB connection, migrations, port in use, blank page, WebSocket, Prisma client, missing env, Node version, Redis), Nuclear Reset section. No emoji used."
     },
     {
-      "id": "US-L07",
-      "title": "Port Conflict Detection in Start Script",
-      "description": "As a developer, I want the start script to detect and report port conflicts before starting services.",
+      "id": "US-L10",
+      "title": "Update Backend README with Local Dev Reference",
+      "description": "As a developer, I want the backend README to reference the new local development guide and list database commands.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
-        "Read the existing ventus-voice/start-local.sh",
-        "Enhance the port checking steps (3001 and 8080) to show the process name and command that occupies the port",
-        "Use lsof -ti:PORT to get PID, then ps -p PID -o comm= to get process name",
-        "If port 3001 is occupied: print 'Port 3001 is in use by [process] (PID: [pid])' in yellow, ask 'Kill it? (y/N)' and kill if confirmed",
-        "If port 8080 is occupied: same behavior",
-        "If user declines to kill: exit with message suggesting to free the port manually",
-        "Keep existing functionality intact (preflight, install, db setup, startup)"
+        "Read the existing ventus-voice/backend/README.md",
+        "Add a 'Local Development' section that links to ../LOCAL_DEVELOPMENT.md for full setup guide",
+        "Add a 'Database Commands' subsection listing: db:setup-local, db:reset-local, db:seed-local, db:generate, db:migrate, db:studio with brief descriptions",
+        "Add a 'Quick Start (Backend Only)' subsection: npm install, create .env from .env.example, npm run db:setup-local, npm run dev",
+        "Keep ALL existing content intact - only add new sections",
+        "No emoji in additions"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Enhanced port checking in ventus-voice/start-local.sh with a reusable check_port() function. For each port (3001 backend, 8080 frontend): uses lsof -ti:PORT to get PID, ps -p PID -o comm= to get process name, prints yellow warning 'Port PORT (label) is in use by PROCESS (PID: PID)', prompts 'Kill it? (y/N)', kills process if confirmed (with post-kill verification via lsof), exits with manual fix suggestion if user declines. All existing functionality preserved (preflight, install, db setup, startup). bash -n syntax check passes."
-    },
-    {
-      "id": "US-L08",
-      "title": "Colored Output and Progress Indicators",
-      "description": "As a developer, I want the start script to use colors and visual indicators for better readability.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
-        "Read the existing ventus-voice/start-local.sh",
-        "Add ANSI color variables at the top: RED, GREEN, YELLOW, BLUE, BOLD, RESET",
-        "Add helper functions: info() prints blue text, success() prints green with checkmark, warn() prints yellow with warning symbol, error() prints red with X",
-        "Replace all echo statements with appropriate color functions",
-        "Add a banner at the top with the Vora name in bold/blue",
-        "Add a spinner function that shows dots while waiting for backend health check",
-        "Add a final summary box with borders showing access URLs",
-        "Check if terminal supports colors (test -t 1) and disable colors if not (e.g., piped output)"
-      ],
-      "priority": 3,
-      "passes": true,
-      "notes": "Rewrote ventus-voice/start-local.sh with full color support. Added ANSI color variables (RED, GREEN, YELLOW, BLUE, BOLD, RESET) with terminal detection via 'test -t 1' — colors disabled when piped. Added helper functions: info() blue text, success() green with checkmark, warn() yellow with warning symbol, error() red with X. Replaced all echo statements with appropriate color functions. Added bold/blue banner at top with Unicode box-drawing characters. Added spinner() function that shows animated dots while waiting for backend health check (runs as background process, killed when health check completes or times out). Added final summary box in bold/green with Unicode borders showing Frontend, Backend, and DB Studio URLs. All existing functionality preserved (preflight, install, db setup, port check, startup, cleanup trap). bash -n syntax check passes."
+      "passes": false,
+      "notes": ""
     }
   ]
 }

@@ -1468,3 +1468,30 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 - Spinner background process properly killed in both success and timeout paths
 - All existing functionality preserved (preflight, install, db setup, port check with kill prompt, backend/frontend startup, cleanup trap)
 
+## Iteration 9: US-L09 - Create LOCAL_DEVELOPMENT.md Guide
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. Created `ventus-voice/LOCAL_DEVELOPMENT.md` with comprehensive local development documentation.
+
+**Sections included**:
+- **Quick Start**: 6 shell commands (git clone, cd, install:all, cp envs, setup, local)
+- **Prerequisites**: Table with Node.js 20+, npm 10+, PostgreSQL 15+, Git 2.30+, Docker (optional)
+- **Environment Variables**: Two tables covering all backend/.env and frontend/.env variables with Required, Default, Description columns
+- **Bare Metal Setup**: 6-step manual setup (install deps, create DB, configure env, migrate+seed, start backend, start frontend)
+- **Docker Setup**: docker-compose.local.yml usage with services table (PostgreSQL, Redis, pgAdmin, Redis Commander)
+- **Architecture Overview**: ASCII diagram showing Browser -> Frontend (8080) -> Backend API (3001) -> PostgreSQL (5432), plus list of external services
+- **Available Scripts**: Two tables - root package.json commands and backend package.json commands
+- **Feature Availability Matrix**: Table mapping features to required API keys (dashboard, voice calls, agent compiler, brand analysis, etc.)
+- **Seed Data**: Table describing what seed-local.ts creates (1 org, 1 user, 3 agents, 5 sessions, 3 credit packs, 6 pricing entries)
+- **Troubleshooting**: 11 common issues each with Symptom/Cause/Fix (CORS, 401, DB connection, migrations, port in use, blank page, WebSocket, Prisma client, missing env vars, Node version, Redis connection)
+- **Nuclear Reset**: Complete wipe and rebuild procedure (8 steps)
+
+**Verification**:
+- No emoji used anywhere in the document
+- All file paths reference ventus-voice/ correctly
+- Environment variable tables sourced from actual .env.example files
+- Script tables sourced from actual package.json files
+- Seed data description matches seed-local.ts implementation
+
