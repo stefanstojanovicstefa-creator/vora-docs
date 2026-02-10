@@ -1,82 +1,31 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-06-phase-1-components-wiring",
-  "description": "Phase 1: Wire Components tab in Flow Studio to existing backend API via React Query. IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/).",
+  "branchName": "ralph/audit-06-phase-2-minimal-publish",
+  "description": "Phase 2: Implement minimal flow publish — validate, set flag, show published state. IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Add component query keys to query-keys.ts",
-      "description": "As a developer, I want component query keys defined so React Query can manage component data caching and invalidation.",
+      "title": "Add publish endpoint and wire handlePublish to real backend call",
+      "description": "As a user, I want the Publish button to actually publish my flow so it becomes the active version.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/",
-        "In ventus-voice/frontend/src/lib/query-keys.ts, add a 'components' section to the queryKeys object",
-        "Follow the existing pattern used for other resources (e.g., agents, brands)",
-        "Define keys: all: ['components'], lists: () => [...all, 'list'], list: (filters?) => [...lists(), filters ?? {}], details: () => [...all, 'detail'], detail: (id: string) => [...details(), id]",
-        "Export the keys as part of the existing queryKeys object",
-        "Files: ventus-voice/frontend/src/lib/query-keys.ts",
+        "Check the flow model in ventus-voice/backend/prisma/schema.prisma — look for the Flow or AgentFlow model that stores flow data",
+        "If the flow model already has isPublished/publishedAt fields, use them. If not, the publish action should set isActive=true and update updatedAt timestamp (or whatever existing field marks the flow as the live version)",
+        "In ventus-voice/backend/src/routes/flow.routes.ts, check if a POST /:agentId/flow/publish endpoint already exists",
+        "If no publish endpoint exists: add one that (1) runs the existing validation logic, (2) if valid, updates the flow record to mark it as published/active, (3) returns { success: true, publishedAt: timestamp }",
+        "If a publish endpoint already exists, verify it works correctly",
+        "In ventus-voice/frontend/src/pages/FlowStudioPage.tsx, find handlePublish (the one with the TODO comment about actual publish logic)",
+        "Replace the stub toast.success with an actual API call to POST /api/agents/:agentId/flow/publish",
+        "On success: show toast.success('Flow published successfully') with the publishedAt timestamp",
+        "On validation failure: show toast.error with the validation errors (this part may already work)",
+        "On API error: show toast.error with the error message",
+        "Add a visual indicator in the Flow Studio UI that shows whether the flow is published or in draft state — a small badge or text near the save status area",
+        "Files: ventus-voice/backend/src/routes/flow.routes.ts, ventus-voice/frontend/src/pages/FlowStudioPage.tsx",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Added components section to queryKeys object in query-keys.ts following the existing pattern (all, lists, list with filters, details, detail by id). Typecheck passes."
-    },
-    {
-      "id": "US-002",
-      "title": "Rewrite useComponentLibrary hook to fetch from backend via React Query",
-      "description": "As a user, I want the Components tab to show real components from the backend instead of an empty list.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/",
-        "In ventus-voice/frontend/src/components/FlowStudio/hooks/useComponentLibrary.ts, replace the empty useState with a useQuery call",
-        "The query should call GET /api/components (use the api client pattern from elsewhere in the codebase)",
-        "Use the component query keys from US-001 for the query key",
-        "Map the API response to the existing FlowComponent interface (id, name, description, version, isPublic, tags, inputCount, outputCount, exitPathCount, usageCount, createdAt, updatedAt)",
-        "Add a useMutation for deleteComponent that calls DELETE /api/components/:id and invalidates the component list query",
-        "Add a useMutation for duplicateComponent that calls POST /api/components with the duplicated data and invalidates the list query",
-        "Keep the existing search/filter logic (searchQuery, filteredComponents, myComponents, publicComponents) but apply it to the fetched data",
-        "The hook should still return the same interface: { components, myComponents, publicComponents, isLoading, searchQuery, setSearchQuery, deleteComponent, duplicateComponent }",
-        "Files: ventus-voice/frontend/src/components/FlowStudio/hooks/useComponentLibrary.ts",
-        "Typecheck passes"
-      ],
-      "priority": 2,
-      "passes": true,
-      "notes": "Rewrote useComponentLibrary to use useQuery (GET /api/components) with queryKeys.components.lists(). Added useMutation for delete (DELETE /api/components/:id) and duplicate (POST /api/components). Mapped API response to FlowComponent interface. Kept same return interface. Typecheck passes."
-    },
-    {
-      "id": "US-003",
-      "title": "Replace Components tab stub with ComponentLibrarySidebar",
-      "description": "As a user, I want the Components tab to show the real component library instead of a placeholder.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/",
-        "In ventus-voice/frontend/src/pages/FlowStudioPage.tsx, find the Components tab content block (the one that renders when sidebarTab === 'components')",
-        "Replace the placeholder div (with Component icon, 'Reusable components' text, and 'Save node groups...' subtitle) with: import and render <ComponentLibrarySidebar />",
-        "Import ComponentLibrarySidebar from '@/components/FlowStudio/ComponentLibrarySidebar'",
-        "The ComponentLibrarySidebar accepts an optional onDragStart prop — pass it if FlowStudioPage already has a drag handler, otherwise omit it",
-        "Files: ventus-voice/frontend/src/pages/FlowStudioPage.tsx",
-        "Typecheck passes"
-      ],
-      "priority": 3,
-      "passes": true,
-      "notes": "Replaced placeholder div in FlowStudioPage with <ComponentLibrarySidebar /> import. Added import from @/components/FlowStudio/ComponentLibrarySidebar. No onDragStart prop passed as FlowStudioPage doesn't have a component drag handler. Typecheck passes."
-    },
-    {
-      "id": "US-004",
-      "title": "Wire ComponentCreateModal save to backend POST mutation",
-      "description": "As a user, I want saving a component from the modal to actually persist it to the backend.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/",
-        "Find where ComponentCreateModal is used in the FlowStudio codebase (search for ComponentCreateModal in ventus-voice/frontend/src/)",
-        "The modal has an onSave prop that receives ComponentCreateData",
-        "Wire the onSave handler to call POST /api/components using a useMutation (or use the mutation from the useComponentLibrary hook if it exposes a createComponent mutation)",
-        "The POST body should include: name, description, flow (the selected nodes/edges as JSON), inputs (inputVariables), outputs (outputVariables), exitPaths, isPublic, tags — mapped from ComponentCreateData",
-        "On success: show a success toast, invalidate the components list query, and close the modal",
-        "On error: show an error toast with the error message",
-        "If ComponentCreateModal is not yet rendered/mounted anywhere in FlowStudioPage, add it with proper open/onClose state management",
-        "Files: ventus-voice/frontend/src/pages/FlowStudioPage.tsx (or wherever the modal is used)",
-        "Typecheck passes"
-      ],
-      "priority": 4,
-      "passes": true,
-      "notes": "Wired ComponentCreateModal save in FlowCanvas.tsx to POST /api/components via useMutation. Maps ComponentCreateData fields (inputVariables, outputVariables, exitPaths, name, description, isPublic, tags) to backend CreateComponentSchema. Captures selected nodes/edges as flow JSON. Success: toast + invalidate components query + close modal. Error: toast with error message. Typecheck passes."
+      "notes": "Added POST /:agentId/flow/publish endpoint in flow.routes.ts that validates the flow using existing validateFlow(), then updates isActive+updatedAt. Wired handlePublish in FlowStudioPage.tsx to call the API with loading state, error handling, and success toast with publishedAt timestamp. Added Published/Draft badge next to save status in top bar. All pre-existing TS errors unrelated to changes; frontend typecheck passes clean."
     }
   ]
 }

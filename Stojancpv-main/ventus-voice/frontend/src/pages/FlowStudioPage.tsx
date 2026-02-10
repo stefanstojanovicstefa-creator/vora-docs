@@ -367,7 +367,10 @@ function FlowStudioInner({ agentName, initialFlow }: FlowStudioInnerProps) {
     return errors;
   }, [validateFlow, ctx.flowState.nodes.length, ctx.flowState.edges.length]);
 
-  const handlePublish = useCallback(() => {
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishedAt, setPublishedAt] = useState<string | null>(null);
+
+  const handlePublish = useCallback(async () => {
     const errors = validateFlow();
     if (errors.length > 0) {
       toast.error("Cannot publish — fix validation errors first", {
@@ -375,9 +378,28 @@ function FlowStudioInner({ agentName, initialFlow }: FlowStudioInnerProps) {
       });
       return;
     }
-    // TODO: implement actual publish logic
-    toast.success("Flow published successfully");
-  }, [validateFlow]);
+
+    setIsPublishing(true);
+    try {
+      // Save first to ensure latest changes are persisted
+      ctx.saveNow();
+
+      const result = await apiClient.post<{ success: boolean; publishedAt: string }>(
+        `/api/agents/${ctx.agentId}/flow/publish`
+      );
+
+      setPublishedAt(result.publishedAt);
+      toast.success("Flow published successfully", {
+        description: `Published at ${new Date(result.publishedAt).toLocaleTimeString()}`,
+        icon: <CheckCircle className="h-4 w-4 text-emerald-400" />,
+      });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to publish flow";
+      toast.error("Publish failed", { description: errorMessage });
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [validateFlow, ctx]);
 
   // --------------- Flow Test Simulation (US-402) ---------------
   const [testPanelOpen, setTestPanelOpen] = useState(false);
@@ -865,6 +887,21 @@ function FlowStudioInner({ agentName, initialFlow }: FlowStudioInnerProps) {
               {saveIcon}
               <span className="text-xs text-[hsl(var(--text-subtle))]">{saveLabel}</span>
             </div>
+            {publishedAt ? (
+              <Badge
+                variant="outline"
+                className="text-xs text-emerald-400 border-emerald-400/30 bg-emerald-400/10 ml-2"
+              >
+                Published
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className="text-xs text-amber-400 border-amber-400/30 bg-amber-400/10 ml-2"
+              >
+                Draft
+              </Badge>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -886,9 +923,14 @@ function FlowStudioInner({ agentName, initialFlow }: FlowStudioInnerProps) {
               size="sm"
               className="text-xs bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary))]/90"
               onClick={handlePublish}
+              disabled={isPublishing}
             >
-              <Upload className="h-3.5 w-3.5 me-1" />
-              Publish
+              {isPublishing ? (
+                <Loader2 className="h-3.5 w-3.5 me-1 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5 me-1" />
+              )}
+              {isPublishing ? "Publishing..." : "Publish"}
             </Button>
           </div>
         </div>

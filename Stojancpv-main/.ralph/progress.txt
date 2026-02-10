@@ -1,45 +1,38 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 06 - Phase 1 - Components Tab Wiring
-# Branch: ralph/audit-06-phase-1-components-wiring
+# Feature: Audit 06 - Phase 2 - Minimal Flow Publish
+# Branch: ralph/audit-06-phase-2-minimal-publish
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 — US-001: Add component query keys to query-keys.ts
-- Added `components` section to `queryKeys` object in `ventus-voice/frontend/src/lib/query-keys.ts`
-- Follows existing pattern: `all`, `lists()`, `list(filters?)`, `details()`, `detail(id)`
-- Typecheck passes cleanly
-- Status: ✅ DONE
+## Iteration 1 — US-001: Add publish endpoint and wire handlePublish
 
-## Iteration 2 — US-002: Rewrite useComponentLibrary hook with React Query
-- Replaced empty useState with useQuery calling GET /api/components
-- Used queryKeys.components.lists() for cache key
-- Added useMutation for deleteComponent (DELETE /api/components/:id) with query invalidation
-- Added useMutation for duplicateComponent (POST /api/components) with query invalidation
-- Mapped API response (ComponentListResponse) to FlowComponent interface
-- Kept same return interface: { components, myComponents, publicComponents, isLoading, searchQuery, setSearchQuery, deleteComponent, duplicateComponent }
-- Typecheck passes cleanly
-- Status: ✅ DONE
+### What was done:
+1. **Backend**: Added `POST /:agentId/flow/publish` endpoint in `ventus-voice/backend/src/routes/flow.routes.ts`
+   - Verifies auth and agent ownership
+   - Fetches the active flow
+   - Runs existing `validateFlow()` to check for errors
+   - Returns 400 with validation details if invalid
+   - Updates `isActive=true` and `updatedAt` timestamp on success
+   - Returns `{ success: true, publishedAt: <iso string>, flow: { id, name, version, isActive, updatedAt } }`
 
-## Iteration 3 — US-003: Replace Components tab stub with ComponentLibrarySidebar
-- Replaced placeholder div (Component icon + "Reusable components" text) with <ComponentLibrarySidebar />
-- Added import from @/components/FlowStudio/ComponentLibrarySidebar
-- No onDragStart prop needed — FlowStudioPage doesn't have a component drag handler
-- Component lucide icon still used for sidebar tab, import retained
-- Typecheck passes cleanly
-- Status: ✅ DONE
+2. **Frontend**: Replaced stub `handlePublish` in `ventus-voice/frontend/src/pages/FlowStudioPage.tsx`
+   - Calls `ctx.saveNow()` first to persist latest changes
+   - Makes `POST /api/agents/:agentId/flow/publish` API call
+   - Shows loading spinner on Publish button during request
+   - On success: shows toast with publishedAt timestamp, updates `publishedAt` state
+   - On validation failure: shows toast.error with message
+   - On API error: shows toast.error with error details
 
-## Iteration 4 — US-004: Wire ComponentCreateModal save to backend POST mutation
-- Found ComponentCreateModal used in FlowCanvas.tsx (handleComponentSave callback)
-- Added useMutation for POST /api/components with full payload mapping:
-  - name, description, isPublic, tags from ComponentCreateData
-  - flow: { nodes: selectedNodes, edges: internalEdges }
-  - inputs/outputs: mapped from inputVariables/outputVariables with type "string"
-  - exitPaths: mapped from detected exit paths
-- On success: toast.success, invalidate components query, close modal
-- On error: toast.error with error message
-- Added imports: useMutation, useQueryClient, apiClient, queryKeys, toast
-- Typecheck passes cleanly
-- Status: ✅ DONE
+3. **UI Badge**: Added Published/Draft badge in the top bar next to save status
+   - Green "Published" badge when `publishedAt` is set
+   - Amber "Draft" badge when not yet published
 
+### Typecheck: ✅ Frontend passes clean. Backend has pre-existing errors in unrelated files only.
+
+### Files modified:
+- `ventus-voice/backend/src/routes/flow.routes.ts` — new publish endpoint
+- `ventus-voice/frontend/src/pages/FlowStudioPage.tsx` — real publish logic + badge
+
+---
