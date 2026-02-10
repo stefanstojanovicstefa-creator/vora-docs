@@ -1416,3 +1416,28 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 - DATABASE_URL override in backend environment points to Docker postgres service name
 - Named node_modules volumes prevent host/container dependency conflicts
 
+## Iteration 41: US-L07 - Port Conflict Detection in Start Script
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/start-local.sh`:
+   - Replaced inline port checking (Steps 6-7) with reusable `check_port()` function
+   - `check_port PORT LABEL` function:
+     - Uses `lsof -ti:PORT | head -1` to get PID (head -1 handles multiple PIDs)
+     - Uses `ps -p PID -o comm=` to get process name
+     - Prints yellow warning: "Port PORT (LABEL) is in use by PROCESS (PID: PID)"
+     - Prompts: "Kill it? (y/N)"
+     - If confirmed (y/Y): kills process, waits 1s, verifies port is free via lsof
+     - If kill fails: prints red error with `kill -9` suggestion, exits 1
+     - If declined: prints manual fix message with kill command, exits 1
+   - Called for both ports: `check_port 3001 "backend"` and `check_port 8080 "frontend"`
+   - Post-check: reports "Ports 3001 and 8080 are free" if both clear
+   - All existing functionality preserved (preflight, install, db setup, startup, cleanup trap)
+
+**Verification**:
+- `bash -n` syntax check passes (zero errors)
+- Script remains executable (chmod +x preserved)
+- Existing Steps 1-5 and Steps 8-10 unchanged
+- Yellow color via `\033[33m`, red via `\033[31m`, reset via `\033[0m`
+

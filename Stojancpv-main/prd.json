@@ -39,8 +39,8 @@
         "Keep existing functionality intact (preflight, install, db setup, startup)"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Enhanced port checking in ventus-voice/start-local.sh with a reusable check_port() function. For each port (3001 backend, 8080 frontend): uses lsof -ti:PORT to get PID, ps -p PID -o comm= to get process name, prints yellow warning 'Port PORT (label) is in use by PROCESS (PID: PID)', prompts 'Kill it? (y/N)', kills process if confirmed (with post-kill verification via lsof), exits with manual fix suggestion if user declines. All existing functionality preserved (preflight, install, db setup, startup). bash -n syntax check passes."
     },
     {
       "id": "US-L08",

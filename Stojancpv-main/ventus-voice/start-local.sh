@@ -99,19 +99,42 @@ echo ""
 
 # Step 6: Check port 3001
 echo "Step 6: Checking ports..."
+
+check_port() {
+  local PORT=$1
+  local LABEL=$2
+  local PORT_PID
+  PORT_PID=$(lsof -ti:"$PORT" 2>/dev/null | head -1 || true)
+  if [ -n "$PORT_PID" ]; then
+    local PROC_NAME
+    PROC_NAME=$(ps -p "$PORT_PID" -o comm= 2>/dev/null || echo "unknown")
+    echo -e "  \033[33mWARNING: Port $PORT ($LABEL) is in use by $PROC_NAME (PID: $PORT_PID)\033[0m"
+    printf "  Kill it? (y/N) "
+    read -r REPLY
+    if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
+      kill "$PORT_PID" 2>/dev/null || true
+      sleep 1
+      # Verify it was killed
+      if lsof -ti:"$PORT" >/dev/null 2>&1; then
+        echo -e "  \033[31mFailed to kill process on port $PORT. Try: kill -9 $PORT_PID\033[0m"
+        exit 1
+      fi
+      echo "  Killed $PROC_NAME (PID: $PORT_PID)"
+    else
+      echo ""
+      echo "  Port $PORT is still in use. Free it manually and try again:"
+      echo "    kill $PORT_PID"
+      exit 1
+    fi
+  fi
+}
+
+check_port 3001 "backend"
+check_port 8080 "frontend"
+
+# Report if both ports are free
 BACKEND_PORT_PID=$(lsof -ti:3001 2>/dev/null || true)
-if [ -n "$BACKEND_PORT_PID" ]; then
-  echo "  WARNING: Port 3001 is in use by PID $BACKEND_PORT_PID"
-  echo "  Kill it with: kill $BACKEND_PORT_PID"
-fi
-
-# Step 7: Check port 8080
 FRONTEND_PORT_PID=$(lsof -ti:8080 2>/dev/null || true)
-if [ -n "$FRONTEND_PORT_PID" ]; then
-  echo "  WARNING: Port 8080 is in use by PID $FRONTEND_PORT_PID"
-  echo "  Kill it with: kill $FRONTEND_PORT_PID"
-fi
-
 if [ -z "$BACKEND_PORT_PID" ] && [ -z "$FRONTEND_PORT_PID" ]; then
   echo "  Ports 3001 and 8080 are free"
 fi
