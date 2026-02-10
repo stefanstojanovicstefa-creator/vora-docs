@@ -23,3 +23,9 @@
 - Typecheck passes cleanly (0 errors)
 - Status: DONE
 
+## Iteration 3 - US-003: Navigate Continue button to correct incomplete stage
+- File: ventus-voice/frontend/src/pages/Dashboard.tsx (line 266)
+- Already implemented: Link already uses `firstIncompleteStage` query param when available
+- No code change needed - already satisfies all acceptance criteria
+- Status: DONE (no-op)
+

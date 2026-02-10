@@ -51,8 +51,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Already implemented in existing code at Dashboard.tsx line 266. The Link already appends ?stage={firstIncompleteStage} when available and falls back to /agents/create/interview when not. No code change needed."
     },
     {
       "id": "US-004",
