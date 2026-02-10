@@ -85,8 +85,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Deleted useTutorialProgress.ts. Confirmed no imports reference it anywhere in frontend/src. Typecheck passes."
     }
   ]
 }

@@ -30,3 +30,9 @@
 - Added same dispatch in SIPSetupWizard.tsx createTrunkMutation onSuccess (after toast.success)
 - Typecheck passes ✅
 
+## Iteration 5 - US-005: Delete dead useTutorialProgress hook
+- Deleted `ventus-voice/frontend/src/hooks/useTutorialProgress.ts`
+- Verified no imports reference `useTutorialProgress` anywhere in frontend/src
+- Typecheck passes ✅
+
+ALL STORIES COMPLETE.
