@@ -106,8 +106,8 @@
         "Script works when run from ventus-voice/ directory"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created ventus-voice/start-local.sh. Step 1: runs preflight-check.sh, exits on failure. Step 2-3: checks backend/frontend node_modules, runs npm install if missing. Step 4: checks Prisma client generated, runs prisma generate if not. Step 5: checks database exists and has tables (psql count from information_schema), runs db:setup-local if empty or missing. Step 6-7: checks ports 3001 and 8080 (lsof -ti), warns with PID if occupied. Step 8: starts backend in background (npm run dev &), stores PID. Step 9: waits for backend health (curl http://localhost:3001/health/live, retry up to 30s). Step 10: starts frontend in foreground (npm run dev). Traps SIGINT/SIGTERM to kill backend PID on exit. Prints summary with URLs. Script is chmod +x, works from ventus-voice/ directory."
     },
     {
       "id": "US-L05",

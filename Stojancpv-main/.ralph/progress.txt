@@ -1195,6 +1195,35 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 
 ---
 
+## Iteration 38: US-L04 - Unified Startup Script
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/start-local.sh`:
+   - Banner: "Vora Voice Platform - Local Development"
+   - Step 1: Runs preflight-check.sh from backend/scripts/. Exits with message if it fails.
+   - Step 2: Checks backend node_modules missing → runs npm install
+   - Step 3: Checks frontend node_modules missing → runs npm install
+   - Step 4: Checks Prisma client generated → runs npx prisma generate if not
+   - Step 5: Checks database exists and has tables (psql information_schema.tables count). If no tables, runs db:setup-local.
+   - Step 6: Checks port 3001 free (lsof -ti:3001). Warns with PID if occupied.
+   - Step 7: Checks port 8080 free (lsof -ti:8080). Warns with PID if occupied.
+   - Step 8: Starts backend in background: (cd backend && npm run dev) &. Stores PID.
+   - Step 9: Waits for backend health: curl -sf http://localhost:3001/health/live, retries up to 30 seconds.
+   - Step 10: Starts frontend in foreground: (cd frontend && npm run dev)
+   - Traps SIGINT/SIGTERM: kills backend background process on exit
+   - Prints summary: Frontend http://localhost:8080, Backend http://localhost:3001
+   - Script is chmod +x, runs from ventus-voice/ directory
+
+**Verification**:
+- Script passes `bash -n` syntax check
+- Script is executable (chmod +x)
+- Uses `set -euo pipefail` for strict error handling
+- Cleanup trap ensures backend process is killed on Ctrl+C
+
+---
+
 ## Iteration 37: US-L03 - Environment Preflight Check
 
 **Status**: COMPLETE
