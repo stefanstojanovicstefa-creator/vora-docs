@@ -42,9 +42,9 @@ export function TopBar({ className, sidebarCollapsed = false }: TopBarProps) {
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-30 h-16 transition-all duration-300",
-        // Adjust left margin based on sidebar state
-        sidebarCollapsed ? "left-0 lg:left-20" : "left-0 lg:left-64",
+        "fixed top-0 end-0 z-30 h-16 transition-all duration-300",
+        // Adjust start margin based on sidebar state
+        sidebarCollapsed ? "start-0 lg:start-20" : "start-0 lg:start-64",
         // Transparent by default, blur on scroll
         isScrolled
           ? "glass-card border-b border-[hsl(var(--border))]"
@@ -111,7 +111,7 @@ export function TopBar({ className, sidebarCollapsed = false }: TopBarProps) {
           <SignedIn>
             <div className="relative">
               {/* Online Status Indicator */}
-              <div className="absolute -top-0.5 -right-0.5 z-10">
+              <div className="absolute -top-0.5 -end-0.5 z-10">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(var(--success))] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-[hsl(var(--success))] border-2 border-[hsl(var(--void))]"></span>

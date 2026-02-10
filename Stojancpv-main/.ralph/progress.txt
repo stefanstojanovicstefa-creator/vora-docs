@@ -14,3 +14,10 @@
 - Changed `ml-auto` → `ms-auto` (collapse button)
 - Typecheck passes ✅
 
+## Iteration 2 - US-002: Convert TopBar to logical CSS properties for RTL
+- Changed `right-0` → `end-0` (header positioning)
+- Changed `left-0 lg:left-20` → `start-0 lg:start-20` (collapsed sidebar offset)
+- Changed `left-0 lg:left-64` → `start-0 lg:start-64` (expanded sidebar offset)
+- Changed `-right-0.5` → `-end-0.5` (online status indicator)
+- Typecheck passes ✅
+

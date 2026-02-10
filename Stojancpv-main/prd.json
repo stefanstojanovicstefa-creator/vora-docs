@@ -37,8 +37,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Converted right-0 to end-0, left-0 lg:left-20/lg:left-64 to start-0 lg:start-20/lg:start-64, -right-0.5 to -end-0.5. Typecheck passes."
     },
     {
       "id": "US-003",
