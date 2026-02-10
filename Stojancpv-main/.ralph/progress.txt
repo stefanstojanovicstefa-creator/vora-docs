@@ -1195,6 +1195,43 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 
 ---
 
+## Iteration 36: US-L02 - Database Setup Script
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/backend/scripts/db-setup-local.sh`:
+   - Reads DATABASE_URL from .env (grep + sed to extract value)
+   - Extracts database name from URL (strips query params, then takes part after last /)
+   - Checks if database exists via `psql -lqt | grep`
+   - Creates database with `createdb` if it doesn't exist
+   - Runs `npx prisma generate` (generate Prisma client)
+   - Runs `npx prisma migrate deploy` (apply migrations, non-interactive)
+   - Runs `npx tsx prisma/seed-local.ts` (seed local data)
+   - Error handling at each step with clear error messages and fix suggestions
+   - Uses `set -euo pipefail` for strict error handling
+
+2. `ventus-voice/backend/scripts/db-reset-local.sh`:
+   - Same DATABASE_URL extraction as setup script
+   - Confirmation prompt: `read -r -p "Are you sure? Type 'yes' to continue: "`
+   - Drops database with `dropdb` (with active connection termination hint on failure)
+   - Creates fresh database with `createdb`
+   - Runs prisma generate + migrate deploy + seed (same as setup)
+   - Uses `set -euo pipefail` for strict error handling
+
+3. `ventus-voice/backend/package.json`:
+   - Added `"db:setup-local": "bash scripts/db-setup-local.sh"`
+   - Added `"db:reset-local": "bash scripts/db-reset-local.sh"`
+   - Added `"db:seed-local": "tsx prisma/seed-local.ts"`
+
+**Verification**:
+- Both scripts pass `bash -n` syntax check
+- Both scripts are chmod +x (executable)
+- Scripts work on macOS with standard PostgreSQL tools (psql, createdb, dropdb)
+- TypeScript typecheck passes (pre-existing errors only in short-term-memory.service.ts)
+
+---
+
 ## Iteration 32: US-406 - Implement Model Routing Layer
 
 **Status**: COMPLETE

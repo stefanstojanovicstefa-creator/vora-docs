@@ -52,8 +52,8 @@
         "Typecheck passes (no TS changes needed, but verify existing code still compiles)"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created ventus-voice/backend/scripts/db-setup-local.sh and db-reset-local.sh. Setup script: reads DATABASE_URL from .env, extracts DB name (handles query params), checks if DB exists via psql, creates with createdb if not, runs prisma generate, prisma migrate deploy, and tsx prisma/seed-local.ts. Reset script: same flow but with confirmation prompt (read -r), drops DB first with dropdb, then recreates. Both scripts use set -euo pipefail, handle errors at each step with clear messages, and are chmod +x. Added npm scripts: db:setup-local, db:reset-local, db:seed-local to package.json. Typecheck passes (pre-existing errors only in short-term-memory.service.ts)."
     },
     {
       "id": "US-L03",
