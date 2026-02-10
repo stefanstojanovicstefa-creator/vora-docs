@@ -79,8 +79,8 @@
         "Script is executable (chmod +x)"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created ventus-voice/backend/scripts/preflight-check.sh. Checks: Node.js >= 20 (parses node -v major version), npm available, PostgreSQL reachable (pg_isready or docker ps | grep postgres), backend .env exists, frontend .env exists, required backend env vars (DATABASE_URL, CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY, JWT_SECRET) non-empty, required frontend env var (VITE_CLERK_PUBLISHABLE_KEY) non-empty, backend node_modules exists, frontend node_modules exists, Prisma client generated (checks node_modules/.prisma/client). RED error messages with exact fix commands, GREEN checkmarks for success. Exit 0 on all pass, exit 1 on any fail. Script is chmod +x and runs in < 3 seconds."
     },
     {
       "id": "US-L04",

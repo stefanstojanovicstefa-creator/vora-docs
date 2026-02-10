@@ -1195,6 +1195,35 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 
 ---
 
+## Iteration 37: US-L03 - Environment Preflight Check
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/backend/scripts/preflight-check.sh`:
+   - 10 checks with color-coded output (GREEN ✓ for pass, RED ✗ for fail)
+   - Check 1: Node.js version >= 20 (parses major from `node -v`)
+   - Check 2: npm available
+   - Check 3: PostgreSQL reachable via `pg_isready -q` OR `docker ps | grep postgres`
+   - Check 4: Backend .env exists at ventus-voice/backend/.env
+   - Check 5: Frontend .env exists at ventus-voice/frontend/.env
+   - Check 6: Required backend env vars non-empty: DATABASE_URL, CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY, JWT_SECRET
+   - Check 7: Required frontend env var: VITE_CLERK_PUBLISHABLE_KEY
+   - Check 8: Backend node_modules directory exists
+   - Check 9: Frontend node_modules directory exists
+   - Check 10: Prisma client generated (node_modules/.prisma/client exists)
+   - Each failure includes exact fix command (brew install, cp .env.example, npm install, etc.)
+   - Exit 0 if all checks pass, exit 1 if any fail
+   - Summary shows count of failed checks
+   - Script is chmod +x
+
+**Verification**:
+- Script passes `bash -n` syntax check
+- Script is executable (chmod +x)
+- Runs in < 3 seconds (all checks are local, no network calls)
+
+---
+
 ## Iteration 36: US-L02 - Database Setup Script
 
 **Status**: COMPLETE
