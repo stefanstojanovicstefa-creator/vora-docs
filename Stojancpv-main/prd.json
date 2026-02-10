@@ -36,8 +36,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Replaced conditional rendering of lastDeployedAt with an always-present row. When lastDeployedAt exists, shows the formatted date in a Badge. When absent, shows 'Not yet deployed' in muted text. This ensures all cards have identical content structure and consistent height regardless of deployment status. Card already had h-full and flex flex-col, and CardContent already had mt-auto. Typecheck passes."
     }
   ]
 }

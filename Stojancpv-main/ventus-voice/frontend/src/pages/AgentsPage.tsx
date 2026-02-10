@@ -447,14 +447,18 @@ export default function AgentsPage() {
             <CardContent className="space-y-4 mt-auto">
               {/* Agent Details */}
               <div className="space-y-2 text-sm">
-                {agent.lastDeployedAt && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t("agent:status.deployed")}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("agent:status.deployed")}</span>
+                  {agent.lastDeployedAt ? (
                     <Badge variant="outline" className="text-xs">
                       {formatDateTime(agent.lastDeployedAt)}
                     </Badge>
-                  </div>
-                )}
+                  ) : (
+                    <span className="text-xs text-muted-foreground/60">
+                      {t("agent:status.notDeployed", "Not yet deployed")}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Timestamp */}

@@ -14,3 +14,14 @@
 - **Typecheck**: PASSES
 - **Status**: COMPLETE
 
+---
+
+## Iteration 2 - US-002: Normalize card height with consistent content
+- **File**: ventus-voice/frontend/src/pages/AgentsPage.tsx
+- **Change**: Replaced conditional `{agent.lastDeployedAt && (...)}` block (lines ~450-457) with always-present deployed row
+- **Problem**: When `lastDeployedAt` was null/undefined, the entire deployed row disappeared, causing cards to have different heights
+- **Fix**: Always render the "Deployed" label row. Show formatted date in Badge when available, show "Not yet deployed" in muted text when absent
+- **Verified**: Card already has `h-full flex flex-col`, CardContent has `mt-auto` — structure was correct, just needed consistent content
+- **Typecheck**: PASSES
+- **Status**: COMPLETE
+
