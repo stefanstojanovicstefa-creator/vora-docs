@@ -1,75 +1,43 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-03-phase-1-step-counter",
-  "description": "Phase 1: Fix step counter hallucination and progress accuracy. Legacy interview route has no progress cap (can exceed 100%). Dashboard label is misleading. Continue button doesn't navigate to incomplete stage. IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/).",
+  "branchName": "ralph/audit-03-phase-2-card-grid",
+  "description": "Phase 2: Fix agent card grid vertical spacing. VirtualGrid passes gap to CSS grid (horizontal) but NOT to useVirtualizer (vertical rows touch). IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Cap legacy interview progress at 100%",
-      "description": "As a user, I want the progress percentage to never exceed 100% even if data is corrupt.",
+      "title": "Add vertical gap to VirtualGrid virtualizer",
+      "description": "As a user, I want agent cards in grid view to have consistent spacing between rows, not touching each other.",
       "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/)",
-        "In agent-interview.routes.ts around line 330, find the progress calculation: Math.round((session.currentQuestionIndex / 12) * 100)",
-        "Change it to: Math.min(100, Math.round((session.currentQuestionIndex / 12) * 100))",
-        "Also cap currentQuestionIndex for display: Math.min(session.currentQuestionIndex, 12) so it shows at most 12/12 not 33/12",
-        "The totalQuestions field should remain 12",
-        "Files: ventus-voice/backend/src/routes/agent-interview.routes.ts",
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "In virtual-list.tsx around lines 237-242, find the useVirtualizer config object",
+        "Add gap property to the useVirtualizer options: gap: gap (the gap prop is already passed to VirtualGrid as 24)",
+        "The @tanstack/react-virtual useVirtualizer accepts a gap option that adds spacing between virtual rows",
+        "After this change, vertical rows should have 24px gap matching the horizontal gap",
+        "Cards should no longer touch each other vertically",
+        "The estimateRowHeight (320px) may need adjustment to account for the gap -- verify visually",
+        "Files: ventus-voice/frontend/src/components/ui/virtual-list.tsx",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Capped progress with Math.min(100, ...) and currentQuestionIndex with Math.min(session.currentQuestionIndex, 12) on line 328-330 of agent-interview.routes.ts. Typecheck passes (38 pre-existing errors in unrelated files)."
+      "notes": "Added `gap` property to VirtualGrid's useVirtualizer config at line 242. The gap prop (default 24px from caller) was already available but only used for CSS grid horizontal spacing. Now the virtualizer also uses it for vertical row spacing, ensuring consistent 24px gap between rows. Typecheck passes."
     },
     {
       "id": "US-002",
-      "title": "Improve Dashboard progress label from steps to stages",
-      "description": "As a user, I want the incomplete session card to show meaningful stage names instead of raw step counts.",
+      "title": "Normalize card height with consistent content",
+      "description": "As a user, I want all agent cards in grid view to be the same height regardless of content differences.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In Dashboard.tsx around line 257, find where it displays currentQuestionIndex/totalQuestions steps (progress%)",
-        "Change the label from 'steps' to 'stages' to match the 7 logical stages concept",
-        "If the session data includes firstIncompleteStage, display it as a subtitle hint (e.g. 'Next: Configure voice')",
-        "If progress is 99 or more, show 'Almost done - test your agent' instead of the percentage",
-        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx",
+        "In AgentsPage.tsx grid card (around lines 370-482), verify the Card already has h-full and flex flex-col classes",
+        "Ensure the CardContent section (around line 447) that has mt-auto pushes content to the bottom consistently",
+        "If lastDeployedAt is conditional (some agents have it, some dont), ensure a minimum height placeholder or consistent padding so cards dont jump",
+        "Add a fallback for missing lastDeployedAt -- show 'Not yet deployed' in muted text instead of hiding the element entirely",
+        "Files: ventus-voice/frontend/src/pages/AgentsPage.tsx",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Changed 'steps' to 'stages' in label. Added firstIncompleteStage subtitle hint with title-cased stage name. Added 'Almost done - test your agent' message when progress >= 99%. Typecheck passes cleanly."
-    },
-    {
-      "id": "US-003",
-      "title": "Navigate Continue button to correct incomplete stage",
-      "description": "As a user, I want the Continue button to take me to the right place in the wizard, not always to the start.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In Dashboard.tsx around lines 265-276, find the Continue button that links to /agents/create/interview",
-        "If the session data includes firstIncompleteStage, append it as a query param: /agents/create/interview?stage={firstIncompleteStage}",
-        "If firstIncompleteStage is not available, keep the existing /agents/create/interview link as fallback",
-        "The session data comes from agentForgeService.getIncompleteSession() which returns firstIncompleteStage as an optional field",
-        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx",
-        "Typecheck passes"
-      ],
-      "priority": 3,
-      "passes": true,
-      "notes": "Already implemented in existing code at Dashboard.tsx line 266. The Link already appends ?stage={firstIncompleteStage} when available and falls back to /agents/create/interview when not. No code change needed."
-    },
-    {
-      "id": "US-004",
-      "title": "Add progress bar visual cap at 100%",
-      "description": "As a user, I want the progress bar width to never visually exceed 100% even with bad data.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In Dashboard.tsx, find the progress bar element that uses the progress percentage for its width",
-        "Ensure the width style uses Math.min(100, progress) so it never renders wider than 100%",
-        "If using a shadcn Progress component, verify it already caps internally -- if so this is a no-op",
-        "If using a raw div with style={{ width: progress + '%' }}, add the Math.min cap",
-        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx",
-        "Typecheck passes"
-      ],
-      "priority": 4,
-      "passes": true,
-      "notes": "Added Math.min(100, incompleteSession.progress) to progress bar width style. The raw div uses style={{ width }} so the cap is needed as a defensive measure. Typecheck passes."
+      "passes": false,
+      "notes": ""
     }
   ]
 }

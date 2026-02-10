@@ -1,38 +1,16 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 03 - Phase 1 - Step Counter & Progress Fix
-# Branch: ralph/audit-03-phase-1-step-counter
+# Feature: Audit 03 - Phase 2 - Card Grid Fix
+# Branch: ralph/audit-03-phase-2-card-grid
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 - US-001: Cap legacy interview progress at 100%
-- File: ventus-voice/backend/src/routes/agent-interview.routes.ts (line 328-330)
-- Changed `currentQuestionIndex` display to `Math.min(session.currentQuestionIndex, 12)` so it shows at most 12/12
-- Changed `progress` calculation to `Math.min(100, Math.round((session.currentQuestionIndex / 12) * 100))` to cap at 100%
-- totalQuestions remains 12 (unchanged)
-- Typecheck passes (38 pre-existing errors in unrelated files, none in changed file)
-- Status: DONE
-
-## Iteration 2 - US-002: Improve Dashboard progress label from steps to stages
-- File: ventus-voice/frontend/src/pages/Dashboard.tsx (line 256-263)
-- Changed label from 'steps' to 'stages' in progress text
-- Added firstIncompleteStage subtitle hint (e.g., "Next: Configure Voice") when available and progress < 99%
-- Added "Almost done - test your agent" message when progress >= 99%
-- Stage name is title-cased and dashes replaced with spaces for display
-- Typecheck passes cleanly (0 errors)
-- Status: DONE
-
-## Iteration 3 - US-003: Navigate Continue button to correct incomplete stage
-- File: ventus-voice/frontend/src/pages/Dashboard.tsx (line 266)
-- Already implemented: Link already uses `firstIncompleteStage` query param when available
-- No code change needed - already satisfies all acceptance criteria
-- Status: DONE (no-op)
-
-## Iteration 4 - US-004: Add progress bar visual cap at 100%
-- File: ventus-voice/frontend/src/pages/Dashboard.tsx (line 267)
-- Changed width style from `${incompleteSession.progress}%` to `${Math.min(100, incompleteSession.progress)}%`
-- Uses raw div with style={{ width }}, so Math.min cap is the correct fix
-- Typecheck passes cleanly (0 errors)
-- Status: DONE
+## Iteration 1 - US-001: Add vertical gap to VirtualGrid virtualizer
+- **File**: ventus-voice/frontend/src/components/ui/virtual-list.tsx
+- **Change**: Added `gap` property to VirtualGrid's `useVirtualizer` config (line ~242)
+- **Problem**: VirtualGrid passed `gap` to CSS grid for horizontal spacing but NOT to the virtualizer for vertical row spacing, causing rows to touch
+- **Fix**: Added `gap,` to the useVirtualizer options object, matching how VirtualList already does it
+- **Typecheck**: PASSES
+- **Status**: COMPLETE
 

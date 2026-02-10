@@ -239,6 +239,7 @@ export function VirtualGrid<T>({
     getScrollElement: () => parentRef.current,
     estimateSize: () => estimateRowHeight,
     overscan,
+    gap,
   });
 
   const virtualRows = virtualizer.getVirtualItems();
