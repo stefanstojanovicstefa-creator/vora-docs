@@ -35,8 +35,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Replaced bg-black/80 with bg-[hsl(var(--void))]/80 in both dialog.tsx (line 22) and alert-dialog.tsx (line 19). Animations remain unchanged. Typecheck passes."
     },
     {
       "id": "US-003",

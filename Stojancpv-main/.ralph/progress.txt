@@ -13,3 +13,9 @@
 - No secondary Toaster found in ThemeToggle.tsx (no changes needed)
 - Typecheck passes ✅
 
+## Iteration 2: US-002 - Fix dialog and alert-dialog overlay theme adaptation
+- Changed `bg-black/80` to `bg-[hsl(var(--void))]/80` in dialog.tsx overlay
+- Changed `bg-black/80` to `bg-[hsl(var(--void))]/80` in alert-dialog.tsx overlay
+- data-[state=open] and data-[state=closed] animations remain unchanged
+- Typecheck passes ✅
+
