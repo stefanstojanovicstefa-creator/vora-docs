@@ -16,89 +16,146 @@ FRONTEND_DIR="$SCRIPT_DIR/frontend"
 
 BACKEND_PID=""
 
+# --- Color Support ---
+# Disable colors if stdout is not a terminal (e.g., piped output)
+if [ -t 1 ]; then
+  RED='\033[0;31m'
+  GREEN='\033[0;32m'
+  YELLOW='\033[0;33m'
+  BLUE='\033[0;34m'
+  BOLD='\033[1m'
+  RESET='\033[0m'
+else
+  RED=''
+  GREEN=''
+  YELLOW=''
+  BLUE=''
+  BOLD=''
+  RESET=''
+fi
+
+# --- Helper Functions ---
+info() {
+  echo -e "  ${BLUE}$1${RESET}"
+}
+
+success() {
+  echo -e "  ${GREEN}✓ $1${RESET}"
+}
+
+warn() {
+  echo -e "  ${YELLOW}⚠ $1${RESET}"
+}
+
+error() {
+  echo -e "  ${RED}✗ $1${RESET}"
+}
+
+spinner() {
+  local MSG="$1"
+  local DELAY=0.5
+  local DOTS=""
+  while true; do
+    DOTS="${DOTS}."
+    if [ ${#DOTS} -gt 3 ]; then
+      DOTS="."
+    fi
+    printf "\r  %s%s   " "$MSG" "$DOTS"
+    sleep "$DELAY"
+  done
+}
+
+# --- Cleanup ---
 cleanup() {
   echo ""
-  echo "Shutting down..."
+  warn "Shutting down..."
   if [ -n "$BACKEND_PID" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
     kill "$BACKEND_PID" 2>/dev/null || true
     wait "$BACKEND_PID" 2>/dev/null || true
-    echo "  Backend stopped"
+    info "Backend stopped"
   fi
-  echo "Goodbye!"
+  echo -e "  ${BOLD}Goodbye!${RESET}"
   exit 0
 }
 
 trap cleanup SIGINT SIGTERM
 
+# --- Banner ---
 echo ""
-echo "========================================="
-echo " Vora Voice Platform - Local Development"
-echo "========================================="
+echo -e "${BOLD}${BLUE}╔═══════════════════════════════════════════╗${RESET}"
+echo -e "${BOLD}${BLUE}║       Vora Voice Platform                 ║${RESET}"
+echo -e "${BOLD}${BLUE}║       Local Development Environment       ║${RESET}"
+echo -e "${BOLD}${BLUE}╚═══════════════════════════════════════════╝${RESET}"
 echo ""
 
 # Step 1: Run preflight check
-echo "Step 1: Running preflight check..."
+info "Step 1: Running preflight check..."
 if ! bash "$BACKEND_DIR/scripts/preflight-check.sh"; then
   echo ""
-  echo "Preflight check failed. Fix the issues above and try again."
+  error "Preflight check failed. Fix the issues above and try again."
   exit 1
 fi
+success "Preflight check passed"
 echo ""
 
 # Step 2: Check backend node_modules
-echo "Step 2: Checking backend dependencies..."
+info "Step 2: Checking backend dependencies..."
 if [ ! -d "$BACKEND_DIR/node_modules" ]; then
-  echo "  Backend node_modules missing, installing..."
+  warn "Backend node_modules missing, installing..."
   (cd "$BACKEND_DIR" && npm install)
+  success "Backend dependencies installed"
 else
-  echo "  Backend dependencies OK"
+  success "Backend dependencies OK"
 fi
 echo ""
 
 # Step 3: Check frontend node_modules
-echo "Step 3: Checking frontend dependencies..."
+info "Step 3: Checking frontend dependencies..."
 if [ ! -d "$FRONTEND_DIR/node_modules" ]; then
-  echo "  Frontend node_modules missing, installing..."
+  warn "Frontend node_modules missing, installing..."
   (cd "$FRONTEND_DIR" && npm install)
+  success "Frontend dependencies installed"
 else
-  echo "  Frontend dependencies OK"
+  success "Frontend dependencies OK"
 fi
 echo ""
 
 # Step 4: Check Prisma client
-echo "Step 4: Checking Prisma client..."
+info "Step 4: Checking Prisma client..."
 if [ ! -d "$BACKEND_DIR/node_modules/.prisma/client" ]; then
-  echo "  Prisma client not generated, generating..."
+  warn "Prisma client not generated, generating..."
   (cd "$BACKEND_DIR" && npx prisma generate)
+  success "Prisma client generated"
 else
-  echo "  Prisma client OK"
+  success "Prisma client OK"
 fi
 echo ""
 
 # Step 5: Check database has tables
-echo "Step 5: Checking database..."
+info "Step 5: Checking database..."
 ENV_FILE="$BACKEND_DIR/.env"
 DATABASE_URL=$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | sed 's/^DATABASE_URL=//' | tr -d '"' | tr -d "'")
 DB_URL_NO_PARAMS="${DATABASE_URL%%\?*}"
 DB_NAME="${DB_URL_NO_PARAMS##*/}"
 
 if psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
-  # Database exists, check if it has tables (migrations applied)
   TABLE_COUNT=$(psql -d "$DB_NAME" -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null || echo "0")
   if [ "$TABLE_COUNT" -gt 0 ]; then
-    echo "  Database '$DB_NAME' has $TABLE_COUNT tables"
+    success "Database '$DB_NAME' has $TABLE_COUNT tables"
   else
-    echo "  Database '$DB_NAME' has no tables, running setup..."
+    warn "Database '$DB_NAME' has no tables, running setup..."
     (cd "$BACKEND_DIR" && npm run db:setup-local)
+    success "Database setup complete"
   fi
 else
-  echo "  Database '$DB_NAME' not found, running setup..."
+  warn "Database '$DB_NAME' not found, running setup..."
   (cd "$BACKEND_DIR" && npm run db:setup-local)
+  success "Database created and seeded"
 fi
 echo ""
 
-# Step 6: Check port 3001
-echo "Step 6: Checking ports..."
+# Step 6: Check ports
+info "Step 6: Checking ports..."
 
 check_port() {
   local PORT=$1
@@ -108,22 +165,21 @@ check_port() {
   if [ -n "$PORT_PID" ]; then
     local PROC_NAME
     PROC_NAME=$(ps -p "$PORT_PID" -o comm= 2>/dev/null || echo "unknown")
-    echo -e "  \033[33mWARNING: Port $PORT ($LABEL) is in use by $PROC_NAME (PID: $PORT_PID)\033[0m"
+    warn "Port $PORT ($LABEL) is in use by $PROC_NAME (PID: $PORT_PID)"
     printf "  Kill it? (y/N) "
     read -r REPLY
     if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
       kill "$PORT_PID" 2>/dev/null || true
       sleep 1
-      # Verify it was killed
       if lsof -ti:"$PORT" >/dev/null 2>&1; then
-        echo -e "  \033[31mFailed to kill process on port $PORT. Try: kill -9 $PORT_PID\033[0m"
+        error "Failed to kill process on port $PORT. Try: kill -9 $PORT_PID"
         exit 1
       fi
-      echo "  Killed $PROC_NAME (PID: $PORT_PID)"
+      success "Killed $PROC_NAME (PID: $PORT_PID)"
     else
       echo ""
-      echo "  Port $PORT is still in use. Free it manually and try again:"
-      echo "    kill $PORT_PID"
+      error "Port $PORT is still in use. Free it manually and try again:"
+      info "  kill $PORT_PID"
       exit 1
     fi
   fi
@@ -132,27 +188,31 @@ check_port() {
 check_port 3001 "backend"
 check_port 8080 "frontend"
 
-# Report if both ports are free
 BACKEND_PORT_PID=$(lsof -ti:3001 2>/dev/null || true)
 FRONTEND_PORT_PID=$(lsof -ti:8080 2>/dev/null || true)
 if [ -z "$BACKEND_PORT_PID" ] && [ -z "$FRONTEND_PORT_PID" ]; then
-  echo "  Ports 3001 and 8080 are free"
+  success "Ports 3001 and 8080 are free"
 fi
 echo ""
 
-# Step 8: Start backend in background
-echo "Step 8: Starting backend..."
+# Step 7: Start backend in background
+info "Step 7: Starting backend..."
 (cd "$BACKEND_DIR" && npm run dev) &
 BACKEND_PID=$!
-echo "  Backend starting (PID: $BACKEND_PID)"
+info "Backend starting (PID: $BACKEND_PID)"
 
-# Step 9: Wait for backend health check
-echo "  Waiting for backend to be ready..."
+# Step 8: Wait for backend health check with spinner
 RETRIES=0
 MAX_RETRIES=30
+spinner "Waiting for backend" &
+SPINNER_PID=$!
+
 while [ $RETRIES -lt $MAX_RETRIES ]; do
   if curl -sf http://localhost:3001/health/live >/dev/null 2>&1; then
-    echo "  Backend is ready!"
+    kill "$SPINNER_PID" 2>/dev/null || true
+    wait "$SPINNER_PID" 2>/dev/null || true
+    printf "\r                                        \r"
+    success "Backend is ready!"
     break
   fi
   RETRIES=$((RETRIES + 1))
@@ -160,22 +220,27 @@ while [ $RETRIES -lt $MAX_RETRIES ]; do
 done
 
 if [ $RETRIES -ge $MAX_RETRIES ]; then
-  echo "  WARNING: Backend did not respond within 30 seconds"
-  echo "  Check the logs above for errors"
+  kill "$SPINNER_PID" 2>/dev/null || true
+  wait "$SPINNER_PID" 2>/dev/null || true
+  printf "\r                                        \r"
+  warn "Backend did not respond within 30 seconds"
+  info "Check the logs above for errors"
 fi
 echo ""
 
-# Print summary
-echo "========================================="
-echo " Vora Voice is running!"
-echo "========================================="
-echo ""
-echo "  Frontend:  http://localhost:8080"
-echo "  Backend:   http://localhost:3001"
-echo "  DB Studio: npm run db:studio (in backend/)"
-echo ""
-echo "  Press Ctrl+C to stop all services"
+# --- Final Summary ---
+echo -e "${BOLD}${GREEN}╔═══════════════════════════════════════════╗${RESET}"
+echo -e "${BOLD}${GREEN}║       Vora Voice is running!              ║${RESET}"
+echo -e "${BOLD}${GREEN}╠═══════════════════════════════════════════╣${RESET}"
+echo -e "${BOLD}${GREEN}║${RESET}                                           ${BOLD}${GREEN}║${RESET}"
+echo -e "${BOLD}${GREEN}║${RESET}  ${BOLD}Frontend:${RESET}  http://localhost:8080        ${BOLD}${GREEN}║${RESET}"
+echo -e "${BOLD}${GREEN}║${RESET}  ${BOLD}Backend:${RESET}   http://localhost:3001        ${BOLD}${GREEN}║${RESET}"
+echo -e "${BOLD}${GREEN}║${RESET}  ${BOLD}DB Studio:${RESET} npm run db:studio (backend/) ${BOLD}${GREEN}║${RESET}"
+echo -e "${BOLD}${GREEN}║${RESET}                                           ${BOLD}${GREEN}║${RESET}"
+echo -e "${BOLD}${GREEN}║${RESET}  Press ${BOLD}Ctrl+C${RESET} to stop all services       ${BOLD}${GREEN}║${RESET}"
+echo -e "${BOLD}${GREEN}║${RESET}                                           ${BOLD}${GREEN}║${RESET}"
+echo -e "${BOLD}${GREEN}╚═══════════════════════════════════════════╝${RESET}"
 echo ""
 
-# Step 10: Start frontend in foreground
+# Step 9: Start frontend in foreground
 (cd "$FRONTEND_DIR" && npm run dev)

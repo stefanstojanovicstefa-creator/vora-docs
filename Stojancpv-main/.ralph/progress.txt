@@ -1441,3 +1441,30 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 - Existing Steps 1-5 and Steps 8-10 unchanged
 - Yellow color via `\033[33m`, red via `\033[31m`, reset via `\033[0m`
 
+## Iteration 42: US-L08 - Colored Output and Progress Indicators
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/start-local.sh` (full rewrite for color support):
+   - **Color variables**: RED, GREEN, YELLOW, BLUE, BOLD, RESET defined at top
+   - **Terminal detection**: `test -t 1` check — sets all color vars to empty string when piped
+   - **Helper functions**:
+     - `info()` — prints blue text with 2-space indent
+     - `success()` — prints green text with ✓ checkmark prefix
+     - `warn()` — prints yellow text with ⚠ warning symbol prefix
+     - `error()` — prints red text with ✗ X prefix
+   - **Banner**: Bold blue Unicode box-drawing characters (╔═╗║╚═╝) with "Vora Voice Platform" and "Local Development Environment"
+   - **Spinner function**: `spinner()` runs as background process, shows animated dots ("Waiting for backend.", "..", "...") while health check loop runs. Killed with SPINNER_PID when health check succeeds or times out. printf \r used to overwrite line in-place.
+   - **All echo statements replaced**: Steps 1-9 use info/success/warn/error as appropriate
+   - **Final summary box**: Bold green Unicode borders showing Frontend (http://localhost:8080), Backend (http://localhost:3001), DB Studio, and Ctrl+C instruction
+   - **Port check (US-L07)**: Updated to use warn/error/success/info helpers instead of raw echo -e
+   - **Cleanup trap**: Updated to use warn/info/bold helpers
+   - Steps renumbered: Steps 7-9 (was 8-10) after consolidating port check into single step
+
+**Verification**:
+- `bash -n` syntax check passes (zero errors)
+- Colors disabled when piped (test -t 1 returns false → empty vars → no ANSI codes in output)
+- Spinner background process properly killed in both success and timeout paths
+- All existing functionality preserved (preflight, install, db setup, port check with kill prompt, backend/frontend startup, cleanup trap)
+
