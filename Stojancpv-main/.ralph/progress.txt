@@ -25,3 +25,8 @@
 - Both gated by `transcript.length > 0` so opening/immediately closing doesn't count
 - Typecheck passes ✅
 
+## Iteration 4 - US-004: Add tutorial validation events to phone connection flows
+- Added `tutorial:validation` CustomEvent dispatch with `key: 'phone_connected'` in PhoneNumbersPage.tsx createTrunkMutation onSuccess (after toast.success)
+- Added same dispatch in SIPSetupWizard.tsx createTrunkMutation onSuccess (after toast.success)
+- Typecheck passes ✅
+

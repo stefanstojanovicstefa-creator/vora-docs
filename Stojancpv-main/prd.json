@@ -69,8 +69,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added tutorial:validation dispatch with key 'phone_connected' in PhoneNumbersPage.tsx and SIPSetupWizard.tsx createTrunkMutation onSuccess callbacks, after toast.success."
     },
     {
       "id": "US-005",
