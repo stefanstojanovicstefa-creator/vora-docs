@@ -40,8 +40,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Added 3 new tags (Brands, MCP, Functions) and 3 new schema definitions (BrandAnalysisResult with audienceAnalysis/competitorAnalysis/vocabulary/useCaseScenarios, MCPCatalogItem, MCPConnection) to swagger.ts. Added @openapi JSDoc annotations to all routes in: brands.routes.ts (7 endpoints), mcp-catalog.routes.ts (3 endpoints), mcp-connections.routes.ts (6 endpoints), custom-functions.routes.ts (12 endpoints), knowledge-base.routes.ts (11 endpoints). Each annotation includes summary, description, tags, parameters, requestBody schemas, and responses (200/400/401/403/404/500) with $ref to shared schemas. Protected routes marked with security: [{ ClerkJWT: [] }]. Typecheck passes (no new errors; pre-existing errors in unrelated files only)."
     },
     {
       "id": "US-503",

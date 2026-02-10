@@ -35,3 +35,76 @@
 - Did NOT rename ventus-voice/ directory or change file paths/imports
 
 ### Status: COMPLETE
+
+---
+
+## Iteration 2: US-502 - Swagger/OpenAPI Annotations for Priority Routes
+
+### Changes Made:
+1. **ventus-voice/backend/src/docs/swagger.ts**:
+   - Added 3 new tag groups: `Brands`, `MCP`, `Functions`
+   - Added 3 new schema definitions:
+     - `BrandAnalysisResult` (with audienceAnalysis, competitorAnalysis, vocabulary, useCaseScenarios fields)
+     - `MCPCatalogItem` (id, name, description, category, serverUrl, regions, etc.)
+     - `MCPConnection` (id, orgId, serverUrl, authType, credentials, healthStatus, catalog ref)
+
+2. **ventus-voice/backend/src/routes/brands.routes.ts** (7 endpoints annotated):
+   - POST /api/brands/analyze - Trigger brand analysis
+   - GET /api/brands - List all brands
+   - GET /api/brands/{brandId} - Get brand analysis results
+   - PUT /api/brands/{brandId}/refresh - Refresh brand analysis
+   - DELETE /api/brands/{brandId} - Delete a brand analysis
+   - GET /api/brands/costs/summary - Cost summary
+   - GET /api/brands/{brandId}/costs - Brand costs
+
+3. **ventus-voice/backend/src/routes/mcp-catalog.routes.ts** (3 endpoints annotated):
+   - GET /api/mcp/catalog - List catalog with filters
+   - GET /api/mcp/catalog/recommended - Industry recommendations
+   - GET /api/mcp/catalog/{id} - Single catalog entry
+
+4. **ventus-voice/backend/src/routes/mcp-connections.routes.ts** (6 endpoints annotated):
+   - GET /api/mcp-connections - List org connections
+   - POST /api/mcp-connections - Create connection
+   - PATCH /api/mcp-connections/{id} - Update connection
+   - DELETE /api/mcp-connections/{id} - Delete connection
+   - POST /api/mcp-connections/{id}/test - Health test
+   - POST /api/mcp-connections/{id}/refresh - Force tool re-discovery
+
+5. **ventus-voice/backend/src/routes/custom-functions.routes.ts** (12 endpoints annotated):
+   - GET /api/custom-functions - List functions
+   - POST /api/custom-functions - Create function
+   - POST /api/custom-functions/validate - Validate definition
+   - GET /api/custom-functions/templates - List templates
+   - GET /api/custom-functions/templates/{templateId} - Get template
+   - POST /api/custom-functions/compile-template - Create from template
+   - POST /api/custom-functions/generate-with-ai - AI generation
+   - GET /api/custom-functions/{functionId} - Get function
+   - PATCH /api/custom-functions/{functionId} - Update function
+   - DELETE /api/custom-functions/{functionId} - Delete function
+   - POST /api/custom-functions/{functionId}/execute - Execute function
+   - GET /api/custom-functions/{functionId}/stats - Execution stats
+   - GET /api/custom-functions/{functionId}/logs - Execution logs
+   - POST /api/custom-functions/{functionId}/duplicate - Duplicate function
+
+6. **ventus-voice/backend/src/routes/knowledge-base.routes.ts** (11 endpoints annotated):
+   - POST /api/knowledge-base/create - Create KB
+   - GET /api/knowledge-base/agent/{agentId} - List KBs for agent
+   - GET /api/knowledge-base/{kbId} - Get KB with documents
+   - POST /api/knowledge-base/{kbId}/upload - Upload document
+   - POST /api/knowledge-base/{kbId}/add-url - Add URL content
+   - POST /api/knowledge-base/{kbId}/search - Search KB (RAG)
+   - POST /api/knowledge-base/agent/{agentId}/search - Search all agent KBs
+   - DELETE /api/knowledge-base/document/{docId} - Delete document
+   - POST /api/knowledge-base/document/{docId}/reprocess - Reprocess document
+   - DELETE /api/knowledge-base/{kbId} - Delete KB
+   - PATCH /api/knowledge-base/{kbId} - Update KB
+   - GET /api/knowledge-base/{kbId}/stats - KB statistics
+
+### Verification:
+- Frontend typecheck: PASS (clean)
+- Backend typecheck: PASS (no new errors; pre-existing errors in unrelated files only)
+- All annotations use @openapi JSDoc format compatible with swagger-jsdoc
+- All protected routes marked with `security: [{ ClerkJWT: [] }]`
+- $ref used for shared schemas: BrandAnalysisResult, MCPCatalogItem, MCPConnection, CustomFunction, KnowledgeBase, Document, Error
+
+### Status: COMPLETE
