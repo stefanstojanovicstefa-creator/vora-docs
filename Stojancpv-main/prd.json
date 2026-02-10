@@ -38,8 +38,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added 'View All Trends' link to CallTrendsChart.tsx routing to /analytics?tab=overview, and 'View Cost Details' link to CostAnalyticsChart.tsx routing to /analytics?tab=costs. Both use Button ghost variant with ArrowRight icon. Imports added for Link, Button, ArrowRight. Typecheck passes."
     },
     {
       "id": "US-003",

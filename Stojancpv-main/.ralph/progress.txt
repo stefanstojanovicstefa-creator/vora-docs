@@ -16,3 +16,11 @@
 - Typecheck passes ✅
 - File: ventus-voice/frontend/src/pages/Dashboard.tsx
 
+## Iteration 2 - US-002: Add View More links to chart components
+- Added "View All Trends" footer link to CallTrendsChart.tsx → /analytics?tab=overview
+- Added "View Cost Details" footer link to CostAnalyticsChart.tsx → /analytics?tab=costs
+- Both use Button ghost variant with ArrowRight icon, consistent pattern
+- Added imports: Link (react-router-dom), Button (ui/button), ArrowRight (lucide-react)
+- Typecheck passes ✅
+- Files: ventus-voice/frontend/src/components/Dashboard/CallTrendsChart.tsx, CostAnalyticsChart.tsx
+
