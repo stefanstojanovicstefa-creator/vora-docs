@@ -1,49 +1,21 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 01 - Phase 2 - RTL + Clerk Dedup
-# Branch: ralph/audit-01-phase-2-rtl-clerk
+# Feature: Audit 01 - Phase 3 - Visual Polish
+# Branch: ralph/audit-01-phase-3-visual-polish
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 - US-001: Convert Sidebar to logical CSS properties for RTL
-- Changed `left-4` → `start-4` (mobile toggle button)
-- Changed `left-[252px]` → `start-[252px]` (mobile toggle when open)
-- Changed `left-0` → `start-0` (sidebar aside element)
-- Added `rtl:translate-x-full` alongside `-translate-x-full` for RTL slide animation
-- Changed `ml-auto` → `ms-auto` (collapse button)
-- Typecheck passes ✅
-
-## Iteration 2 - US-002: Convert TopBar to logical CSS properties for RTL
-- Changed `right-0` → `end-0` (header positioning)
-- Changed `left-0 lg:left-20` → `start-0 lg:start-20` (collapsed sidebar offset)
-- Changed `left-0 lg:left-64` → `start-0 lg:start-64` (expanded sidebar offset)
-- Changed `-right-0.5` → `-end-0.5` (online status indicator)
-- Typecheck passes ✅
-
-## Iteration 3 - US-003: Convert PageLayout to logical CSS properties for RTL
-- Changed `lg:ml-20` → `lg:ms-20` (collapsed sidebar margin)
-- Changed `lg:ml-64` → `lg:ms-64` (expanded sidebar margin)
-- Typecheck passes ✅
-
-## Iteration 4 - US-004: Define rtl-mirror CSS utility class
-- Added `[dir="rtl"] .rtl-mirror { transform: scaleX(-1); }` in index.css utilities section
-- The class was already referenced in Sidebar.tsx line 223 on the collapse chevron - now it works
-- Typecheck passes ✅
-
-## Iteration 5 - US-005: Wire ProfileSettings to Clerk useUser()
-- Imported `useUser` from `@clerk/clerk-react`
-- Name, email, and avatar now display real Clerk user data (disabled fields, managed by Clerk)
-- Replaced non-functional `handleAvatarUpload` with "Manage Account" button linking to Clerk
-- Role, company, bio fields use Clerk `unsafeMetadata` for persistence
-- `handleSave` is async, saves to `user.update({ unsafeMetadata })` with error handling
-- Removed all hardcoded "John Doe", "john.doe@example.com", "Product Manager", "Acme Inc." strings
-- Added loading skeleton state while Clerk loads
-- Cancel button resets from current Clerk metadata instead of hardcoded values
-- Typecheck passes ✅
-
-## Iteration 6 - US-006: Delete orphaned AccountPage
-- Deleted `ventus-voice/frontend/src/pages/AccountPage.tsx`
-- Verified no imports reference AccountPage anywhere in the codebase (grep confirmed only self-reference)
-- Typecheck passes ✅
+## Iteration 1 - US-001: Define section accent CSS variables
+- Added 6 section accent CSS variables to :root/.dark block in index.css:
+  - --accent-agents: 210 100% 80% (blue/primary)
+  - --accent-analytics: 35 92% 60% (warm amber)
+  - --accent-forge: 262 83% 65% (purple)
+  - --accent-deploy: 142 71% 50% (green)
+  - --accent-billing: 45 93% 55% (gold)
+  - --accent-settings: 240 5% 55% (neutral gray)
+- Added matching light-mode values in .light block with adjusted saturation/lightness
+- Added descriptive comment block explaining section-to-color mapping
+- All values in HSL format without wrapper (matching existing pattern)
+- Typecheck passes
 

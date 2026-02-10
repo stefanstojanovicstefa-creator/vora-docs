@@ -168,6 +168,23 @@
     --chart-3: 45 93% 47%;
     --chart-4: 262 83% 58%;
     --chart-5: 174 72% 56%;
+
+    /* ============================================
+       Section Accent Colors (Dark Mode)
+       Each platform area gets a unique accent for visual identity.
+       agents    → blue/primary (matches brand)
+       analytics → warm amber
+       forge     → purple
+       deploy    → green
+       billing   → gold
+       settings  → neutral gray
+       ============================================ */
+    --accent-agents: 210 100% 80%;
+    --accent-analytics: 35 92% 60%;
+    --accent-forge: 262 83% 65%;
+    --accent-deploy: 142 71% 50%;
+    --accent-billing: 45 93% 55%;
+    --accent-settings: 240 5% 55%;
   }
 
   .light {
@@ -255,6 +272,14 @@
     --chart-3: 38 92% 50%;
     --chart-4: 262 83% 58%;
     --chart-5: 174 72% 56%;
+
+    /* Section Accent Colors (Light Mode) */
+    --accent-agents: 217 91% 55%;
+    --accent-analytics: 25 85% 50%;
+    --accent-forge: 262 75% 55%;
+    --accent-deploy: 142 65% 40%;
+    --accent-billing: 40 90% 45%;
+    --accent-settings: 240 5% 45%;
   }
 
   * {

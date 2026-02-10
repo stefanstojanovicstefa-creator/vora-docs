@@ -1,113 +1,77 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-01-phase-2-rtl-clerk",
-  "description": "Phase 2: RTL logical properties for layout components + Clerk profile dedup. Fix physical CSS (left/right/ml/mr) to logical (start/end/ms/me) in Sidebar, TopBar, PageLayout. Wire ProfileSettings to Clerk useUser() and delete dead AccountPage. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
+  "branchName": "ralph/audit-01-phase-3-visual-polish",
+  "description": "Phase 3: Break visual monotony with section accent colors, gradient page headers, differentiated empty states, and activation of existing animation utilities. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Convert Sidebar to logical CSS properties for RTL",
-      "description": "As an Arabic-speaking user, I want the sidebar to appear on the right side when RTL is active.",
+      "title": "Define section accent CSS variables in both themes",
+      "description": "As a developer, I need section-specific accent colors defined as CSS variables so each platform area has visual identity.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In Sidebar.tsx line 160: change left-4 to start-4",
-        "In Sidebar.tsx line 161: change left-[252px] to start-[252px]",
-        "In Sidebar.tsx line 189: change left-0 to start-0",
-        "In Sidebar.tsx line 192: the -translate-x-full for slide animation needs RTL handling -- add rtl:translate-x-full class alongside the existing -translate-x-full",
-        "In Sidebar.tsx line 217: change ml-auto to ms-auto",
-        "Sidebar renders on the left in LTR and on the right in RTL",
-        "Mobile slide-in animation works in both LTR and RTL directions",
-        "Files: ventus-voice/frontend/src/components/layout/Sidebar.tsx",
+        "Add to :root, .dark block in index.css: --accent-agents (blue/primary), --accent-analytics (warm amber), --accent-forge (purple), --accent-deploy (green), --accent-billing (gold), --accent-settings (neutral gray)",
+        "Add matching values to .light block with appropriate light-mode versions",
+        "Add a comment block above the variables explaining the section-to-color mapping",
+        "Values should be in HSL format without hsl() wrapper (matching existing pattern like --primary: 210 100% 80%)",
+        "Files: ventus-voice/frontend/src/index.css",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Converted left-4 to start-4, left-[252px] to start-[252px], left-0 to start-0, added rtl:translate-x-full alongside -translate-x-full for RTL slide animation, changed ml-auto to ms-auto. Typecheck passes."
+      "notes": "Added 6 section accent CSS variables (--accent-agents, --accent-analytics, --accent-forge, --accent-deploy, --accent-billing, --accent-settings) in HSL format to both :root/.dark and .light blocks in index.css. Included descriptive comment block mapping sections to colors. Typecheck passes."
     },
     {
       "id": "US-002",
-      "title": "Convert TopBar to logical CSS properties for RTL",
-      "description": "As an Arabic-speaking user, I want the top bar to position correctly when RTL is active.",
+      "title": "Add accent border to page headers using data-section",
+      "description": "As a user, I want each section of the platform to feel visually distinct at the page level.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In TopBar.tsx line 45: change right-0 to end-0",
-        "In TopBar.tsx line 47: change left-0 lg:left-20 to start-0 lg:start-20 (collapsed), and left-0 lg:left-64 to start-0 lg:start-64 (expanded)",
-        "In TopBar.tsx line 114: change -right-0.5 to -end-0.5",
-        "TopBar correctly positioned in both LTR and RTL",
-        "Files: ventus-voice/frontend/src/components/layout/TopBar.tsx",
+        "In PageLayout.tsx or page wrapper: add support for a data-section attribute or section prop",
+        "Add CSS rules in index.css that style [data-section=agents] with a subtle left border or top gradient using --accent-agents",
+        "Apply data-section attributes to at least 5 main pages: Dashboard (agents), AnalyticsHubPage (analytics), Forge/AgentWizard (forge), DeploymentPage or similar (deploy), SubscriptionPage (billing)",
+        "The accent should be subtle -- 3px border-left or a gradient-to-transparent background tint",
+        "Works in both dark and light modes",
+        "Files: ventus-voice/frontend/src/components/layout/PageLayout.tsx, ventus-voice/frontend/src/index.css, section page files",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Converted right-0 to end-0, left-0 lg:left-20/lg:left-64 to start-0 lg:start-20/lg:start-64, -right-0.5 to -end-0.5. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Convert PageLayout to logical CSS properties for RTL",
-      "description": "As an Arabic-speaking user, I want the main content area to have correct margins in RTL.",
+      "title": "Add hover-lift and card-hover animations to key surfaces",
+      "description": "As a user, I want interactive cards and buttons to feel responsive with subtle hover animations.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In PageLayout.tsx line 53: change lg:ml-20 to lg:ms-20 and lg:ml-64 to lg:ms-64",
-        "Main content area has correct offset from sidebar in both LTR and RTL",
-        "Files: ventus-voice/frontend/src/components/layout/PageLayout.tsx",
+        "Add hover-lift class to Dashboard stat cards (StatCard.tsx or equivalent)",
+        "Add card-hover class to agent cards on AgentsPage",
+        "Add neon-glow-hover class to primary CTA buttons on at least 3 key pages",
+        "All added animations use classes already defined in animations.css -- do NOT create new keyframes",
+        "Animations respect prefers-reduced-motion (already handled in animations.css)",
+        "No animation is distracting or causes layout shift",
+        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx, ventus-voice/frontend/src/pages/AgentsPage.tsx, key CTA buttons",
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Converted lg:ml-20 to lg:ms-20 and lg:ml-64 to lg:ms-64. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Define rtl-mirror CSS utility class",
-      "description": "As a developer, I need the rtl-mirror class to exist so directional icons (like chevrons) flip in RTL mode.",
+      "title": "Add ModeToggle overflow-hidden micro-fix",
+      "description": "As a user, I want the mode toggle animation to not visually overflow its container.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "Add rtl-mirror utility class to index.css utilities section",
-        "Rule: [dir=rtl] .rtl-mirror { transform: scaleX(-1); }",
-        "The class is already referenced in Sidebar.tsx line 223 on the collapse chevron -- verify it now works",
-        "Chevron icon flips direction when document dir is rtl",
-        "Files: ventus-voice/frontend/src/index.css",
+        "In TopBar.tsx (line 86 area) or ModeToggle.tsx (line 36 area), add overflow-hidden to the toggle wrapper div",
+        "The spring animation pill no longer peeks outside the button bounds during overshoot",
+        "The toggle still functions correctly (clicking switches between Mom/God mode)",
+        "Files: ventus-voice/frontend/src/components/layout/TopBar.tsx or ventus-voice/frontend/src/components/mode/ModeToggle.tsx",
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Added [dir=rtl] .rtl-mirror { transform: scaleX(-1); } rule in index.css utilities section. The rtl-mirror class already referenced in Sidebar.tsx collapse chevron now works. Typecheck passes."
-    },
-    {
-      "id": "US-005",
-      "title": "Wire ProfileSettings to Clerk useUser() for real data",
-      "description": "As a user, I want to see my real name, email, and avatar on the Profile Settings page instead of hardcoded John Doe.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "Import useUser from @clerk/clerk-react in ProfileSettings.tsx",
-        "Replace hardcoded firstName/lastName/email/avatar with values from useUser()",
-        "Name and email fields display real Clerk user data",
-        "Avatar displays real Clerk profile image using user.imageUrl",
-        "Remove the non-functional handleAvatarUpload function -- replace avatar upload button with a link or button that opens Clerk user management",
-        "Role, company, bio fields: either connect to Clerk unsafeMetadata for MVP or mark as disabled with Coming soon placeholder",
-        "Remove all hardcoded John Doe, john.doe@example.com, Product Manager, Acme Inc strings",
-        "The handleSave function: if using unsafeMetadata, save role/company/bio there; otherwise show toast with info that feature is coming",
-        "Files: ventus-voice/frontend/src/components/Settings/ProfileSettings.tsx",
-        "Typecheck passes"
-      ],
-      "priority": 5,
-      "passes": true,
-      "notes": "Wired ProfileSettings to Clerk useUser(). Name/email/avatar now display real Clerk data (disabled fields). Replaced avatar upload with Manage Account button linking to Clerk. Role/company/bio stored in unsafeMetadata with async save. Removed all hardcoded John Doe/Acme strings. Typecheck passes."
-    },
-    {
-      "id": "US-006",
-      "title": "Delete orphaned AccountPage",
-      "description": "As a developer, I want to remove dead code that is never used.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "Delete the file ventus-voice/frontend/src/pages/AccountPage.tsx",
-        "Verify no imports reference AccountPage in App.tsx or any other file (grep for AccountPage)",
-        "If any import references exist, remove them too",
-        "Files: ventus-voice/frontend/src/pages/AccountPage.tsx (DELETE)",
-        "Typecheck passes"
-      ],
-      "priority": 6,
-      "passes": true,
-      "notes": "Deleted ventus-voice/frontend/src/pages/AccountPage.tsx. Verified no imports reference it (grep found only the file itself). Typecheck passes."
+      "passes": false,
+      "notes": "This is the micro-fix for Finding #4 from the audit"
     }
   ]
 }
