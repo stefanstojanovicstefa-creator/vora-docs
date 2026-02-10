@@ -426,13 +426,13 @@
 
   .btn-primary:hover {
     background: hsl(var(--primary-hover));
-    box-shadow: 0 0 15px rgba(153, 205, 255, 0.4);
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.4);
     transform: translateY(-1px);
   }
 
   .btn-primary:active {
     transform: translateY(0);
-    box-shadow: 0 0 5px rgba(153, 205, 255, 0.4);
+    box-shadow: 0 0 5px hsl(var(--primary) / 0.4);
   }
 
   /* Secondary Button - Hologram Border */
@@ -447,7 +447,7 @@
   .btn-secondary:hover {
     background: hsl(var(--primary) / 0.1);
     border-color: hsl(var(--primary));
-    box-shadow: 0 0 10px rgba(153, 205, 255, 0.2);
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.2);
   }
 
   /* Ghost Button */
@@ -478,7 +478,7 @@
 
   .input-neon:focus {
     border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 1px hsl(var(--primary)), 0 0 10px rgba(153, 205, 255, 0.2);
+    box-shadow: 0 0 0 1px hsl(var(--primary)), 0 0 10px hsl(var(--primary) / 0.2);
     outline: none;
   }
 

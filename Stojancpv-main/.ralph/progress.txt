@@ -13,6 +13,13 @@
 - No secondary Toaster found in ThemeToggle.tsx (no changes needed)
 - Typecheck passes ✅
 
+## Iteration 3: US-003 - Fix hardcoded neon rgba in CSS buttons and inputs
+- Replaced rgba(153, 205, 255, 0.4) with hsl(var(--primary) / 0.4) in .btn-primary:hover
+- Replaced rgba(153, 205, 255, 0.4) with hsl(var(--primary) / 0.4) in .btn-primary:active
+- Replaced rgba(153, 205, 255, 0.2) with hsl(var(--primary) / 0.2) in .btn-secondary:hover
+- Replaced rgba(153, 205, 255, 0.2) with hsl(var(--primary) / 0.2) in .input-neon:focus
+- Typecheck passes ✅
+
 ## Iteration 2: US-002 - Fix dialog and alert-dialog overlay theme adaptation
 - Changed `bg-black/80` to `bg-[hsl(var(--void))]/80` in dialog.tsx overlay
 - Changed `bg-black/80` to `bg-[hsl(var(--void))]/80` in alert-dialog.tsx overlay

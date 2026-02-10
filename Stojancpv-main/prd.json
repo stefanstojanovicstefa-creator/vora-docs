@@ -53,8 +53,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Replaced all 4 instances of rgba(153, 205, 255, N) with hsl(var(--primary) / N) in index.css: btn-primary:hover, btn-primary:active, btn-secondary:hover, and input-neon:focus. Typecheck passes."
     },
     {
       "id": "US-004",
