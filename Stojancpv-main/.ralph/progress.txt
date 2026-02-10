@@ -24,3 +24,12 @@
 - Typecheck passes ✅
 - Files: ventus-voice/frontend/src/components/Dashboard/CallTrendsChart.tsx, CostAnalyticsChart.tsx
 
+## Iteration 3 - US-003: Make recent session items clickable
+- Wrapped each session motion.div in <Link to={`/sessions/${session.id}`}>
+- Used className='block no-underline' on Link to preserve card styling
+- Moved key prop from motion.div to Link (React list rendering requirement)
+- Hover animations (scale: 1.01, x: 4) preserved on inner motion.div
+- Route /sessions/:sessionId already exists in App.tsx
+- Typecheck passes ✅
+- File: ventus-voice/frontend/src/pages/Dashboard.tsx
+

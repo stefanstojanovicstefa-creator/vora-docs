@@ -296,58 +296,59 @@ export default function Dashboard() {
 
           <div className="space-y-2">
             {recentSessions.map((session, index) => (
-              <motion.div
-                key={session.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
-                whileHover={{ scale: 1.01, x: 4 }}
-                className={cn(
-                  'flex items-center justify-between p-3 rounded-[var(--radius-md)]',
-                  'bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))]',
-                  'hover:border-[hsl(var(--primary)_/_0.3)] transition-all duration-200',
-                  'cursor-pointer group relative overflow-hidden'
-                )}
-                style={{
-                  boxShadow: '0 0 0 hsl(var(--primary) / 0)',
-                }}
-                whileHoverStyle={{
-                  boxShadow: '0 0 15px hsl(var(--primary) / 0.1)',
-                }}
-              >
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="h-8 w-8 rounded-[var(--radius-md)] bg-[hsl(var(--surface))] flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-[hsl(var(--text-muted))]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[hsl(var(--text-high))] truncate">
-                      {session.agentName}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-[hsl(var(--text-muted))]">
-                      <Clock className="h-3 w-3" />
-                      <span>{formatDuration(session.duration)}</span>
-                      <span>·</span>
-                      <span>{formatDateTime(session.timestamp)}</span>
+              <Link key={session.id} to={`/sessions/${session.id}`} className="block no-underline">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
+                  whileHover={{ scale: 1.01, x: 4 }}
+                  className={cn(
+                    'flex items-center justify-between p-3 rounded-[var(--radius-md)]',
+                    'bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))]',
+                    'hover:border-[hsl(var(--primary)_/_0.3)] transition-all duration-200',
+                    'cursor-pointer group relative overflow-hidden'
+                  )}
+                  style={{
+                    boxShadow: '0 0 0 hsl(var(--primary) / 0)',
+                  }}
+                  whileHoverStyle={{
+                    boxShadow: '0 0 15px hsl(var(--primary) / 0.1)',
+                  }}
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="h-8 w-8 rounded-[var(--radius-md)] bg-[hsl(var(--surface))] flex items-center justify-center">
+                      <Bot className="h-4 w-4 text-[hsl(var(--text-muted))]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[hsl(var(--text-high))] truncate">
+                        {session.agentName}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-[hsl(var(--text-muted))]">
+                        <Clock className="h-3 w-3" />
+                        <span>{formatDuration(session.duration)}</span>
+                        <span>·</span>
+                        <span>{formatDateTime(session.timestamp)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={getStatusVariant(session.status)} className="capitalize">
-                    {session.status}
-                  </Badge>
-                  <motion.div
-                    animate={{ x: [0, 4, 0] }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      repeatDelay: 1
-                    }}
-                  >
-                    <ArrowRight className="h-4 w-4 text-[hsl(var(--text-muted))] group-hover:text-[hsl(var(--primary))] transition-colors" />
-                  </motion.div>
-                </div>
-              </motion.div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={getStatusVariant(session.status)} className="capitalize">
+                      {session.status}
+                    </Badge>
+                    <motion.div
+                      animate={{ x: [0, 4, 0] }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        repeatDelay: 1
+                      }}
+                    >
+                      <ArrowRight className="h-4 w-4 text-[hsl(var(--text-muted))] group-hover:text-[hsl(var(--primary))] transition-colors" />
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </Link>
             ))}
           </div>
 
