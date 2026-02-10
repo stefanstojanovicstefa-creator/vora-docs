@@ -1,55 +1,15 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 01 - Phase 3 - Visual Polish
-# Branch: ralph/audit-01-phase-3-visual-polish
+# Feature: Audit 02 - Phase 1 - Tutorial Trigger Fix
+# Branch: ralph/audit-02-phase-1-tutorial-trigger
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 - US-001: Define section accent CSS variables
-- Added 6 section accent CSS variables to :root/.dark block in index.css:
-  - --accent-agents: 210 100% 80% (blue/primary)
-  - --accent-analytics: 35 92% 60% (warm amber)
-  - --accent-forge: 262 83% 65% (purple)
-  - --accent-deploy: 142 71% 50% (green)
-  - --accent-billing: 45 93% 55% (gold)
-  - --accent-settings: 240 5% 55% (neutral gray)
-- Added matching light-mode values in .light block with adjusted saturation/lightness
-- Added descriptive comment block explaining section-to-color mapping
-- All values in HSL format without wrapper (matching existing pattern)
-- Typecheck passes
-
----
-
-## Iteration 2 - US-002: Add accent border to page headers using data-section
-- Added `SectionName` type and `routeSectionMap` to PageLayout.tsx for route-based section detection
-- `detectSection()` function tries exact match then longest-prefix match against route paths
-- Maps: /dashboard, /agents → agents; /analytics, /sessions → analytics; /forge, /agents/create → forge; /deploy, /phone-numbers → deploy; /subscription → billing; /settings → settings
-- PageLayout `<main>` element now renders `data-section` attribute automatically based on current route
-- Optional `section` prop allows manual override from any page
-- Added 6 CSS rules in index.css: `main[data-section="agents"]` etc. with `border-left: 3px solid hsl(var(--accent-*) / 0.35)`
-- Subtle 35% opacity ensures accent is visible but not overwhelming in both themes
-- Typecheck passes
-
----
-
-## Iteration 3 - US-003: Add hover-lift and card-hover animations to key surfaces
-- Added `hover-lift` CSS class to StatCard (Dashboard stat cards) in StatCard.tsx
-- Added `card-hover` CSS class to agent cards on AgentsPage — both grid view (renderAgentCard) and list view (renderAgentListItem)
-- Added `neon-glow-hover` CSS class to primary CTA buttons on 3 pages:
-  - Dashboard: "Create Agent" button
-  - AgentsPage: "Create Agent" header button
-  - SubscriptionPage: "Upgrade Plan" button
-- All classes were already defined in animations.css — no new keyframes created
-- prefers-reduced-motion support already present in animations.css
-- No layout shift from any animation (translateY only, box-shadow only)
-- Typecheck passes
-
----
-
-## Iteration 4 - US-004: Add ModeToggle overflow-hidden micro-fix
-- Added `overflow-hidden` to the ModeToggle button element in ModeToggle.tsx
-- Spring animation pill now clips properly during overshoot (no visual peek outside button bounds)
-- Toggle functionality preserved — clicking still switches between Mom/God mode
-- Typecheck passes
+## Iteration 1 - US-001: Add auth guard to tutorial state query
+- Added `useAuth` import from `@clerk/clerk-react` to useTutorial.ts
+- Destructured `isSignedIn` from `useAuth()` inside the hook
+- Added `enabled: !!isSignedIn` to the useQuery options
+- Query now only fires when user is authenticated (not on public routes)
+- Typecheck passes ✅
 

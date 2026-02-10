@@ -1,77 +1,92 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-01-phase-3-visual-polish",
-  "description": "Phase 3: Break visual monotony with section accent colors, gradient page headers, differentiated empty states, and activation of existing animation utilities. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
+  "branchName": "ralph/audit-02-phase-1-tutorial-trigger",
+  "description": "Phase 1: Fix tutorial trigger bug. Three compounding bugs prevent the tutorial from ever showing: missing auth guard on query, zero validation event dispatchers, dead code. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Define section accent CSS variables in both themes",
-      "description": "As a developer, I need section-specific accent colors defined as CSS variables so each platform area has visual identity.",
+      "title": "Add auth guard to tutorial state query",
+      "description": "As a user, I want the tutorial to appear after I sign in for the first time, not fail silently due to unauthenticated API calls.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "Add to :root, .dark block in index.css: --accent-agents (blue/primary), --accent-analytics (warm amber), --accent-forge (purple), --accent-deploy (green), --accent-billing (gold), --accent-settings (neutral gray)",
-        "Add matching values to .light block with appropriate light-mode versions",
-        "Add a comment block above the variables explaining the section-to-color mapping",
-        "Values should be in HSL format without hsl() wrapper (matching existing pattern like --primary: 210 100% 80%)",
-        "Files: ventus-voice/frontend/src/index.css",
+        "In useTutorial.ts (around line 92-97), add enabled option to the useQuery call",
+        "Import useAuth from @clerk/clerk-react at the top of useTutorial.ts",
+        "Call const { isSignedIn } = useAuth() inside the useTutorial hook",
+        "Set enabled: !!isSignedIn on the useQuery options object so the query only fires when authenticated",
+        "The query should NOT fire on public routes (landing page, sign-in page)",
+        "When authenticated, the query should fetch /api/tutorial/state and shouldShowTutorial should become true for new users",
+        "Files: ventus-voice/frontend/src/hooks/useTutorial.ts",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Added 6 section accent CSS variables (--accent-agents, --accent-analytics, --accent-forge, --accent-deploy, --accent-billing, --accent-settings) in HSL format to both :root/.dark and .light blocks in index.css. Included descriptive comment block mapping sections to colors. Typecheck passes."
+      "notes": "Added useAuth import from @clerk/clerk-react, destructured isSignedIn, added enabled: !!isSignedIn to useQuery options. Query now only fires when user is authenticated."
     },
     {
       "id": "US-002",
-      "title": "Add accent border to page headers using data-section",
-      "description": "As a user, I want each section of the platform to feel visually distinct at the page level.",
+      "title": "Add tutorial validation events to agent creation flows",
+      "description": "As a user completing the tutorial, I want step 2 (Create Agent) to be validated when I successfully create an agent.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In PageLayout.tsx or page wrapper: add support for a data-section attribute or section prop",
-        "Add CSS rules in index.css that style [data-section=agents] with a subtle left border or top gradient using --accent-agents",
-        "Apply data-section attributes to at least 5 main pages: Dashboard (agents), AnalyticsHubPage (analytics), Forge/AgentWizard (forge), DeploymentPage or similar (deploy), SubscriptionPage (billing)",
-        "The accent should be subtle -- 3px border-left or a gradient-to-transparent background tint",
-        "Works in both dark and light modes",
-        "Files: ventus-voice/frontend/src/components/layout/PageLayout.tsx, ventus-voice/frontend/src/index.css, section page files",
+        "In InterviewBot.tsx, find the handleOverlayComplete function (around line 867-874). After the toast.success and before navigate(), add: window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'agent_created' } }))",
+        "In EnhancedAgentWizard.tsx, find handleDeploy function (around line 144-147). After toast.success and before navigate(), add the same dispatch",
+        "The CustomEvent detail must have key: 'agent_created' exactly (this matches what TutorialSystem.tsx listens for)",
+        "Do NOT modify TutorialSystem.tsx -- the listener is already correct",
+        "Files: ventus-voice/frontend/src/pages/InterviewBot.tsx, ventus-voice/frontend/src/components/AgentWizard/EnhancedAgentWizard.tsx",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Added section prop and auto-detection via useLocation() to PageLayout.tsx. Route-to-section mapping covers 5+ main areas: agents (/dashboard, /agents), analytics (/analytics, /sessions), forge (/agents/create/interview, /forge, /agents/create), deploy (/deploy, /phone-numbers), billing (/subscription), settings (/settings). Added 6 CSS rules in index.css for main[data-section=*] with 3px left border using section accent colors at 35% opacity — works in both dark/light modes. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Add hover-lift and card-hover animations to key surfaces",
-      "description": "As a user, I want interactive cards and buttons to feel responsive with subtle hover animations.",
+      "title": "Add tutorial validation events to agent test flows",
+      "description": "As a user completing the tutorial, I want step 3 (Test Agent) to be validated when I complete a test call.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "Add hover-lift class to Dashboard stat cards (StatCard.tsx or equivalent)",
-        "Add card-hover class to agent cards on AgentsPage",
-        "Add neon-glow-hover class to primary CTA buttons on at least 3 key pages",
-        "All added animations use classes already defined in animations.css -- do NOT create new keyframes",
-        "Animations respect prefers-reduced-motion (already handled in animations.css)",
-        "No animation is distracting or causes layout shift",
-        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx, ventus-voice/frontend/src/pages/AgentsPage.tsx, key CTA buttons",
+        "In AgentTestPage.tsx, find handleEndCall (around line 126-136). After endVoiceSession() resolves, add: if (transcript.length > 0) { window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'agent_tested' } })) }",
+        "In TestPanel.tsx, find handleEndCall (around line 253-266). After endCall() resolves, add the same dispatch with the transcript length check",
+        "Only dispatch if transcript.length > 0 (so just opening and immediately closing doesnt count)",
+        "The CustomEvent detail must have key: 'agent_tested' exactly",
+        "Files: ventus-voice/frontend/src/pages/AgentTestPage.tsx, ventus-voice/frontend/src/components/AgentTesting/TestPanel.tsx",
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Added hover-lift class to Dashboard StatCard. Added card-hover class to AgentsPage agent cards (both grid and list views). Added neon-glow-hover to 3 primary CTA buttons: Dashboard create-agent, AgentsPage create-agent, and SubscriptionPage upgrade-plan. All classes pre-existing in animations.css, no new keyframes. prefers-reduced-motion already handled. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Add ModeToggle overflow-hidden micro-fix",
-      "description": "As a user, I want the mode toggle animation to not visually overflow its container.",
+      "title": "Add tutorial validation events to phone connection flows",
+      "description": "As a user completing the tutorial, I want step 4 (Connect Number) to be validated when I connect a phone number.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In TopBar.tsx (line 86 area) or ModeToggle.tsx (line 36 area), add overflow-hidden to the toggle wrapper div",
-        "The spring animation pill no longer peeks outside the button bounds during overshoot",
-        "The toggle still functions correctly (clicking switches between Mom/God mode)",
-        "Files: ventus-voice/frontend/src/components/layout/TopBar.tsx or ventus-voice/frontend/src/components/mode/ModeToggle.tsx",
+        "In PhoneNumbersPage.tsx, find createTrunkMutation onSuccess callback (around line 161-165). After toast.success, add: window.dispatchEvent(new CustomEvent('tutorial:validation', { detail: { key: 'phone_connected' } }))",
+        "In SIPSetupWizard.tsx, find createTrunkMutation onSuccess callback (around line 107-113). After toast.success, add the same dispatch",
+        "The CustomEvent detail must have key: 'phone_connected' exactly",
+        "Files: ventus-voice/frontend/src/pages/PhoneNumbersPage.tsx, ventus-voice/frontend/src/components/SIPWizard/SIPSetupWizard.tsx",
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Added overflow-hidden to the ModeToggle button element in ModeToggle.tsx (line 36). The spring animation pill now clips properly during overshoot. Toggle still functions correctly. Typecheck passes."
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Delete dead useTutorialProgress hook",
+      "description": "As a developer, I want dead code removed so it doesnt confuse future contributors.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "Delete the file ventus-voice/frontend/src/hooks/useTutorialProgress.ts",
+        "Verify no imports reference useTutorialProgress anywhere (grep the entire frontend/src directory)",
+        "If any imports exist, remove them",
+        "Files: ventus-voice/frontend/src/hooks/useTutorialProgress.ts (DELETE)",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
     }
   ]
 }

@@ -14,6 +14,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@clerk/clerk-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useViewMode } from '@/hooks/useViewMode';
 import { apiClient } from '@/lib/api-client';
@@ -80,6 +81,7 @@ export const tutorialQueryKeys = {
 
 export function useTutorial() {
   const queryClient = useQueryClient();
+  const { isSignedIn } = useAuth();
   const { trackEvent } = useAnalytics();
   const { isMomMode } = useViewMode();
 
@@ -94,6 +96,7 @@ export function useTutorial() {
     queryFn: getTutorialState,
     staleTime: 60 * 1000, // 1 minute
     retry: 1,
+    enabled: !!isSignedIn,
   });
 
   // Update tutorial state mutation
