@@ -1,59 +1,79 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-04-phase-2-prompt-enrichment",
-  "description": "Phase 2: Enrich brand analyzer AI prompt for richer extraction -- target audience, vocabulary/jargon, and use-case scenarios. IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/).",
+  "branchName": "ralph/audit-05-phase-1-css-alignment",
+  "description": "Phase 1: Normalize CSS spacing and visual hierarchy across all Command Center tabs. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Add target audience and competitor context to AI analysis prompt",
-      "description": "As a user, I want the AI to extract information about who the business serves and how it positions against competitors.",
+      "title": "Normalize EarsTab AccordionContent spacing to consistent space-y-4 pt-2",
+      "description": "As a user, I want consistent vertical spacing between form sections in the Ears tab so it matches other tabs.",
       "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/)",
-        "In openrouter.service.ts, find the AI analysis prompt (around line 505-521 area) that generates the brand analysis",
-        "Add a section to the prompt asking for: targetAudience (demographics, pain points, typical questions they would ask), competitorContext (industry landscape, how this brand differentiates)",
-        "Add these fields to the expected JSON output structure in the prompt",
-        "In brand-analysis.types.ts, add targetAudience and competitorContext to the appropriate type (BrandAnalysisResult or the analysis response type)",
-        "In brand-analyzer.service.ts, map the new fields from the AI response to the result object",
-        "Files: ventus-voice/backend/src/services/ai/openrouter.service.ts, ventus-voice/backend/src/types/brand-analysis.types.ts, ventus-voice/backend/src/services/ai/brand-analyzer.service.ts",
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "In EarsTab.tsx (ventus-voice/frontend/src/components/CommandCenter/tabs/EarsTab.tsx), find ALL AccordionContent elements",
+        "Ensure every AccordionContent className includes 'space-y-4 pt-2' consistently",
+        "Specifically fix: Custom Vocabulary section — change space-y-3 to space-y-4",
+        "Specifically fix: Accent Hints section — add space-y-4 (currently only pt-2 with no space-y)",
+        "Specifically fix: Noise Cancellation section — add space-y-4 (currently only pt-2 with no space-y)",
+        "Specifically fix: Fallback Transcribers section — change space-y-3 to space-y-4",
+        "Do NOT change the internal card spacing (p-3 space-y-3 inside VocabCard/FallbackItem is fine — only fix the AccordionContent wrapper)",
+        "Files: ventus-voice/frontend/src/components/CommandCenter/tabs/EarsTab.tsx",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Already implemented. openrouter.service.ts prompt (lines 419-461) already requests audience_analysis (demographics, pain_points, goals) and competitor_analysis (competitors, differentiators). OpenRouterAnalysisResponse type (lines 105-113) includes these fields. brand-analysis.types.ts defines AudienceAnalysis (line 219) and CompetitorAnalysis (line 228), and BrandAnalysisResult (lines 292-293) maps them. brand-analyzer.service.ts (lines 157-158) maps audienceAnalysis and competitorAnalysis from AI response. Typecheck passes."
+      "notes": "Fixed 4 AccordionContent sections: Custom Vocabulary space-y-3→space-y-4, Accent Hints added space-y-4, Noise Cancellation added space-y-4, Fallback Transcribers space-y-3→space-y-4. All now consistently use 'space-y-4 pt-2'."
     },
     {
       "id": "US-002",
-      "title": "Add vocabulary and jargon extraction to AI analysis prompt",
-      "description": "As a user, I want the AI agent to speak using industry-specific terminology from my website.",
+      "title": "Normalize fallback item padding across Voice and Ears tabs",
+      "description": "As a user, I want fallback voice/transcriber rows to have consistent padding across tabs.",
       "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/)",
-        "In the same AI analysis prompt in openrouter.service.ts, add a section asking for: vocabulary (array of industry-specific terms, jargon, brand-specific words the agent should know and use correctly)",
-        "Add vocabulary field (string array) to the systemPrompt section of the output structure in the prompt",
-        "In brand-analysis.types.ts, add vocabulary: string[] to the SystemPrompt type",
-        "In brand-analyzer.service.ts, map the vocabulary field from AI response",
-        "Files: ventus-voice/backend/src/services/ai/openrouter.service.ts, ventus-voice/backend/src/types/brand-analysis.types.ts, ventus-voice/backend/src/services/ai/brand-analyzer.service.ts",
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "In VoiceTab.tsx (ventus-voice/frontend/src/components/CommandCenter/tabs/VoiceTab.tsx), find the fallback voice row elements",
+        "Change fallback voice row from 'flex items-center gap-2 p-2 border rounded' to 'flex items-center gap-3 p-3 rounded-lg border border-border bg-background' to match EarsTab fallback styling",
+        "This normalizes: p-2 gap-2 border rounded → p-3 gap-3 rounded-lg border border-border bg-background",
+        "Files: ventus-voice/frontend/src/components/CommandCenter/tabs/VoiceTab.tsx",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Already implemented. openrouter.service.ts prompt (lines 432-440) requests vocabulary with jargon array and acronyms array. OpenRouterAnalysisResponse (lines 114-117) defines vocabulary field. brand-analysis.types.ts defines DomainVocabulary interface (lines 236-239) with jargon: string[] and acronyms. BrandAnalysisResult (line 294) includes vocabulary. brand-analyzer.service.ts (line 159) maps vocabulary from AI response. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Add use-case scenarios to AI analysis prompt",
-      "description": "As a user, I want the AI agent to be prepared for common customer interaction scenarios.",
+      "title": "Normalize grid gaps to consistent gap-3 across Voice and Ears tabs",
+      "description": "As a user, I want consistent grid spacing for voice cards and provider cards.",
       "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/)",
-        "In the same AI analysis prompt in openrouter.service.ts, add a section asking for: useCaseScenarios (array of 3-5 realistic customer interaction scenarios the agent should handle well, each with scenario description, expected customer question, ideal agent response approach)",
-        "Add useCaseScenarios field to the systemPrompt section of the output structure in the prompt",
-        "In brand-analysis.types.ts, add useCaseScenarios: Array<{ scenario: string; customerQuestion: string; responseApproach: string }> to the SystemPrompt type",
-        "In brand-analyzer.service.ts, map the useCaseScenarios field from AI response",
-        "Files: ventus-voice/backend/src/services/ai/openrouter.service.ts, ventus-voice/backend/src/types/brand-analysis.types.ts, ventus-voice/backend/src/services/ai/brand-analyzer.service.ts",
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "In VoiceTab.tsx, find the voice selector grid (grid grid-cols-2 gap-2) and change gap-2 to gap-3",
+        "Verify EarsTab provider card grids already use gap-3 (if gap-2 found, change to gap-3)",
+        "Search all tab files in ventus-voice/frontend/src/components/CommandCenter/tabs/ for 'gap-2' in grid contexts and normalize to gap-3",
+        "Do NOT change gap-2 inside flex layouts (like flex gap-2 for inline badge groups) — only normalize grid layouts",
+        "Files: ventus-voice/frontend/src/components/CommandCenter/tabs/VoiceTab.tsx, ventus-voice/frontend/src/components/CommandCenter/tabs/EarsTab.tsx",
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Already implemented. openrouter.service.ts prompt (lines 441-453) requests use_case_scenarios with title, description, example_dialogue for 3-5 realistic scenarios. OpenRouterAnalysisResponse (lines 118-122) defines use_case_scenarios array. brand-analysis.types.ts defines UseCaseScenario interface (lines 244-248). BrandAnalysisResult (line 295) includes useCaseScenarios. brand-analyzer.service.ts (line 160) maps useCaseScenarios from AI response. Typecheck passes."
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add SectionBadge hints to BrainTab, VoiceTab, EarsTab accordion triggers",
+      "description": "As a user, I want consistent visual hierarchy badges on section headers across all tabs, matching the BehaviorTab pattern.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "BehaviorTab.tsx already has a SectionBadge pattern: <span className='text-xs bg-[hsl(var(--surface-elevated))] text-[hsl(var(--text-muted))] px-2 py-0.5 rounded-full ml-auto'>hint text</span> inside AccordionTrigger",
+        "Add similar SectionBadge hints to key AccordionTrigger elements in BrainTab.tsx — add badge text: Provider section → provider+model name, Intelligence section → temperature value, System Prompt section → token count",
+        "Add similar SectionBadge hints to VoiceTab.tsx — Provider section → selected provider, Voice section → selected voice name, Tuning section → speed value",
+        "Add similar SectionBadge hints to EarsTab.tsx — Provider section → selected provider, Language section → selected language, Recognition section → accuracy mode",
+        "The badge should show a short summary of current selection, placed inside <AccordionTrigger> after the label text",
+        "Use the exact same className as BehaviorTab: 'text-xs bg-[hsl(var(--surface-elevated))] text-[hsl(var(--text-muted))] px-2 py-0.5 rounded-full ml-auto'",
+        "Files: ventus-voice/frontend/src/components/CommandCenter/tabs/BrainTab.tsx, ventus-voice/frontend/src/components/CommandCenter/tabs/VoiceTab.tsx, ventus-voice/frontend/src/components/CommandCenter/tabs/EarsTab.tsx",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
     }
   ]
 }
