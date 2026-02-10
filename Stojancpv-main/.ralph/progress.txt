@@ -14,3 +14,12 @@
 - Typecheck passes (38 pre-existing errors in unrelated files, none in changed file)
 - Status: DONE
 
+## Iteration 2 - US-002: Improve Dashboard progress label from steps to stages
+- File: ventus-voice/frontend/src/pages/Dashboard.tsx (line 256-263)
+- Changed label from 'steps' to 'stages' in progress text
+- Added firstIncompleteStage subtitle hint (e.g., "Next: Configure Voice") when available and progress < 99%
+- Added "Almost done - test your agent" message when progress >= 99%
+- Stage name is title-cased and dashes replaced with spaces for display
+- Typecheck passes cleanly (0 errors)
+- Status: DONE
+

@@ -34,8 +34,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Changed 'steps' to 'stages' in label. Added firstIncompleteStage subtitle hint with title-cased stage name. Added 'Almost done - test your agent' message when progress >= 99%. Typecheck passes cleanly."
     },
     {
       "id": "US-003",

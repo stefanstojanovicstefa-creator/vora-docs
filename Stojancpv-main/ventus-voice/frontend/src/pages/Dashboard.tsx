@@ -253,9 +253,16 @@ export default function Dashboard() {
                   {t('agent:interview.incomplete.title')}
                 </h3>
               </div>
-              <p className="text-sm text-[hsl(var(--text-muted))] mb-3">
-                {`${incompleteSession.currentQuestionIndex}/${incompleteSession.totalQuestions} steps (${incompleteSession.progress}%)`}
+              <p className="text-sm text-[hsl(var(--text-muted))] mb-1">
+                {incompleteSession.progress >= 99
+                  ? 'Almost done - test your agent'
+                  : `${incompleteSession.currentQuestionIndex}/${incompleteSession.totalQuestions} stages (${incompleteSession.progress}%)`}
               </p>
+              {incompleteSession.firstIncompleteStage && incompleteSession.progress < 99 && (
+                <p className="text-xs text-[hsl(var(--text-muted))] mb-2">
+                  {`Next: ${incompleteSession.firstIncompleteStage.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}`}
+                </p>
+              )}
               <div className="w-full bg-[hsl(var(--surface))] rounded-full h-2 mb-4">
                 <div
                   className="bg-[hsl(var(--primary))] h-2 rounded-full transition-all duration-300"
