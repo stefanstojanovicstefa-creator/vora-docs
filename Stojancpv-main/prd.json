@@ -36,8 +36,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Can be done in same file edit as US-001"
+      "passes": true,
+      "notes": "Removed onEscapeKeyDown prop from DialogContent (lines 67-73). useCommandPalette.tsx useEffect handler is now the single source of truth for Escape: first press clears query, second press closes palette. Typecheck passes clean."
     },
     {
       "id": "US-003",

@@ -14,3 +14,13 @@
 - Verified no other usage of motion/AnimatePresence in file
 - Typecheck passes clean
 - Status: ✅ DONE
+
+---
+
+## Iteration 2 — US-002: Remove dual Escape key handler conflict
+- Removed `onEscapeKeyDown` prop from `DialogContent` in CommandPalette.tsx (lines 67-73)
+- This prop was conflicting with the useEffect keyboard handler in useCommandPalette.tsx
+- useCommandPalette.tsx useEffect (lines 320-328) is now the single source of truth for Escape handling
+- Did NOT modify useCommandPalette.tsx (as required)
+- Typecheck passes clean
+- Status: ✅ DONE

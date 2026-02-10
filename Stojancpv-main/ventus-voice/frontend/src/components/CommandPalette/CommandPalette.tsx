@@ -64,13 +64,6 @@ export function CommandPalette({ className }: CommandPaletteProps) {
       <DialogContent
         className={cn("sm:max-w-[640px] p-0 gap-0 overflow-hidden", className)}
         onOpenAutoFocus={e => e.preventDefault()}
-        onEscapeKeyDown={e => {
-          // UX: first Escape clears the query, second Escape closes.
-          // Prevent Radix from closing the dialog when there is an active query.
-          if (query.trim()) {
-            e.preventDefault();
-          }
-        }}
       >
         <DialogTitle className="sr-only">Command Palette</DialogTitle>
 
