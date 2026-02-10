@@ -120,8 +120,8 @@
         "Typecheck passes (no TS changes)"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added scripts section to ventus-voice/package.json while preserving existing dependencies. Scripts: local (./start-local.sh), setup (cd backend && npm run db:setup-local), db:reset (cd backend && npm run db:reset-local), db:seed (cd backend && npm run db:seed-local), frontend (cd frontend && npm run dev), backend (cd backend && npm run dev), install:all (cd backend && npm install && cd ../frontend && npm install). Typecheck passes (no TS changes)."
     }
   ]
 }

@@ -1195,6 +1195,28 @@ Website URL → brand analysis AI prompt (enriched) → AI extracts all 4 catego
 
 ---
 
+## Iteration 39: US-L05 - Root NPM Aliases
+
+**Status**: COMPLETE
+
+**Changes Made**:
+1. `ventus-voice/package.json`:
+   - Added `scripts` section while preserving existing `dependencies` (axios)
+   - `"local": "./start-local.sh"` — unified startup
+   - `"setup": "cd backend && npm run db:setup-local"` — database setup
+   - `"db:reset": "cd backend && npm run db:reset-local"` — database reset
+   - `"db:seed": "cd backend && npm run db:seed-local"` — seed only
+   - `"frontend": "cd frontend && npm run dev"` — start frontend only
+   - `"backend": "cd backend && npm run dev"` — start backend only
+   - `"install:all": "cd backend && npm install && cd ../frontend && npm install"` — install all deps
+
+**Verification**:
+- JSON is valid (node JSON.parse check)
+- TypeScript typecheck passes (no TS changes)
+- All scripts reference correct relative paths from ventus-voice/ root
+
+---
+
 ## Iteration 38: US-L04 - Unified Startup Script
 
 **Status**: COMPLETE
