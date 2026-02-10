@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Save, Upload, User, Mail, Building } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Save, User, ExternalLink } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -8,43 +9,60 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 
-interface ProfileData {
-  fullName: string;
-  email: string;
-  role: string;
-  company: string;
-  bio: string;
-  avatarUrl?: string;
+interface ProfileMetadata {
+  role?: string;
+  company?: string;
+  bio?: string;
 }
 
 export function ProfileSettings() {
-  const [profile, setProfile] = useState<ProfileData>({
-    fullName: 'John Doe',
-    email: 'john.doe@example.com',
-    role: 'Product Manager',
-    company: 'Acme Inc.',
-    bio: '',
-    avatarUrl: undefined,
-  });
+  const { user, isLoaded } = useUser();
 
+  const metadata = (user?.unsafeMetadata ?? {}) as ProfileMetadata;
+
+  const [role, setRole] = useState(metadata.role ?? '');
+  const [company, setCompany] = useState(metadata.company ?? '');
+  const [bio, setBio] = useState(metadata.bio ?? '');
   const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleChange = (field: keyof ProfileData, value: string) => {
-    setProfile((prev) => ({ ...prev, [field]: value }));
-    setHasChanges(true);
+  useEffect(() => {
+    if (isLoaded && user) {
+      const meta = (user.unsafeMetadata ?? {}) as ProfileMetadata;
+      setRole(meta.role ?? '');
+      setCompany(meta.company ?? '');
+      setBio(meta.bio ?? '');
+    }
+  }, [isLoaded, user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      await user.update({
+        unsafeMetadata: { role, company, bio },
+      });
+      toast.success('Profile updated successfully');
+      setHasChanges(false);
+    } catch {
+      toast.error('Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSave = () => {
-    // TODO: Implement save logic
-    toast.success('Profile updated successfully');
-    setHasChanges(false);
+  const handleManageAccount = () => {
+    if (user) {
+      // Opens Clerk's user profile management
+      window.open('https://accounts.clerk.dev/user', '_blank');
+    }
   };
 
-  const handleAvatarUpload = () => {
-    // TODO: Implement avatar upload
-    toast.success('Avatar uploaded successfully');
-    setHasChanges(true);
-  };
+  const fullName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || 'User'
+    : 'Loading...';
+  const email = user?.primaryEmailAddress?.emailAddress ?? 'Loading...';
+  const avatarUrl = user?.imageUrl;
 
   const getInitials = (name: string) => {
     return name
@@ -55,6 +73,15 @@ export function ProfileSettings() {
       .slice(0, 2);
   };
 
+  if (!isLoaded) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <Card className="bg-surface/70 backdrop-blur-xl border-border/50 h-40" />
+        <Card className="bg-surface/70 backdrop-blur-xl border-border/50 h-80" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Avatar */}
@@ -62,24 +89,24 @@ export function ProfileSettings() {
         <CardHeader>
           <CardTitle className="text-xl">Profile Picture</CardTitle>
           <CardDescription>
-            Upload a photo to personalize your account
+            Manage your profile picture through your Clerk account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
+              <AvatarImage src={avatarUrl} alt={fullName} />
               <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                {getInitials(profile.fullName)}
+                {getInitials(fullName)}
               </AvatarFallback>
             </Avatar>
             <div className="space-y-2">
-              <Button onClick={handleAvatarUpload} variant="outline" className="gap-2">
-                <Upload className="h-4 w-4" />
-                Upload Photo
+              <Button onClick={handleManageAccount} variant="outline" className="gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Manage Account
               </Button>
               <p className="text-xs text-muted-foreground">
-                JPG, PNG or GIF. Max size 2MB.
+                Change your avatar, name, and email through Clerk.
               </p>
             </div>
           </div>
@@ -94,7 +121,7 @@ export function ProfileSettings() {
             Personal Information
           </CardTitle>
           <CardDescription>
-            Update your personal details
+            Your name and email are managed by Clerk. Role, company, and bio can be updated here.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -103,10 +130,13 @@ export function ProfileSettings() {
               <Label htmlFor="full-name">Full Name</Label>
               <Input
                 id="full-name"
-                value={profile.fullName}
-                onChange={(e) => handleChange('fullName', e.target.value)}
+                value={fullName}
                 className="bg-background/50"
+                disabled
               />
+              <p className="text-xs text-muted-foreground">
+                Managed by Clerk
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -114,13 +144,12 @@ export function ProfileSettings() {
               <Input
                 id="email"
                 type="email"
-                value={profile.email}
-                onChange={(e) => handleChange('email', e.target.value)}
+                value={email}
                 className="bg-background/50"
                 disabled
               />
               <p className="text-xs text-muted-foreground">
-                Email changes require verification
+                Managed by Clerk
               </p>
             </div>
           </div>
@@ -130,8 +159,12 @@ export function ProfileSettings() {
               <Label htmlFor="role">Role</Label>
               <Input
                 id="role"
-                value={profile.role}
-                onChange={(e) => handleChange('role', e.target.value)}
+                value={role}
+                onChange={(e) => {
+                  setRole(e.target.value);
+                  setHasChanges(true);
+                }}
+                placeholder="e.g. Product Manager"
                 className="bg-background/50"
               />
             </div>
@@ -140,8 +173,12 @@ export function ProfileSettings() {
               <Label htmlFor="company">Company</Label>
               <Input
                 id="company"
-                value={profile.company}
-                onChange={(e) => handleChange('company', e.target.value)}
+                value={company}
+                onChange={(e) => {
+                  setCompany(e.target.value);
+                  setHasChanges(true);
+                }}
+                placeholder="e.g. Acme Inc."
                 className="bg-background/50"
               />
             </div>
@@ -151,8 +188,11 @@ export function ProfileSettings() {
             <Label htmlFor="bio">Bio</Label>
             <Textarea
               id="bio"
-              value={profile.bio}
-              onChange={(e) => handleChange('bio', e.target.value)}
+              value={bio}
+              onChange={(e) => {
+                setBio(e.target.value);
+                setHasChanges(true);
+              }}
               placeholder="Tell us a bit about yourself..."
               rows={4}
               className="bg-background/50 resize-none"
@@ -169,14 +209,10 @@ export function ProfileSettings() {
         <Button
           variant="outline"
           onClick={() => {
-            setProfile({
-              fullName: 'John Doe',
-              email: 'john.doe@example.com',
-              role: 'Product Manager',
-              company: 'Acme Inc.',
-              bio: '',
-              avatarUrl: undefined,
-            });
+            const meta = (user?.unsafeMetadata ?? {}) as ProfileMetadata;
+            setRole(meta.role ?? '');
+            setCompany(meta.company ?? '');
+            setBio(meta.bio ?? '');
             setHasChanges(false);
             toast.info('Changes discarded');
           }}
@@ -186,11 +222,11 @@ export function ProfileSettings() {
         </Button>
         <Button
           onClick={handleSave}
-          disabled={!hasChanges}
+          disabled={!hasChanges || isSaving}
           className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           <Save className="h-4 w-4" />
-          Save Changes
+          {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
     </div>

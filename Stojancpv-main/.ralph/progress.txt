@@ -31,3 +31,14 @@
 - The class was already referenced in Sidebar.tsx line 223 on the collapse chevron - now it works
 - Typecheck passes ✅
 
+## Iteration 5 - US-005: Wire ProfileSettings to Clerk useUser()
+- Imported `useUser` from `@clerk/clerk-react`
+- Name, email, and avatar now display real Clerk user data (disabled fields, managed by Clerk)
+- Replaced non-functional `handleAvatarUpload` with "Manage Account" button linking to Clerk
+- Role, company, bio fields use Clerk `unsafeMetadata` for persistence
+- `handleSave` is async, saves to `user.update({ unsafeMetadata })` with error handling
+- Removed all hardcoded "John Doe", "john.doe@example.com", "Product Manager", "Acme Inc." strings
+- Added loading skeleton state while Clerk loads
+- Cancel button resets from current Clerk metadata instead of hardcoded values
+- Typecheck passes ✅
+

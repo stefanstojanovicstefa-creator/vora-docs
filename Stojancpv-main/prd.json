@@ -90,8 +90,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wired ProfileSettings to Clerk useUser(). Name/email/avatar now display real Clerk data (disabled fields). Replaced avatar upload with Manage Account button linking to Clerk. Role/company/bio stored in unsafeMetadata with async save. Removed all hardcoded John Doe/Acme strings. Typecheck passes."
     },
     {
       "id": "US-006",
