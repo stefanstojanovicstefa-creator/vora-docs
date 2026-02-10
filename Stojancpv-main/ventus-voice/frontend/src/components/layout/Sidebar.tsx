@@ -157,8 +157,8 @@ export function Sidebar({ className, defaultCollapsed = false }: SidebarProps) {
         variant="ghost"
         size="icon"
         className={cn(
-          "fixed top-4 left-4 z-50 lg:hidden glass-card",
-          isMobileOpen && "left-[252px]"
+          "fixed top-4 start-4 z-50 lg:hidden glass-card",
+          isMobileOpen && "start-[252px]"
         )}
         onClick={() => setIsMobileOpen(!isMobileOpen)}
         aria-label={
@@ -186,10 +186,10 @@ export function Sidebar({ className, defaultCollapsed = false }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen transition-transform duration-300",
+          "fixed top-0 start-0 z-40 h-screen transition-transform duration-300",
           "glass-card border-r border-[hsl(var(--border))]",
           // Mobile: slide in/out
-          isMobileOpen ? "translate-x-0" : "-translate-x-full",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full",
           // Desktop: always visible
           "lg:translate-x-0",
           // Width based on collapsed state
@@ -214,7 +214,7 @@ export function Sidebar({ className, defaultCollapsed = false }: SidebarProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="hidden lg:flex h-8 w-8 ml-auto"
+              className="hidden lg:flex h-8 w-8 ms-auto"
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >

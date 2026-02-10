@@ -1,148 +1,113 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-01-phase-1b-light-theme",
-  "description": "Phase 1b: Fix light theme rendering. ThemeProvider works correctly but hardcoded dark-specific values (rgba neon glows, bg-black overlays, Toaster theme=dark) bypass CSS variables. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
+  "branchName": "ralph/audit-01-phase-2-rtl-clerk",
+  "description": "Phase 2: RTL logical properties for layout components + Clerk profile dedup. Fix physical CSS (left/right/ml/mr) to logical (start/end/ms/me) in Sidebar, TopBar, PageLayout. Wire ProfileSettings to Clerk useUser() and delete dead AccountPage. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Fix Toaster theme binding to use resolved theme",
-      "description": "As a user, I want toast notifications to match my selected theme (light or dark) instead of always being dark.",
+      "title": "Convert Sidebar to logical CSS properties for RTL",
+      "description": "As an Arabic-speaking user, I want the sidebar to appear on the right side when RTL is active.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In App.tsx (line 275), change Toaster theme='dark' to use the resolved theme dynamically",
-        "Import useResolvedTheme or useTheme from ThemeProvider and pass the resolved value",
-        "If Toaster is outside ThemeProvider in the component tree, move it inside or use a wrapper component",
-        "In ThemeToggle.tsx (line 107), apply the same fix if there is a secondary Toaster",
-        "Toast notifications render with appropriate colors in both light and dark modes",
-        "Files: ventus-voice/frontend/src/App.tsx, ventus-voice/frontend/src/components/ThemeToggle.tsx",
+        "In Sidebar.tsx line 160: change left-4 to start-4",
+        "In Sidebar.tsx line 161: change left-[252px] to start-[252px]",
+        "In Sidebar.tsx line 189: change left-0 to start-0",
+        "In Sidebar.tsx line 192: the -translate-x-full for slide animation needs RTL handling -- add rtl:translate-x-full class alongside the existing -translate-x-full",
+        "In Sidebar.tsx line 217: change ml-auto to ms-auto",
+        "Sidebar renders on the left in LTR and on the right in RTL",
+        "Mobile slide-in animation works in both LTR and RTL directions",
+        "Files: ventus-voice/frontend/src/components/layout/Sidebar.tsx",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Created ThemedToaster wrapper component that uses useResolvedTheme() to dynamically pass the resolved theme to Toaster. Replaced hardcoded theme='dark' with the wrapper. Imported useResolvedTheme from ThemeProvider. No secondary Toaster in ThemeToggle.tsx. Typecheck passes."
+      "notes": "Converted left-4 to start-4, left-[252px] to start-[252px], left-0 to start-0, added rtl:translate-x-full alongside -translate-x-full for RTL slide animation, changed ml-auto to ms-auto. Typecheck passes."
     },
     {
       "id": "US-002",
-      "title": "Fix dialog and alert-dialog overlay theme adaptation",
-      "description": "As a user, I want modal overlays to look appropriate in both light and dark themes.",
+      "title": "Convert TopBar to logical CSS properties for RTL",
+      "description": "As an Arabic-speaking user, I want the top bar to position correctly when RTL is active.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In dialog.tsx (line 22), change bg-black/80 to bg-[hsl(var(--void))]/80",
-        "In alert-dialog.tsx (line 19), apply the same change",
-        "Overlays look correct in dark mode (dark scrim) and light mode (lighter scrim)",
-        "The data-[state=open] and data-[state=closed] animations still work after the change",
-        "Files: ventus-voice/frontend/src/components/ui/dialog.tsx, ventus-voice/frontend/src/components/ui/alert-dialog.tsx",
+        "In TopBar.tsx line 45: change right-0 to end-0",
+        "In TopBar.tsx line 47: change left-0 lg:left-20 to start-0 lg:start-20 (collapsed), and left-0 lg:left-64 to start-0 lg:start-64 (expanded)",
+        "In TopBar.tsx line 114: change -right-0.5 to -end-0.5",
+        "TopBar correctly positioned in both LTR and RTL",
+        "Files: ventus-voice/frontend/src/components/layout/TopBar.tsx",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Replaced bg-black/80 with bg-[hsl(var(--void))]/80 in both dialog.tsx (line 22) and alert-dialog.tsx (line 19). Animations remain unchanged. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Fix hardcoded neon rgba in CSS buttons and inputs",
-      "description": "As a developer, I need button and input hover/focus glows to use CSS variables so they adapt to the active theme.",
+      "title": "Convert PageLayout to logical CSS properties for RTL",
+      "description": "As an Arabic-speaking user, I want the main content area to have correct margins in RTL.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In index.css line 429 (.btn-primary:hover), replace rgba(153, 205, 255, 0.4) with hsl(var(--primary) / 0.4)",
-        "In index.css line 435 (.btn-primary:active), apply same pattern",
-        "In index.css line 450 (.btn-secondary:hover), apply same pattern",
-        "In index.css line 481 (.input-neon:focus), apply same pattern",
-        "Buttons glow with neon blue (#99CDFF) in dark mode and solid blue (#2563EB) in light mode",
-        "Files: ventus-voice/frontend/src/index.css",
+        "In PageLayout.tsx line 53: change lg:ml-20 to lg:ms-20 and lg:ml-64 to lg:ms-64",
+        "Main content area has correct offset from sidebar in both LTR and RTL",
+        "Files: ventus-voice/frontend/src/components/layout/PageLayout.tsx",
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Replaced all 4 instances of rgba(153, 205, 255, N) with hsl(var(--primary) / N) in index.css: btn-primary:hover, btn-primary:active, btn-secondary:hover, and input-neon:focus. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Add light-mode neon glow variants in animations.css",
-      "description": "As a developer, I need the neon-glow utility classes to use theme-appropriate colors so the brand glow effect works in light mode.",
+      "title": "Define rtl-mirror CSS utility class",
+      "description": "As a developer, I need the rtl-mirror class to exist so directional icons (like chevrons) flip in RTL mode.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In animations.css after the existing .neon-glow rules (lines 169-183), add .light .neon-glow with box-shadow using light primary rgba(37, 99, 235, 0.2)",
-        "Add .light .neon-glow-hover:hover with rgba(37, 99, 235, 0.4)",
-        "Add .light .neon-glow-active with rgba(37, 99, 235, 0.3)",
-        "The prefers-reduced-motion rule (line ~362) that disables all glows remains unchanged",
-        "Follow the same pattern used for .glass-card light variants in index.css (lines 374-396)",
-        "Files: ventus-voice/frontend/src/styles/animations.css",
+        "Add rtl-mirror utility class to index.css utilities section",
+        "Rule: [dir=rtl] .rtl-mirror { transform: scaleX(-1); }",
+        "The class is already referenced in Sidebar.tsx line 223 on the collapse chevron -- verify it now works",
+        "Chevron icon flips direction when document dir is rtl",
+        "Files: ventus-voice/frontend/src/index.css",
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Added .light .neon-glow, .light .neon-glow-hover:hover, and .light .neon-glow-active variants using rgba(37, 99, 235, N) after the existing dark-mode neon-glow rules. prefers-reduced-motion rule left unchanged. Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-005",
-      "title": "Audit and fix hardcoded rgba(153,205,255) in Dashboard and StatCard",
-      "description": "As a developer, I need Dashboard.tsx and StatCard.tsx to use CSS variables instead of hardcoded dark-mode neon blue.",
+      "title": "Wire ProfileSettings to Clerk useUser() for real data",
+      "description": "As a user, I want to see my real name, email, and avatar on the Profile Settings page instead of hardcoded John Doe.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In Dashboard.tsx, find all instances of rgba(153, 205, 255 and replace with hsl(var(--primary) / N) where N is the alpha value",
-        "In StatCard.tsx, apply the same replacement",
-        "Both components render correctly in dark mode (should look identical to before)",
-        "Both components render correctly in light mode (use the light primary blue)",
-        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx, ventus-voice/frontend/src/components/Dashboard/StatCard.tsx",
+        "Import useUser from @clerk/clerk-react in ProfileSettings.tsx",
+        "Replace hardcoded firstName/lastName/email/avatar with values from useUser()",
+        "Name and email fields display real Clerk user data",
+        "Avatar displays real Clerk profile image using user.imageUrl",
+        "Remove the non-functional handleAvatarUpload function -- replace avatar upload button with a link or button that opens Clerk user management",
+        "Role, company, bio fields: either connect to Clerk unsafeMetadata for MVP or mark as disabled with Coming soon placeholder",
+        "Remove all hardcoded John Doe, john.doe@example.com, Product Manager, Acme Inc strings",
+        "The handleSave function: if using unsafeMetadata, save role/company/bio there; otherwise show toast with info that feature is coming",
+        "Files: ventus-voice/frontend/src/components/Settings/ProfileSettings.tsx",
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": true,
-      "notes": "Replaced all rgba(153, 205, 255) instances with hsl(var(--primary) / N) in Dashboard.tsx (3 instances: boxShadow hover, radial-gradient) and StatCard.tsx (2 instances: boxShadow hover + gradient hex colors). Typecheck passes."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-006",
-      "title": "Audit and fix hardcoded rgba in Forge and AgentWizard components",
-      "description": "As a developer, I need Forge and AgentWizard components to use CSS variables for theme-adaptive colors.",
+      "title": "Delete orphaned AccountPage",
+      "description": "As a developer, I want to remove dead code that is never used.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In StepIndicator.tsx, find all rgba(153, 205, 255 and replace with hsl(var(--primary) / N)",
-        "In AgentCreationOverlay.tsx, apply the same replacement",
-        "Both components render correctly in both themes",
-        "Files: ventus-voice/frontend/src/components/AgentWizard/StepIndicator.tsx, ventus-voice/frontend/src/components/Forge/AgentCreationOverlay.tsx",
+        "Delete the file ventus-voice/frontend/src/pages/AccountPage.tsx",
+        "Verify no imports reference AccountPage in App.tsx or any other file (grep for AccountPage)",
+        "If any import references exist, remove them too",
+        "Files: ventus-voice/frontend/src/pages/AccountPage.tsx (DELETE)",
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": true,
-      "notes": "StepIndicator.tsx: replaced 2 rgba instances in pulse-glow keyframe with hsl(var(--primary) / N). AgentCreationOverlay.tsx: replaced 3 rgba instances (background, boxShadow, color) with hsl(var(--primary) / N). Typecheck passes."
-    },
-    {
-      "id": "US-007",
-      "title": "Audit and fix hardcoded rgba in VoiceCall components",
-      "description": "As a developer, I need VoiceCall components to use CSS variables for theme-adaptive glow effects.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In VoiceCallButton.tsx, find all rgba(153, 205, 255 and replace with hsl(var(--primary) / N)",
-        "In VoiceVisualizer.tsx, apply the same replacement",
-        "Both components render correctly in both themes",
-        "Files: ventus-voice/frontend/src/components/VoiceCall/VoiceCallButton.tsx, ventus-voice/frontend/src/components/VoiceCall/VoiceVisualizer.tsx",
-        "Typecheck passes"
-      ],
-      "priority": 7,
-      "passes": true,
-      "notes": "VoiceCallButton.tsx: replaced 4 rgba(153,205,255) instances in glow variants with hsl(var(--primary) / N). VoiceVisualizer.tsx: replaced 2 rgba glow values and 2 hex active colors with --primary variable. Typecheck passes."
-    },
-    {
-      "id": "US-008",
-      "title": "Audit bg-black overlays across components for theme adaptation",
-      "description": "As a developer, I need modal/overlay backgrounds to adapt to the active theme instead of always being black.",
-      "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "Review each bg-black/N usage and decide: theme-adaptive overlay or intentionally black",
-        "Change OnboardingSurvey.tsx bg-black/60 to bg-[hsl(var(--void))]/60 (2 instances around lines 188 and 222)",
-        "Change SegmentationModal.tsx bg-black/80 to bg-[hsl(var(--void))]/80",
-        "Change TutorialSystem.tsx bg-black/60 to bg-[hsl(var(--void))]/60",
-        "Change CreateCampaignDialog.tsx bg-black/60 to bg-[hsl(var(--void))]/60",
-        "Change CampaignDetailModal.tsx bg-black/60 to bg-[hsl(var(--void))]/60",
-        "Leave FlowStudioPage.tsx bg-black/30 as-is (canvas overlay, intentionally dark)",
-        "Leave InterviewBot.tsx bg-black/80 as-is (video overlay, intentionally dark)",
-        "Files: multiple component files listed above",
-        "Typecheck passes"
-      ],
-      "priority": 8,
-      "passes": true,
-      "notes": "Changed bg-black/60 to bg-[hsl(var(--void))]/60 in: OnboardingSurvey.tsx (2 instances), TutorialSystem.tsx, CreateCampaignDialog.tsx, CampaignDetailModal.tsx. Changed bg-black/80 to bg-[hsl(var(--void))]/80 in SegmentationModal.tsx. Left FlowStudioPage.tsx and InterviewBot.tsx as-is (intentionally dark). Typecheck passes."
+      "passes": false,
+      "notes": ""
     }
   ]
 }
