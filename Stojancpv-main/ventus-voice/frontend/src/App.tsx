@@ -4,7 +4,7 @@ import { Toaster } from "sonner";
 import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from "@clerk/clerk-react";
 import { Loader2 } from "lucide-react";
 import { PageLayout } from "./components/layout";
-import { ThemeProvider } from "./components/ThemeProvider";
+import { ThemeProvider, useResolvedTheme } from "./components/ThemeProvider";
 import { ViewModeProvider } from "./providers/ViewModeProvider";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { CommandPalette } from "./components/CommandPalette";
@@ -66,6 +66,25 @@ const BuilderCreateRedirect = lazy(() => import("./pages/BuilderCreateRedirect")
 const MCPMarketplacePage = lazy(() => import("./pages/MCPMarketplacePage"));
 const PoliciesPage = lazy(() => import("./pages/PoliciesPage"));
 const EmbedSnippetsPage = lazy(() => import("./pages/EmbedSnippetsPage"));
+
+// Theme-aware toaster wrapper (uses resolved theme from ThemeProvider)
+function ThemedToaster() {
+  const resolvedTheme = useResolvedTheme();
+  return (
+    <Toaster
+      position="bottom-right"
+      theme={resolvedTheme}
+      toastOptions={{
+        style: {
+          background: "hsl(var(--surface))",
+          color: "hsl(var(--text-high))",
+          border: "1px solid hsl(var(--border))",
+        },
+        className: "backdrop-blur-xl",
+      }}
+    />
+  );
+}
 
 // Loading component
 function PageLoader() {
@@ -272,18 +291,7 @@ function App() {
                 </Route>
               </Routes>
             </Suspense>
-            <Toaster
-              position="bottom-right"
-              theme="dark"
-              toastOptions={{
-                style: {
-                  background: "hsl(var(--surface))",
-                  color: "hsl(var(--text-high))",
-                  border: "1px solid hsl(var(--border))",
-                },
-                className: "backdrop-blur-xl",
-              }}
-            />
+            <ThemedToaster />
             <ErrorBoundary fallback={null}>
               <CommandPalette />
             </ErrorBoundary>

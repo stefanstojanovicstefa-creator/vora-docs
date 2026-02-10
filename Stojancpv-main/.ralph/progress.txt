@@ -1,36 +1,15 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 01 - Phase 1a - Command Palette Crash Fix
-# Branch: ralph/audit-01-phase-1a-command-palette
+# Feature: Audit 01 - Phase 1b - Light Theme Fixes
+# Branch: ralph/audit-01-phase-1b-light-theme
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 — US-001: Replace motion.button with plain button + CSS transitions
-- Removed `import { motion, AnimatePresence } from "framer-motion"` from CommandPalette.tsx
-- Replaced `<motion.button>` with `<button>` (lines 140-197)
-- Removed `initial={{ opacity: 0, y: 5 }}`, `animate={{ opacity: 1, y: 0 }}`, `transition={{ delay: commandIndex * 0.02 }}` props
-- Changed className from `transition-colors` to `transition-all duration-150` for hover/selection states
-- Verified no other usage of motion/AnimatePresence in file
-- Typecheck passes clean
-- Status: ✅ DONE
+## Iteration 1: US-001 - Fix Toaster theme binding
+- Created `ThemedToaster` wrapper component in App.tsx that uses `useResolvedTheme()` hook
+- Replaced hardcoded `theme="dark"` on `<Toaster>` with dynamic resolved theme
+- Imported `useResolvedTheme` from ThemeProvider
+- No secondary Toaster found in ThemeToggle.tsx (no changes needed)
+- Typecheck passes ✅
 
----
-
-## Iteration 2 — US-002: Remove dual Escape key handler conflict
-- Removed `onEscapeKeyDown` prop from `DialogContent` in CommandPalette.tsx (lines 67-73)
-- This prop was conflicting with the useEffect keyboard handler in useCommandPalette.tsx
-- useCommandPalette.tsx useEffect (lines 320-328) is now the single source of truth for Escape handling
-- Did NOT modify useCommandPalette.tsx (as required)
-- Typecheck passes clean
-- Status: ✅ DONE
-
----
-
-## Iteration 3 — US-003: Add error boundary around CommandPalette
-- ErrorBoundary component already exists at `src/components/ErrorBoundary.tsx` and is already imported in App.tsx
-- Wrapped `<CommandPalette />` in `<ErrorBoundary fallback={null}>` in App.tsx (line 287)
-- Only CommandPalette is wrapped — other adjacent components (SegmentationModal, TutorialSystem, ChatWidget) are not affected
-- `fallback={null}` means the palette silently disappears on error instead of crashing the app
-- Typecheck passes clean
-- Status: ✅ DONE

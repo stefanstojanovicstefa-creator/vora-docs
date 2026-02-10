@@ -1,61 +1,148 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-01-phase-1a-command-palette",
-  "description": "Phase 1a: Fix Command Palette crash on Ctrl+K/Cmd+K. Root cause is framer-motion motion.button inside Radix Dialog portal causing focus-trap conflict, plus dual Escape key handlers. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
+  "branchName": "ralph/audit-01-phase-1b-light-theme",
+  "description": "Phase 1b: Fix light theme rendering. ThemeProvider works correctly but hardcoded dark-specific values (rgba neon glows, bg-black overlays, Toaster theme=dark) bypass CSS variables. IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Replace motion.button with plain button + CSS transitions",
-      "description": "As a user, I want Ctrl+K/Cmd+K to open the Command Palette without crashing, so I can use keyboard navigation.",
+      "title": "Fix Toaster theme binding to use resolved theme",
+      "description": "As a user, I want toast notifications to match my selected theme (light or dark) instead of always being dark.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "All motion.button elements in CommandPalette.tsx (lines 141-198) replaced with standard <button> elements",
-        "Each button has className with transition-all duration-150 for hover/selection states",
-        "The initial={{ opacity: 0, y: 5 }} and animate/transition props are removed (not needed)",
-        "framer-motion import removed from CommandPalette.tsx (import { motion } and import { AnimatePresence } if present)",
-        "Verify no other usage of motion or AnimatePresence in CommandPalette.tsx before removing import",
-        "Files: ventus-voice/frontend/src/components/CommandPalette/CommandPalette.tsx",
+        "In App.tsx (line 275), change Toaster theme='dark' to use the resolved theme dynamically",
+        "Import useResolvedTheme or useTheme from ThemeProvider and pass the resolved value",
+        "If Toaster is outside ThemeProvider in the component tree, move it inside or use a wrapper component",
+        "In ThemeToggle.tsx (line 107), apply the same fix if there is a secondary Toaster",
+        "Toast notifications render with appropriate colors in both light and dark modes",
+        "Files: ventus-voice/frontend/src/App.tsx, ventus-voice/frontend/src/components/ThemeToggle.tsx",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Removed framer-motion import (motion + AnimatePresence). Replaced motion.button with plain <button>. Replaced initial/animate/transition animation props with className transition-all duration-150. Typecheck passes clean."
+      "notes": "Created ThemedToaster wrapper component that uses useResolvedTheme() to dynamically pass the resolved theme to Toaster. Replaced hardcoded theme='dark' with the wrapper. Imported useResolvedTheme from ThemeProvider. No secondary Toaster in ThemeToggle.tsx. Typecheck passes."
     },
     {
       "id": "US-002",
-      "title": "Remove dual Escape key handler conflict",
-      "description": "As a user, I want Escape to clear my search query first, then close the palette on second press, without conflicts between handlers.",
+      "title": "Fix dialog and alert-dialog overlay theme adaptation",
+      "description": "As a user, I want modal overlays to look appropriate in both light and dark themes.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "Remove the onEscapeKeyDown prop from DialogContent in CommandPalette.tsx (around lines 68-73)",
-        "The useEffect keyboard handler in useCommandPalette.tsx (lines 320-328) remains unchanged -- it is the single source of truth for Escape handling",
-        "Test: pressing Escape with query text clears the query but keeps palette open",
-        "Test: pressing Escape with empty query closes the palette",
-        "Do NOT modify useCommandPalette.tsx -- it is correct as-is",
-        "Files: ventus-voice/frontend/src/components/CommandPalette/CommandPalette.tsx",
+        "In dialog.tsx (line 22), change bg-black/80 to bg-[hsl(var(--void))]/80",
+        "In alert-dialog.tsx (line 19), apply the same change",
+        "Overlays look correct in dark mode (dark scrim) and light mode (lighter scrim)",
+        "The data-[state=open] and data-[state=closed] animations still work after the change",
+        "Files: ventus-voice/frontend/src/components/ui/dialog.tsx, ventus-voice/frontend/src/components/ui/alert-dialog.tsx",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Removed onEscapeKeyDown prop from DialogContent (lines 67-73). useCommandPalette.tsx useEffect handler is now the single source of truth for Escape: first press clears query, second press closes palette. Typecheck passes clean."
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Add error boundary around CommandPalette",
-      "description": "As a developer, I want CommandPalette to fail gracefully instead of crashing the entire app if any future regression occurs.",
+      "title": "Fix hardcoded neon rgba in CSS buttons and inputs",
+      "description": "As a developer, I need button and input hover/focus glows to use CSS variables so they adapt to the active theme.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In App.tsx, find where <CommandPalette /> is rendered (around line 285)",
-        "Wrap it in an ErrorBoundary component with a fallback of null (palette silently fails rather than crashing app)",
-        "The ErrorBoundary wraps ONLY CommandPalette, not other components",
-        "If ErrorBoundary component does not exist in the project, check if there is one already in components/ -- use the existing one",
-        "If no ErrorBoundary exists, create a minimal one or use a try-catch wrapper component",
-        "Files: ventus-voice/frontend/src/App.tsx",
+        "In index.css line 429 (.btn-primary:hover), replace rgba(153, 205, 255, 0.4) with hsl(var(--primary) / 0.4)",
+        "In index.css line 435 (.btn-primary:active), apply same pattern",
+        "In index.css line 450 (.btn-secondary:hover), apply same pattern",
+        "In index.css line 481 (.input-neon:focus), apply same pattern",
+        "Buttons glow with neon blue (#99CDFF) in dark mode and solid blue (#2563EB) in light mode",
+        "Files: ventus-voice/frontend/src/index.css",
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Wrapped <CommandPalette /> in <ErrorBoundary fallback={null}> in App.tsx (line 287). ErrorBoundary already imported. Only CommandPalette is wrapped — other components remain outside this boundary. On error, palette silently fails (renders null) instead of crashing the app. Typecheck passes clean."
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add light-mode neon glow variants in animations.css",
+      "description": "As a developer, I need the neon-glow utility classes to use theme-appropriate colors so the brand glow effect works in light mode.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "In animations.css after the existing .neon-glow rules (lines 169-183), add .light .neon-glow with box-shadow using light primary rgba(37, 99, 235, 0.2)",
+        "Add .light .neon-glow-hover:hover with rgba(37, 99, 235, 0.4)",
+        "Add .light .neon-glow-active with rgba(37, 99, 235, 0.3)",
+        "The prefers-reduced-motion rule (line ~362) that disables all glows remains unchanged",
+        "Follow the same pattern used for .glass-card light variants in index.css (lines 374-396)",
+        "Files: ventus-voice/frontend/src/styles/animations.css",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Audit and fix hardcoded rgba(153,205,255) in Dashboard and StatCard",
+      "description": "As a developer, I need Dashboard.tsx and StatCard.tsx to use CSS variables instead of hardcoded dark-mode neon blue.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "In Dashboard.tsx, find all instances of rgba(153, 205, 255 and replace with hsl(var(--primary) / N) where N is the alpha value",
+        "In StatCard.tsx, apply the same replacement",
+        "Both components render correctly in dark mode (should look identical to before)",
+        "Both components render correctly in light mode (use the light primary blue)",
+        "Files: ventus-voice/frontend/src/pages/Dashboard.tsx, ventus-voice/frontend/src/components/Dashboard/StatCard.tsx",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Audit and fix hardcoded rgba in Forge and AgentWizard components",
+      "description": "As a developer, I need Forge and AgentWizard components to use CSS variables for theme-adaptive colors.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "In StepIndicator.tsx, find all rgba(153, 205, 255 and replace with hsl(var(--primary) / N)",
+        "In AgentCreationOverlay.tsx, apply the same replacement",
+        "Both components render correctly in both themes",
+        "Files: ventus-voice/frontend/src/components/AgentWizard/StepIndicator.tsx, ventus-voice/frontend/src/components/Forge/AgentCreationOverlay.tsx",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Audit and fix hardcoded rgba in VoiceCall components",
+      "description": "As a developer, I need VoiceCall components to use CSS variables for theme-adaptive glow effects.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "In VoiceCallButton.tsx, find all rgba(153, 205, 255 and replace with hsl(var(--primary) / N)",
+        "In VoiceVisualizer.tsx, apply the same replacement",
+        "Both components render correctly in both themes",
+        "Files: ventus-voice/frontend/src/components/VoiceCall/VoiceCallButton.tsx, ventus-voice/frontend/src/components/VoiceCall/VoiceVisualizer.tsx",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Audit bg-black overlays across components for theme adaptation",
+      "description": "As a developer, I need modal/overlay backgrounds to adapt to the active theme instead of always being black.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
+        "Review each bg-black/N usage and decide: theme-adaptive overlay or intentionally black",
+        "Change OnboardingSurvey.tsx bg-black/60 to bg-[hsl(var(--void))]/60 (2 instances around lines 188 and 222)",
+        "Change SegmentationModal.tsx bg-black/80 to bg-[hsl(var(--void))]/80",
+        "Change TutorialSystem.tsx bg-black/60 to bg-[hsl(var(--void))]/60",
+        "Change CreateCampaignDialog.tsx bg-black/60 to bg-[hsl(var(--void))]/60",
+        "Change CampaignDetailModal.tsx bg-black/60 to bg-[hsl(var(--void))]/60",
+        "Leave FlowStudioPage.tsx bg-black/30 as-is (canvas overlay, intentionally dark)",
+        "Leave InterviewBot.tsx bg-black/80 as-is (video overlay, intentionally dark)",
+        "Files: multiple component files listed above",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
     }
   ]
 }
