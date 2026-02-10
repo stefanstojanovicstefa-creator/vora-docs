@@ -1,24 +1,14 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 05 - Phase 1 - CSS Alignment
-# Branch: ralph/audit-05-phase-1-css-alignment
+# Feature: Audit 06 - Phase 1 - Components Tab Wiring
+# Branch: ralph/audit-06-phase-1-components-wiring
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 — US-001: Normalize EarsTab AccordionContent spacing
-- Fixed 4 AccordionContent sections in EarsTab.tsx to use consistent `space-y-4 pt-2`:
-  - Custom Vocabulary: `space-y-3 pt-2` → `space-y-4 pt-2`
-  - Accent Hints: `pt-2` → `space-y-4 pt-2`
-  - Noise Cancellation: `pt-2` → `space-y-4 pt-2`
-  - Fallback Transcribers: `space-y-3 pt-2` → `space-y-4 pt-2`
-- Provider, Language, Recognition already had correct `space-y-4 pt-2`
-- Typecheck passes ✅
-
-## Iteration 2 — US-002: Normalize fallback item padding across Voice and Ears tabs
-- Changed VoiceTab fallback voice row className:
-  - FROM: `flex items-center gap-2 p-2 border rounded`
-  - TO: `flex items-center gap-3 p-3 rounded-lg border border-border bg-background`
-- Now matches EarsTab FallbackItem styling exactly
-- Typecheck passes ✅
+## Iteration 1 — US-001: Add component query keys to query-keys.ts
+- Added `components` section to `queryKeys` object in `ventus-voice/frontend/src/lib/query-keys.ts`
+- Follows existing pattern: `all`, `lists()`, `list(filters?)`, `details()`, `detail(id)`
+- Typecheck passes cleanly
+- Status: ✅ DONE
 
