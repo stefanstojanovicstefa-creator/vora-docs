@@ -24,3 +24,13 @@
 - Did NOT modify useCommandPalette.tsx (as required)
 - Typecheck passes clean
 - Status: ✅ DONE
+
+---
+
+## Iteration 3 — US-003: Add error boundary around CommandPalette
+- ErrorBoundary component already exists at `src/components/ErrorBoundary.tsx` and is already imported in App.tsx
+- Wrapped `<CommandPalette />` in `<ErrorBoundary fallback={null}>` in App.tsx (line 287)
+- Only CommandPalette is wrapped — other adjacent components (SegmentationModal, TutorialSystem, ChatWidget) are not affected
+- `fallback={null}` means the palette silently disappears on error instead of crashing the app
+- Typecheck passes clean
+- Status: ✅ DONE

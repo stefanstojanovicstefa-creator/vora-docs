@@ -41,6 +41,7 @@ const UsageMetricsDashboard = lazy(() => import("./pages/UsageMetricsDashboard")
 const ProviderManagementDashboard = lazy(() => import("./pages/ProviderManagementDashboard"));
 const AgentPerformanceDashboard = lazy(() => import("./pages/AgentPerformanceDashboard"));
 const DocumentationPage = lazy(() => import("./pages/DocumentationPage"));
+const DeploymentTutorialsPage = lazy(() => import("./pages/DeploymentTutorialsPage"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const KnowledgeBasePage = lazy(() => import("./pages/KnowledgeBasePage"));
 const CustomFunctionsPage = lazy(() => import("./pages/CustomFunctionsPage"));
@@ -247,6 +248,7 @@ function App() {
                     element={<Navigate to="/analytics?tab=performance" replace />}
                   />
                   <Route path="/docs" element={<DocumentationPage />} />
+                  <Route path="/docs/deployment-tutorials" element={<DeploymentTutorialsPage />} />
                   <Route path="/onboarding" element={<OnboardingPage />} />
                   <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
                   <Route path="/custom-functions" element={<CustomFunctionsPage />} />
@@ -282,7 +284,9 @@ function App() {
                 className: "backdrop-blur-xl",
               }}
             />
-            <CommandPalette />
+            <ErrorBoundary fallback={null}>
+              <CommandPalette />
+            </ErrorBoundary>
             <SegmentationModal
               open={showSegmentationModal}
               onClose={handleCloseSegmentationModal}
