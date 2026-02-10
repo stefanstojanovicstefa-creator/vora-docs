@@ -19,3 +19,9 @@
 - TutorialSystem.tsx not modified (listener already correct)
 - Typecheck passes ✅
 
+## Iteration 3 - US-003: Add tutorial validation events to agent test flows
+- Added `tutorial:validation` CustomEvent dispatch with `key: 'agent_tested'` in AgentTestPage.tsx handleEndCall (after endVoiceSession resolves)
+- Added same dispatch in TestPanel.tsx handleEndCall (after endCall resolves)
+- Both gated by `transcript.length > 0` so opening/immediately closing doesn't count
+- Typecheck passes ✅
+

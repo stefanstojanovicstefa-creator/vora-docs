@@ -53,8 +53,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added tutorial:validation dispatch with key 'agent_tested' in AgentTestPage.tsx and TestPanel.tsx handleEndCall, gated by transcript.length > 0."
     },
     {
       "id": "US-004",
