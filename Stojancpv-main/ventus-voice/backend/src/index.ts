@@ -1,5 +1,5 @@
 /**
- * Ventus Voice Backend API
+ * Vora Voice Backend API
  * Main entry point
  */
 

@@ -1,5 +1,3 @@
-// D:\VoraSve\Stojancpv\Vora\ventus-voice\novi front end\src\components\Dashboard\StatCard.tsx
-
 import { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';

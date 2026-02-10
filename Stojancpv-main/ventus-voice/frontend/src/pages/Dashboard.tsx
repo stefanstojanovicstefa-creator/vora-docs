@@ -1,5 +1,3 @@
-// D:\VoraSve\Stojancpv\Vora\ventus-voice\novi front end\src\pages\Dashboard.tsx
-
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';

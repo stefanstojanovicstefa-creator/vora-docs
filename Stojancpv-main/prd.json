@@ -1,48 +1,87 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/locally-running-dashboard-phase-3",
-  "description": "Phase 3: Documentation & Onboarding - Create LOCAL_DEVELOPMENT.md with setup guide, troubleshooting, and architecture overview. IMPORTANT: The codebase is at ventus-voice/frontend/ and ventus-voice/backend/ (NOT at project root frontend/ backend/).",
+  "branchName": "ralph/phase-5-documentation",
+  "description": "Phase 5: Documentation - Ventus-to-Vora rebrand sweep, Swagger/OpenAPI annotations, in-app FAQ expansion, and deployment tutorials. IMPORTANT: The codebase is at ventus-voice/frontend/ and ventus-voice/backend/ (NOT at project root frontend/ backend/). Item 5.1 (Mintlify docs full refresh) is excluded from Ralph as it requires external Mintlify site work.",
   "userStories": [
     {
-      "id": "US-L09",
-      "title": "Create LOCAL_DEVELOPMENT.md Guide",
-      "description": "As a new developer, I want comprehensive documentation for running the Vora dashboard locally so I can go from clone to running in 5 minutes.",
+      "id": "US-505",
+      "title": "Codebase Ventus-to-Vora Final Sweep",
+      "description": "As a user, I want all references to 'Ventus' replaced with 'Vora' throughout the codebase for brand consistency.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
-        "Create ventus-voice/LOCAL_DEVELOPMENT.md",
-        "Quick Start section at the top: 5-6 shell commands from clone to running (cd ventus-voice, npm run install:all, npm run setup, npm run local)",
-        "Prerequisites section: Node.js 20+, PostgreSQL 15+ (or Docker), npm, Git",
-        "Environment Variables section: table with columns Name, Required, Default, Description for all vars in both frontend/.env and backend/.env",
-        "Bare Metal Setup section: step-by-step for manual setup (install deps, create DB, migrate, seed, start backend, start frontend)",
-        "Docker Setup section: how to use docker-compose.local.yml (docker compose -f docker-compose.local.yml up)",
-        "Architecture Overview section: ASCII diagram showing: Browser -> Frontend (localhost:8080) -> Backend API (localhost:3001) -> PostgreSQL (localhost:5432), and external services (Clerk Auth, LiveKit Cloud, OpenAI/Google APIs)",
-        "Available Scripts section: table of all npm run commands from ventus-voice/package.json with descriptions",
-        "Feature Availability Matrix section: table showing which features work with which API keys (e.g., Voice calls need LIVEKIT keys, Brand analysis needs GOOGLE_API_KEY, etc.)",
-        "Seed Data section: describe what the seed script creates (1 org, 1 user, 3 agents, 5 sessions, credit packs, pricing)",
-        "Troubleshooting section with 10+ common issues: CORS errors, 401 Unauthorized, DB connection failed, migration errors, port in use, blank page, WebSocket failed, Prisma client not generated, missing env vars, Node version mismatch. Each has symptom, cause, fix command",
-        "Nuclear Reset section: complete wipe and rebuild (npm run db:reset, rm -rf node_modules, reinstall)",
-        "No emoji in the document"
+        "Find ALL instances of 'Ventus' and 'ventus' in user-facing strings, comments, and code across ventus-voice/frontend/src/ and ventus-voice/backend/src/",
+        "In ventus-voice/backend/src/index.ts: change 'Ventus Voice Backend API' to 'Vora Voice Backend API'",
+        "In ventus-voice/backend/src/templates/agent-compiler-prompt.ts: change 'CORE of the Ventus Voice platform' to 'CORE of the Vora Voice platform'",
+        "In ventus-voice/backend/src/utils/embed-code-generator.ts: replace ALL 'ventus' references - cdn.ventusvoice.ai -> cdn.voicevora.com, ventus-widget.js -> vora-widget.js, VentusWidget -> VoraWidget, @ventusvoice/react -> @voicevora/react, ventus-agent -> vora-agent, api.ventusvoice.ai -> api.voicevora.com, all HTML comments '<!-- Ventus Voice Widget -->' -> '<!-- Vora Voice Widget -->'",
+        "In ventus-voice/frontend/src/pages/OnboardingPage.tsx: change 'ventus_onboarding_complete' localStorage key to 'vora_onboarding_complete'",
+        "Remove old Windows path comments (lines starting with '// D:\\VoraSve\\Stojancpv\\Vora\\ventus-voice\\') from all frontend files that have them - these are dead references from an old copy-paste",
+        "DO NOT rename the ventus-voice/ directory itself (that's the repo folder name, not user-facing)",
+        "DO NOT change file paths or import statements that reference the ventus-voice directory",
+        "DO NOT change references in .env files, config paths, or error messages that describe file system paths like 'ventus-voice/backend/.env.example'",
+        "Typecheck passes after all changes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Created ventus-voice/LOCAL_DEVELOPMENT.md with all required sections: Quick Start (6 commands), Prerequisites table, Environment Variables tables (backend + frontend), Bare Metal Setup (6 steps), Docker Setup with docker-compose.local.yml, ASCII Architecture Overview with external services, Available Scripts tables (root + backend), Feature Availability Matrix, Seed Data table (1 org, 1 user, 3 agents, 5 sessions, 3 credit packs, 6 pricing entries), Troubleshooting with 11 issues (CORS, 401, DB connection, migrations, port in use, blank page, WebSocket, Prisma client, missing env, Node version, Redis), Nuclear Reset section. No emoji used."
+      "notes": "Completed: Replaced 'Ventus Voice Backend API' -> 'Vora Voice Backend API' in index.ts, 'CORE of the Ventus Voice platform' -> 'CORE of the Vora Voice platform' in agent-compiler-prompt.ts, all ventus references in embed-code-generator.ts (cdn.ventusvoice.ai -> cdn.voicevora.com, ventus-widget.js -> vora-widget.js, VentusWidget -> VoraWidget, @ventusvoice/react -> @voicevora/react, ventus-agent -> vora-agent, api.ventusvoice.ai -> api.voicevora.com, HTML comments updated), 'ventus_onboarding_complete' -> 'vora_onboarding_complete' in OnboardingPage.tsx, removed 20 old Windows path comments from frontend files. Typecheck passes (frontend clean, backend pre-existing errors in unrelated files only)."
     },
     {
-      "id": "US-L10",
-      "title": "Update Backend README with Local Dev Reference",
-      "description": "As a developer, I want the backend README to reference the new local development guide and list database commands.",
+      "id": "US-502",
+      "title": "Swagger/OpenAPI Annotations for Priority Routes",
+      "description": "As an API developer, I want complete Swagger/OpenAPI documentation at /api-docs showing all endpoints with request/response schemas.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
-        "Read the existing ventus-voice/backend/README.md",
-        "Add a 'Local Development' section that links to ../LOCAL_DEVELOPMENT.md for full setup guide",
-        "Add a 'Database Commands' subsection listing: db:setup-local, db:reset-local, db:seed-local, db:generate, db:migrate, db:studio with brief descriptions",
-        "Add a 'Quick Start (Backend Only)' subsection: npm install, create .env from .env.example, npm run db:setup-local, npm run dev",
-        "Keep ALL existing content intact - only add new sections",
-        "No emoji in additions"
+        "Find the Swagger setup in ventus-voice/backend/src/ (likely src/docs/swagger.ts or similar)",
+        "Add @openapi JSDoc annotations to the following route files in ventus-voice/backend/src/routes/: brands.routes.ts, mcp-catalog.routes.ts, mcp-connections.routes.ts, custom-functions.routes.ts, knowledge-base.routes.ts",
+        "Each annotation must include: summary, description, tags, parameters (path/query), requestBody schema (where applicable), responses (200/400/401/500) with schema definitions",
+        "Use proper OpenAPI 3.0 schema references ($ref) where shared types exist",
+        "Add schema definitions for: BrandAnalysisResult (with new audienceAnalysis, competitorAnalysis, vocabulary, useCaseScenarios fields), MCPCatalogItem, MCPConnection, CustomFunction, KnowledgeBase",
+        "Tag groups: Brands, MCP, Functions, Knowledge Base",
+        "Auth requirements: mark protected routes with security: [{ bearerAuth: [] }]",
+        "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Added three new sections to ventus-voice/backend/README.md while keeping all existing content intact: (1) 'Local Development' section with link to ../LOCAL_DEVELOPMENT.md, (2) 'Quick Start (Backend Only)' subsection with 4 commands (npm install, cp .env.example .env, npm run db:setup-local, npm run dev), (3) 'Database Commands' subsection with table of all 6 commands (db:setup-local, db:reset-local, db:seed-local, db:generate, db:migrate, db:studio) with descriptions. Renamed existing '📝 Notes' to 'Notes' at end of file. No emoji in additions."
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-503",
+      "title": "In-App FAQ Expansion",
+      "description": "As a user, I want the in-app documentation page to cover all major features (MCP, Flow Studio, Memory, Forge, Analytics) with FAQ items and guide cards.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Find DocumentationPage.tsx in ventus-voice/frontend/src/pages/",
+        "Add 10 new FAQ items covering: (1) MCP Marketplace browsing and connecting, (2) Flow Studio creating and testing flows, (3) Memory System layers and RIF scoring, (4) Forge URL Wizard vs Interview Bot, (5) Knowledge Base uploading and RAG search, (6) Custom Functions creation and assignment, (7) Analytics call data and session transcripts, (8) Voice Library TTS/STT providers, (9) Billing minutes and plan upgrades, (10) Embed/Deploy agent to website",
+        "Each FAQ item has a clear question as title and a helpful 2-4 sentence answer",
+        "Add 4 guide cards at the top of the page: 'Create Your First Agent' (links to /agents/create), 'Build a Conversation Flow' (links to Flow Studio), 'Connect External Tools' (links to /integrations/marketplace), 'Understand Your Calls' (links to /analytics)",
+        "Each guide card has: icon, title, short description, and a link/button to the feature",
+        "All text uses 'Vora' branding (no 'Ventus' references)",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-504",
+      "title": "Platform Deployment Tutorials",
+      "description": "As a user deploying an agent, I want step-by-step tutorials for embedding my agent on Shopify, WordPress, Webflow, and React/Next.js.",
+      "acceptanceCriteria": [
+        "IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/)",
+        "Find or create a deployment tutorials section in the frontend - either add to the existing DocumentationPage.tsx or create a new DeploymentTutorialsPage.tsx in ventus-voice/frontend/src/pages/",
+        "If creating a new page: add route /docs/deployment-tutorials in App.tsx and link from DocumentationPage",
+        "Create 4 tutorial sections: Shopify, WordPress, Webflow, React/Next.js",
+        "Shopify tutorial: explain opening theme editor, navigating to theme.liquid, pasting script tag in <head>, verifying widget appears",
+        "WordPress tutorial: explain using Appearance > Theme Editor or a header/footer plugin, pasting script tag, clearing cache, verifying",
+        "Webflow tutorial: explain opening Project Settings > Custom Code, pasting in Head Code section, publishing, verifying",
+        "React/Next.js tutorial: explain installing npm package (or using script tag), importing component, adding to layout, passing agent ID prop",
+        "Each tutorial has: prerequisites list, numbered step-by-step instructions, a code snippet showing the embed code, a troubleshooting tip",
+        "Use Vora branding in all embed snippets (VoraWidget, voicevora.com, etc.)",
+        "Tutorials render in both light and dark themes",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
     }
   ]
 }
