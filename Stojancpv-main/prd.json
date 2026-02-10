@@ -1,43 +1,45 @@
 {
   "project": "Vora Voice Platform",
-  "branchName": "ralph/audit-03-phase-2-card-grid",
-  "description": "Phase 2: Fix agent card grid vertical spacing. VirtualGrid passes gap to CSS grid (horizontal) but NOT to useVirtualizer (vertical rows touch). IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/).",
+  "branchName": "ralph/audit-04-phase-1-ux-cleanup",
+  "description": "Phase 1: Wire AgentCreationOverlay into UrlCreationWizard for consistent creation UX + delete dead old brand-analysis.service.ts. IMPORTANT: Code is at ventus-voice/frontend/src/ and ventus-voice/backend/src/ (NOT root frontend/ or backend/).",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Add vertical gap to VirtualGrid virtualizer",
-      "description": "As a user, I want agent cards in grid view to have consistent spacing between rows, not touching each other.",
+      "title": "Wire AgentCreationOverlay into UrlCreationWizard creating step",
+      "description": "As a user, I want the URL wizard to show the same polished creation animation as the Forge flow instead of a plain spinner.",
       "acceptanceCriteria": [
         "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In virtual-list.tsx around lines 237-242, find the useVirtualizer config object",
-        "Add gap property to the useVirtualizer options: gap: gap (the gap prop is already passed to VirtualGrid as 24)",
-        "The @tanstack/react-virtual useVirtualizer accepts a gap option that adds spacing between virtual rows",
-        "After this change, vertical rows should have 24px gap matching the horizontal gap",
-        "Cards should no longer touch each other vertically",
-        "The estimateRowHeight (320px) may need adjustment to account for the gap -- verify visually",
-        "Files: ventus-voice/frontend/src/components/ui/virtual-list.tsx",
+        "In UrlCreationWizard.tsx, import AgentCreationOverlay from @/components/Forge/AgentCreationOverlay",
+        "Add two boolean state variables: showForgeOverlay (default false) and forgeComplete (default false)",
+        "When entering the creating step (where handleCreateAgent is called), set showForgeOverlay to true",
+        "When agent creation succeeds (the polling returns a created agent with an ID), set forgeComplete to true",
+        "Add <AgentCreationOverlay isVisible={showForgeOverlay} isComplete={forgeComplete} onComplete={() => { setShowForgeOverlay(false); navigate to the agent page }} /> to the component JSX",
+        "The onComplete callback should navigate to /agents/${createdAgentId} (same as current success redirect)",
+        "Keep the existing renderCreatingStep as the underlying content -- the overlay covers the full screen at z-50 anyway",
+        "On cancel or error, set showForgeOverlay to false to dismiss the overlay",
+        "Files: ventus-voice/frontend/src/pages/UrlCreationWizard.tsx",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Added `gap` property to VirtualGrid's useVirtualizer config at line 242. The gap prop (default 24px from caller) was already available but only used for CSS grid horizontal spacing. Now the virtualizer also uses it for vertical row spacing, ensuring consistent 24px gap between rows. Typecheck passes."
+      "notes": "Imported AgentCreationOverlay, added showForgeOverlay/forgeComplete state, trigger overlay on creating step, set forgeComplete on success (both sync and async paths), dismiss overlay on cancel/error, onComplete navigates to /agents/${id}. Typecheck passes."
     },
     {
       "id": "US-002",
-      "title": "Normalize card height with consistent content",
-      "description": "As a user, I want all agent cards in grid view to be the same height regardless of content differences.",
+      "title": "Delete dead old brand-analysis.service.ts",
+      "description": "As a developer, I want to remove the dead old brand analysis service that is no longer used by the production job flow.",
       "acceptanceCriteria": [
-        "IMPORTANT: Code is at ventus-voice/frontend/src/ (NOT root frontend/)",
-        "In AgentsPage.tsx grid card (around lines 370-482), verify the Card already has h-full and flex flex-col classes",
-        "Ensure the CardContent section (around line 447) that has mt-auto pushes content to the bottom consistently",
-        "If lastDeployedAt is conditional (some agents have it, some dont), ensure a minimum height placeholder or consistent padding so cards dont jump",
-        "Add a fallback for missing lastDeployedAt -- show 'Not yet deployed' in muted text instead of hiding the element entirely",
-        "Files: ventus-voice/frontend/src/pages/AgentsPage.tsx",
+        "IMPORTANT: Code is at ventus-voice/backend/src/ (NOT root backend/)",
+        "Check if ventus-voice/backend/src/services/brand-analysis.service.ts is imported anywhere (grep for brand-analysis.service)",
+        "If it has NO imports other than itself, delete the file",
+        "If it IS imported somewhere, do NOT delete -- instead add a TODO comment at the top explaining it uses the old scrapeWebsite() path and should be migrated",
+        "The NEW service at ventus-voice/backend/src/services/ai/brand-analyzer.service.ts is the production one used by brand-analysis.job.ts",
+        "Files: ventus-voice/backend/src/services/brand-analysis.service.ts (DELETE if safe)",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Replaced conditional rendering of lastDeployedAt with an always-present row. When lastDeployedAt exists, shows the formatted date in a Badge. When absent, shows 'Not yet deployed' in muted text. This ensures all cards have identical content structure and consistent height regardless of deployment status. Card already had h-full and flex flex-col, and CardContent already had mt-auto. Typecheck passes."
+      "passes": false,
+      "notes": ""
     }
   ]
 }

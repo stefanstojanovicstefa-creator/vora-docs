@@ -1,27 +1,20 @@
 # Ralph Progress Log
 # Project: Vora Voice Platform
-# Feature: Audit 03 - Phase 2 - Card Grid Fix
-# Branch: ralph/audit-03-phase-2-card-grid
+# Feature: Audit 04 - Phase 1 - UX Cleanup
+# Branch: ralph/audit-04-phase-1-ux-cleanup
 # Started: 2026-02-10
 
 ---
 
-## Iteration 1 - US-001: Add vertical gap to VirtualGrid virtualizer
-- **File**: ventus-voice/frontend/src/components/ui/virtual-list.tsx
-- **Change**: Added `gap` property to VirtualGrid's `useVirtualizer` config (line ~242)
-- **Problem**: VirtualGrid passed `gap` to CSS grid for horizontal spacing but NOT to the virtualizer for vertical row spacing, causing rows to touch
-- **Fix**: Added `gap,` to the useVirtualizer options object, matching how VirtualList already does it
-- **Typecheck**: PASSES
-- **Status**: COMPLETE
-
----
-
-## Iteration 2 - US-002: Normalize card height with consistent content
-- **File**: ventus-voice/frontend/src/pages/AgentsPage.tsx
-- **Change**: Replaced conditional `{agent.lastDeployedAt && (...)}` block (lines ~450-457) with always-present deployed row
-- **Problem**: When `lastDeployedAt` was null/undefined, the entire deployed row disappeared, causing cards to have different heights
-- **Fix**: Always render the "Deployed" label row. Show formatted date in Badge when available, show "Not yet deployed" in muted text when absent
-- **Verified**: Card already has `h-full flex flex-col`, CardContent has `mt-auto` — structure was correct, just needed consistent content
-- **Typecheck**: PASSES
-- **Status**: COMPLETE
+## Iteration 1 - US-001: Wire AgentCreationOverlay into UrlCreationWizard
+- Imported AgentCreationOverlay from @/components/Forge/AgentCreationOverlay
+- Added showForgeOverlay (default false) and forgeComplete (default false) state variables
+- When entering creating step (handleCreateAgent), set showForgeOverlay=true, forgeComplete=false
+- On sync success (startResponse.agent?.id): set forgeComplete=true (removed old setTimeout navigate)
+- On async polling success (statusResponse.status === "completed"): set forgeComplete=true (removed old setTimeout navigate)
+- On error in handleCreateAgent catch block: set showForgeOverlay=false before error handling
+- On cancel (handleCancel): set showForgeOverlay=false
+- Added <AgentCreationOverlay> JSX with onComplete callback that dismisses overlay and navigates to /agents/${createdAgentId}
+- Kept existing renderCreatingStep as underlying content (overlay covers at z-50)
+- Typecheck passes
 

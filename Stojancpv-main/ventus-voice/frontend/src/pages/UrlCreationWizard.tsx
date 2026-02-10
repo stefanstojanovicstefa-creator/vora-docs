@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiClient, ApiClientError } from "@/lib/api-client";
 import { SUPPORTED_LANGUAGES, getLanguageByCode } from "@/data/supported-languages";
+import { AgentCreationOverlay } from "@/components/Forge/AgentCreationOverlay";
 
 // Type definitions for MCP suggestions
 interface MCPSuggestion {
@@ -154,6 +155,10 @@ export default function UrlCreationWizard() {
   const [createdAgentId, setCreatedAgentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Forge overlay states for creation animation
+  const [showForgeOverlay, setShowForgeOverlay] = useState(false);
+  const [forgeComplete, setForgeComplete] = useState(false);
+
   // Collapsible states for preview cards
   const [openSections, setOpenSections] = useState({
     tone: true,
@@ -187,6 +192,7 @@ export default function UrlCreationWizard() {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+    setShowForgeOverlay(false);
     setCurrentStep("input");
     setScrapingProgress(0);
     setError(null);
@@ -601,6 +607,8 @@ export default function UrlCreationWizard() {
     const signal = abortControllerRef.current.signal;
 
     setCurrentStep("creating");
+    setShowForgeOverlay(true);
+    setForgeComplete(false);
 
     try {
       const prompt = buildAgentPrompt(brandAnalysis, url.trim(), enabledMcps, selectedLanguage);
@@ -635,8 +643,7 @@ export default function UrlCreationWizard() {
       // Handle sync response (demo mode or old backend)
       if (startResponse.agent?.id) {
         setCreatedAgentId(startResponse.agent.id);
-        setCurrentStep("success");
-        setTimeout(() => navigate(`/agents/${startResponse.agent!.id}`), 2000);
+        setForgeComplete(true);
         return;
       }
 
@@ -672,8 +679,7 @@ export default function UrlCreationWizard() {
 
         if (statusResponse.status === "completed" && statusResponse.agent) {
           setCreatedAgentId(statusResponse.agent.id);
-          setCurrentStep("success");
-          setTimeout(() => navigate(`/agents/${statusResponse.agent!.id}`), 2000);
+          setForgeComplete(true);
           return;
         }
 
@@ -684,6 +690,8 @@ export default function UrlCreationWizard() {
 
       throw new Error("Agent creation timed out. Please try again.");
     } catch (err) {
+      setShowForgeOverlay(false);
+
       // If user cancelled, don't show error
       if (signal.aborted) {
         return;
@@ -1346,6 +1354,18 @@ export default function UrlCreationWizard() {
         {currentStep === "success" && renderSuccessStep()}
         {currentStep === "error" && renderErrorStep()}
       </AnimatePresence>
+
+      {/* Forge-style creation overlay */}
+      <AgentCreationOverlay
+        isVisible={showForgeOverlay}
+        isComplete={forgeComplete}
+        onComplete={() => {
+          setShowForgeOverlay(false);
+          if (createdAgentId) {
+            navigate(`/agents/${createdAgentId}`);
+          }
+        }}
+      />
     </div>
   );
 }
