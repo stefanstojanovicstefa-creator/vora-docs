@@ -532,6 +532,30 @@
     border-color: hsl(var(--error) / 0.3);
     color: hsl(var(--error));
   }
+
+  /* ============================================
+     Section Accent Borders
+     Subtle left border on main content area per section.
+     Uses accent CSS variables defined in :root and .light.
+     ============================================ */
+  main[data-section="agents"] {
+    border-left: 3px solid hsl(var(--accent-agents) / 0.35);
+  }
+  main[data-section="analytics"] {
+    border-left: 3px solid hsl(var(--accent-analytics) / 0.35);
+  }
+  main[data-section="forge"] {
+    border-left: 3px solid hsl(var(--accent-forge) / 0.35);
+  }
+  main[data-section="deploy"] {
+    border-left: 3px solid hsl(var(--accent-deploy) / 0.35);
+  }
+  main[data-section="billing"] {
+    border-left: 3px solid hsl(var(--accent-billing) / 0.35);
+  }
+  main[data-section="settings"] {
+    border-left: 3px solid hsl(var(--accent-settings) / 0.35);
+  }
 }
 
 @layer utilities {

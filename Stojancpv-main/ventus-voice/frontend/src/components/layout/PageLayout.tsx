@@ -11,10 +11,37 @@
  */
 
 import { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { TutorialOverlay } from '@/components/tutorial';
+
+type SectionName = 'agents' | 'analytics' | 'forge' | 'deploy' | 'billing' | 'settings';
+
+const routeSectionMap: Record<string, SectionName> = {
+  '/dashboard': 'agents',
+  '/agents': 'agents',
+  '/analytics': 'analytics',
+  '/sessions': 'analytics',
+  '/agents/create/interview': 'forge',
+  '/forge': 'forge',
+  '/agents/create': 'forge',
+  '/deploy': 'deploy',
+  '/phone-numbers': 'deploy',
+  '/subscription': 'billing',
+  '/settings': 'settings',
+};
+
+function detectSection(pathname: string): SectionName | undefined {
+  // Try exact match first, then prefix matches (longest first)
+  if (routeSectionMap[pathname]) return routeSectionMap[pathname];
+  const sorted = Object.keys(routeSectionMap).sort((a, b) => b.length - a.length);
+  for (const prefix of sorted) {
+    if (pathname.startsWith(prefix)) return routeSectionMap[prefix];
+  }
+  return undefined;
+}
 
 interface PageLayoutProps {
   children: ReactNode;
@@ -22,6 +49,7 @@ interface PageLayoutProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   noPadding?: boolean;
   sidebarCollapsed?: boolean;
+  section?: SectionName;
 }
 
 const maxWidthClasses = {
@@ -39,7 +67,11 @@ export function PageLayout({
   maxWidth = 'xl',
   noPadding = false,
   sidebarCollapsed = false,
+  section: sectionProp,
 }: PageLayoutProps) {
+  const { pathname } = useLocation();
+  const section = sectionProp ?? detectSection(pathname);
+
   return (
     <div className="min-h-screen bg-[hsl(var(--void))]">
       {/* Sidebar Navigation */}
@@ -64,6 +96,7 @@ export function PageLayout({
             className
           )}
           role="main"
+          {...(section ? { 'data-section': section } : {})}
         >
           <div
             className={cn(

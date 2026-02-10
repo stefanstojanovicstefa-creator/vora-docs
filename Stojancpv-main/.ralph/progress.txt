@@ -19,3 +19,15 @@
 - All values in HSL format without wrapper (matching existing pattern)
 - Typecheck passes
 
+---
+
+## Iteration 2 - US-002: Add accent border to page headers using data-section
+- Added `SectionName` type and `routeSectionMap` to PageLayout.tsx for route-based section detection
+- `detectSection()` function tries exact match then longest-prefix match against route paths
+- Maps: /dashboard, /agents → agents; /analytics, /sessions → analytics; /forge, /agents/create → forge; /deploy, /phone-numbers → deploy; /subscription → billing; /settings → settings
+- PageLayout `<main>` element now renders `data-section` attribute automatically based on current route
+- Optional `section` prop allows manual override from any page
+- Added 6 CSS rules in index.css: `main[data-section="agents"]` etc. with `border-left: 3px solid hsl(var(--accent-*) / 0.35)`
+- Subtle 35% opacity ensures accent is visible but not overwhelming in both themes
+- Typecheck passes
+

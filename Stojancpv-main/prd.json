@@ -35,8 +35,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added section prop and auto-detection via useLocation() to PageLayout.tsx. Route-to-section mapping covers 5+ main areas: agents (/dashboard, /agents), analytics (/analytics, /sessions), forge (/agents/create/interview, /forge, /agents/create), deploy (/deploy, /phone-numbers), billing (/subscription), settings (/settings). Added 6 CSS rules in index.css for main[data-section=*] with 3px left border using section accent colors at 35% opacity — works in both dark/light modes. Typecheck passes."
     },
     {
       "id": "US-003",
