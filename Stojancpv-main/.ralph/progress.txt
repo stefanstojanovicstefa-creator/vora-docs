@@ -21,3 +21,8 @@
 - Changed `-right-0.5` → `-end-0.5` (online status indicator)
 - Typecheck passes ✅
 
+## Iteration 3 - US-003: Convert PageLayout to logical CSS properties for RTL
+- Changed `lg:ml-20` → `lg:ms-20` (collapsed sidebar margin)
+- Changed `lg:ml-64` → `lg:ms-64` (expanded sidebar margin)
+- Typecheck passes ✅
+

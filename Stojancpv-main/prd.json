@@ -52,8 +52,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Converted lg:ml-20 to lg:ms-20 and lg:ml-64 to lg:ms-64. Typecheck passes."
     },
     {
       "id": "US-004",
