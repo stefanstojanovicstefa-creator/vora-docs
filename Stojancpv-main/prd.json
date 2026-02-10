@@ -141,8 +141,8 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Changed bg-black/60 to bg-[hsl(var(--void))]/60 in: OnboardingSurvey.tsx (2 instances), TutorialSystem.tsx, CreateCampaignDialog.tsx, CampaignDetailModal.tsx. Changed bg-black/80 to bg-[hsl(var(--void))]/80 in SegmentationModal.tsx. Left FlowStudioPage.tsx and InterviewBot.tsx as-is (intentionally dark). Typecheck passes."
     }
   ]
 }

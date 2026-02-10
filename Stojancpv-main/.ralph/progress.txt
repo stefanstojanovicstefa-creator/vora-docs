@@ -13,6 +13,15 @@
 - No secondary Toaster found in ThemeToggle.tsx (no changes needed)
 - Typecheck passes ✅
 
+## Iteration 8: US-008 - Audit bg-black overlays for theme adaptation
+- OnboardingSurvey.tsx: bg-black/60 → bg-[hsl(var(--void))]/60 (2 instances)
+- SegmentationModal.tsx: bg-black/80 → bg-[hsl(var(--void))]/80
+- TutorialSystem.tsx: bg-black/60 → bg-[hsl(var(--void))]/60
+- CreateCampaignDialog.tsx: bg-black/60 → bg-[hsl(var(--void))]/60
+- CampaignDetailModal.tsx: bg-black/60 → bg-[hsl(var(--void))]/60
+- Left FlowStudioPage.tsx and InterviewBot.tsx as-is (intentionally dark)
+- Typecheck passes ✅
+
 ## Iteration 7: US-007 - Fix hardcoded rgba in VoiceCall components
 - VoiceCallButton.tsx: replaced 4 rgba instances in glow animation variants
 - VoiceVisualizer.tsx: replaced 2 glow values + 2 hex active colors with --primary
