@@ -30,3 +30,16 @@
 - Typecheck passes cleanly
 - Status: ✅ DONE
 
+## Iteration 4 — US-004: Wire ComponentCreateModal save to backend POST mutation
+- Found ComponentCreateModal used in FlowCanvas.tsx (handleComponentSave callback)
+- Added useMutation for POST /api/components with full payload mapping:
+  - name, description, isPublic, tags from ComponentCreateData
+  - flow: { nodes: selectedNodes, edges: internalEdges }
+  - inputs/outputs: mapped from inputVariables/outputVariables with type "string"
+  - exitPaths: mapped from detected exit paths
+- On success: toast.success, invalidate components query, close modal
+- On error: toast.error with error message
+- Added imports: useMutation, useQueryClient, apiClient, queryKeys, toast
+- Typecheck passes cleanly
+- Status: ✅ DONE
+

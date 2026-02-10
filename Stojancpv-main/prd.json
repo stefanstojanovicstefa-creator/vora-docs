@@ -75,8 +75,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wired ComponentCreateModal save in FlowCanvas.tsx to POST /api/components via useMutation. Maps ComponentCreateData fields (inputVariables, outputVariables, exitPaths, name, description, isPublic, tags) to backend CreateComponentSchema. Captures selected nodes/edges as flow JSON. Success: toast + invalidate components query + close modal. Error: toast with error message. Typecheck passes."
     }
   ]
 }
