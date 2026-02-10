@@ -45,3 +45,11 @@
 - No layout shift from any animation (translateY only, box-shadow only)
 - Typecheck passes
 
+---
+
+## Iteration 4 - US-004: Add ModeToggle overflow-hidden micro-fix
+- Added `overflow-hidden` to the ModeToggle button element in ModeToggle.tsx
+- Spring animation pill now clips properly during overshoot (no visual peek outside button bounds)
+- Toggle functionality preserved — clicking still switches between Mom/God mode
+- Typecheck passes
+

@@ -70,8 +70,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": "This is the micro-fix for Finding #4 from the audit"
+      "passes": true,
+      "notes": "Added overflow-hidden to the ModeToggle button element in ModeToggle.tsx (line 36). The spring animation pill now clips properly during overshoot. Toggle still functions correctly. Typecheck passes."
     }
   ]
 }

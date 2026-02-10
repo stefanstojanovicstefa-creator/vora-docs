@@ -33,7 +33,7 @@ export function ModeToggle({ className }: ModeToggleProps) {
             onClick={toggleMode}
             className={cn(
               'relative flex items-center gap-2 px-1 py-1',
-              'h-10 w-[180px] rounded-full',
+              'h-10 w-[180px] rounded-full overflow-hidden',
               'bg-[hsl(var(--surface))] border border-[hsl(var(--border))]',
               'transition-all duration-200',
               'hover:border-[hsl(var(--primary)_/_0.5)]',
