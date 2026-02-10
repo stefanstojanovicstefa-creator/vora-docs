@@ -157,10 +157,10 @@ export const StepIndicator = memo(function StepIndicator({
       <style>{`
         @keyframes pulse-glow {
           0%, 100% {
-            box-shadow: 0 0 20px rgba(153, 205, 255, 0.3);
+            box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
           }
           50% {
-            box-shadow: 0 0 30px rgba(153, 205, 255, 0.5);
+            box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
           }
         }
 

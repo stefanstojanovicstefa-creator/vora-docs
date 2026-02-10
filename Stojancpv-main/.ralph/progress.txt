@@ -13,6 +13,11 @@
 - No secondary Toaster found in ThemeToggle.tsx (no changes needed)
 - Typecheck passes ✅
 
+## Iteration 6: US-006 - Fix hardcoded rgba in Forge and AgentWizard
+- StepIndicator.tsx: replaced 2 rgba instances in pulse-glow keyframe
+- AgentCreationOverlay.tsx: replaced 3 rgba instances (bg, boxShadow, color)
+- Typecheck passes ✅
+
 ## Iteration 5: US-005 - Audit and fix hardcoded rgba in Dashboard and StatCard
 - Dashboard.tsx: replaced 3 rgba(153,205,255) instances with hsl(var(--primary) / N)
 - StatCard.tsx: replaced 2 rgba instances + hex gradient colors with --primary variable

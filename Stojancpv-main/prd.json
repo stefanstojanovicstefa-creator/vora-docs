@@ -104,8 +104,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "StepIndicator.tsx: replaced 2 rgba instances in pulse-glow keyframe with hsl(var(--primary) / N). AgentCreationOverlay.tsx: replaced 3 rgba instances (background, boxShadow, color) with hsl(var(--primary) / N). Typecheck passes."
     },
     {
       "id": "US-007",
