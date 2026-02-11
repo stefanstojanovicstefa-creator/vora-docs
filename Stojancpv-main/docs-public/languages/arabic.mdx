@@ -1,0 +1,67 @@
+---
+title: Arabic
+description: Arabic voice AI support - providers, configuration, and best practices
+---
+
+# Arabic
+
+<Tabs>
+  <Tab title="Simple">
+    Vora fully supports **Arabic** for voice AI agents. ~400M speakers across the MENA region (25+ dialects).
+
+    ### Setting Up an Arabic Agent
+
+    <Steps>
+      <Step title="Create your agent">
+        Use any creation method (Interview, URL Import, etc.)
+      </Step>
+      <Step title="Set language to Arabic">
+        In voice settings, select **Arabic** from the language dropdown.
+      </Step>
+      <Step title="Choose a voice">
+        Select from available Arabic voices in the voice library.
+      </Step>
+      <Step title="Test and deploy">
+        Test with the simulator, then deploy as usual.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For best results with Arabic, we recommend Munsit voices for the most natural speech.
+    </Tip>
+  </Tab>
+  <Tab title="Advanced">
+    ## Provider Matrix
+
+    | Detail | Value |
+    |--------|-------|
+    | **Code** | ar |
+    | **Region** | MENA (25+ dialects) |
+    | **Speakers** | ~400M |
+    | **Best ASR** | Munsit |
+    | **Best TTS** | Munsit |
+    | **Best LLM** | Falcon Arabic |
+
+    ### Available Providers
+
+    | Type | Providers |
+    |------|-----------|
+    | **ASR** | Munsit (Best), Google, Azure, AWS, Deepgram, Soniox, AssemblyAI, ElevenLabs, Speechmatics |
+    | **TTS** | Munsit (Best), Google, Azure, AWS Polly, ElevenLabs, Murf AI, Speechify |
+    | **LLM** | Falcon Arabic (Best), GPT-4o, Gemini, Claude, Cohere Aya, Qwen |
+
+    ### Recommended Stack
+
+    For the best Arabic voice experience:
+    - **STT**: Munsit (best accuracy for Arabic)
+    - **LLM**: Falcon Arabic (best Arabic understanding)
+    - **TTS**: Munsit (most natural Arabic speech)
+
+    ### Configuration
+
+    In the Command Center:
+    1. **Ears Tab** → Set STT provider to Munsit, language to `ar`
+    2. **Brain Tab** → Set LLM to Falcon Arabic
+    3. **Voice Tab** → Set TTS to Munsit, select an Arabic voice
+  </Tab>
+</Tabs>

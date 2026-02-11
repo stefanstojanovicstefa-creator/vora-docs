@@ -1,0 +1,92 @@
+---
+title: Flow Studio
+description: Visual conversation flow builder for complex agent behaviors
+---
+
+# Flow Studio
+
+Flow Studio is a visual editor for designing conversation flows. Build complex agent behaviors by connecting nodes on a canvas - no coding required for flow logic.
+
+<Info>
+  Flow Studio is available in **Advanced Mode** only.
+</Info>
+
+---
+
+## Overview
+
+Flow Studio lets you design multi-step conversation flows visually:
+- **Drag and drop** nodes onto the canvas
+- **Connect** nodes to define conversation paths
+- **Configure** each node's behavior, conditions, and responses
+- **Test** flows directly from the editor
+
+---
+
+## Node Types
+
+| Node | Description |
+|------|-------------|
+| **Start** | Entry point for the conversation |
+| **Message** | Agent says a specific message |
+| **Question** | Agent asks a question and waits for a response |
+| **Condition** | Branch based on caller response or variables |
+| **Function** | Execute a custom function |
+| **Transfer** | Transfer to a human agent or phone number |
+| **End** | End the conversation |
+
+---
+
+## Building a Flow
+
+<Steps>
+  <Step title="Create a new flow">
+    Go to **Flow Studio** in the sidebar and click **Create Flow**.
+  </Step>
+  <Step title="Add the Start node">
+    Every flow begins with a Start node. This is added automatically.
+  </Step>
+  <Step title="Add conversation nodes">
+    Drag nodes from the sidebar onto the canvas. Connect them by drawing lines between ports.
+  </Step>
+  <Step title="Configure conditions">
+    Use Condition nodes to branch based on:
+    - Keywords in the caller's response
+    - Variables set by previous nodes
+    - Function return values
+  </Step>
+  <Step title="Attach to an agent">
+    Link the flow to an agent in the Command Center's Advanced tab.
+  </Step>
+</Steps>
+
+---
+
+## Example Flow
+
+A simple appointment booking flow:
+
+```
+Start → Greeting → Ask for service type
+  → [Haircut] → Ask for date → Book appointment → Confirm → End
+  → [Consultation] → Ask for details → Transfer to specialist
+  → [Other] → General response → End
+```
+
+---
+
+## Variables
+
+Flows can store and use variables throughout the conversation:
+- **Built-in variables** - `caller_name`, `session_id`, `duration`
+- **Custom variables** - Set by Question or Function nodes
+- **Conditional logic** - Use variables in Condition nodes to branch flows
+
+---
+
+## Best Practices
+
+- Keep flows simple - complex flows are hard to debug
+- Test each branch independently
+- Use fallback paths for unexpected responses
+- Combine Flow Studio with Custom Functions for powerful automation

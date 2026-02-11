@@ -1,0 +1,387 @@
+---
+title: HubSpot Integration
+description: Connect your agent to HubSpot CRM
+---
+
+# HubSpot Integration
+
+Connect Vora to HubSpot to give your agent access to contacts, deals, tickets, and more. Enable real-time CRM lookups and updates during conversations.
+
+---
+
+## Overview
+
+The HubSpot integration enables:
+
+- **Contact lookup** - Find customers by email or phone
+- **Contact creation** - Create new contacts during calls
+- **Deal management** - Create and update deals
+- **Ticket creation** - Open support tickets
+- **Activity logging** - Log calls to contact timeline
+
+---
+
+## Setup
+
+<Steps>
+  <Step title="Navigate to Integrations">
+    Go to **Integrations** → **HubSpot** → **Connect**.
+  </Step>
+  <Step title="Authorize with HubSpot">
+    Click **Connect to HubSpot** and sign in to your HubSpot account.
+  </Step>
+  <Step title="Select permissions">
+    Grant access to the required scopes:
+    - Contacts (read/write)
+    - Deals (read/write)
+    - Tickets (read/write)
+    - Timeline (write)
+  </Step>
+  <Step title="Configure settings">
+    Set default values and field mappings.
+  </Step>
+  <Step title="Test connection">
+    Use the **Test** button to verify the connection works.
+  </Step>
+</Steps>
+
+---
+
+## Available Functions
+
+### Contact Functions
+
+#### `hubspot.contact.get`
+
+Look up a contact by email or phone.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `email` | string | One required | Contact email |
+| `phone` | string | One required | Contact phone |
+
+**Returns:**
+
+```json
+{
+  "id": "12345",
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "phone": "+1234567890",
+  "company": "Acme Corp",
+  "lifecycleStage": "customer"
+}
+```
+
+**Agent usage:**
+
+> Agent: "Let me look up your account. I found your record, John Doe with Acme Corp."
+
+---
+
+#### `hubspot.contact.create`
+
+Create a new contact.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `email` | string | Yes | Contact email |
+| `firstName` | string | No | First name |
+| `lastName` | string | No | Last name |
+| `phone` | string | No | Phone number |
+| `company` | string | No | Company name |
+
+**Returns:**
+
+```json
+{
+  "id": "12346",
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane@example.com"
+}
+```
+
+---
+
+#### `hubspot.contact.update`
+
+Update an existing contact.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `contactId` | string | Yes | Contact ID |
+| `properties` | object | Yes | Fields to update |
+
+---
+
+### Deal Functions
+
+#### `hubspot.deal.create`
+
+Create a new deal/opportunity.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `dealName` | string | Yes | Deal title |
+| `amount` | number | No | Deal value |
+| `pipeline` | string | No | Pipeline ID |
+| `stage` | string | No | Stage ID |
+| `contactId` | string | No | Associated contact |
+
+**Returns:**
+
+```json
+{
+  "id": "78901",
+  "dealName": "Widget Pro - Enterprise",
+  "amount": 50000,
+  "stage": "appointmentScheduled"
+}
+```
+
+---
+
+#### `hubspot.deal.list`
+
+List deals for a contact.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `contactId` | string | Yes | Contact ID |
+| `status` | string | No | Filter by status |
+
+---
+
+### Ticket Functions
+
+#### `hubspot.ticket.create`
+
+Create a support ticket.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `subject` | string | Yes | Ticket subject |
+| `content` | string | Yes | Ticket description |
+| `priority` | string | No | LOW, MEDIUM, HIGH |
+| `contactId` | string | No | Associated contact |
+| `category` | string | No | Ticket category |
+
+**Returns:**
+
+```json
+{
+  "id": "TKT-1234",
+  "subject": "Issue with order #12345",
+  "status": "NEW",
+  "priority": "HIGH"
+}
+```
+
+---
+
+### Activity Functions
+
+#### `hubspot.activity.logCall`
+
+Log the call to the contact timeline.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `contactId` | string | Yes | Contact ID |
+| `outcome` | string | Yes | CONNECTED, NO_ANSWER, etc. |
+| `notes` | string | No | Call notes |
+| `duration` | number | No | Call duration (seconds) |
+
+---
+
+## Configuration
+
+### Field Mapping
+
+Map caller information to HubSpot fields:
+
+```javascript
+{
+  "fieldMappings": {
+    "caller_phone": "phone",
+    "caller_email": "email",
+    "account_id": "custom_field_account_id"
+  }
+}
+```
+
+### Default Values
+
+Set defaults for new records:
+
+```javascript
+{
+  "defaults": {
+    "contact": {
+      "lifecycleStage": "lead",
+      "leadSource": "Phone Call"
+    },
+    "deal": {
+      "pipeline": "default",
+      "stage": "appointmentScheduled"
+    },
+    "ticket": {
+      "priority": "MEDIUM",
+      "pipeline": "support"
+    }
+  }
+}
+```
+
+### Call Logging
+
+Automatically log all calls to HubSpot:
+
+| Setting | Description |
+|---------|-------------|
+| **Auto-log calls** | Log every call automatically |
+| **Include transcript** | Attach conversation transcript |
+| **Include recording** | Link to call recording |
+| **Outcome mapping** | Map session outcomes to HubSpot |
+
+---
+
+## Agent Instructions
+
+Example instructions for using HubSpot:
+
+```markdown
+## CRM Integration
+
+When a caller provides their email or phone:
+1. Use hubspot.contact.get to look up their record
+2. If found, greet them by name and reference their company
+3. If not found, ask if they'd like to create an account
+
+When creating a support ticket:
+1. Gather issue details from the caller
+2. Use hubspot.ticket.create with clear subject and description
+3. Provide the ticket number to the caller
+4. Set appropriate priority based on urgency
+
+When qualifying a lead:
+1. After understanding their needs, use hubspot.deal.create
+2. Set the deal amount based on product interest
+3. Schedule a follow-up call if appropriate
+```
+
+---
+
+## Example Conversation
+
+```
+[User calls in]
+
+Agent: Hi! Thanks for calling Acme Corp. I'm Sarah, your virtual assistant.
+       May I have your email address to pull up your account?
+
+User: Sure, it's john@example.com
+
+[Function: hubspot.contact.get]
+Input: { "email": "john@example.com" }
+Output: { "id": "12345", "firstName": "John", "lastName": "Doe",
+          "company": "TechCo", "lifecycleStage": "customer" }
+
+Agent: Thanks John! I see you're with TechCo. How can I help you today?
+
+User: I'm having issues with my recent order.
+
+Agent: I'm sorry to hear that. Let me create a support ticket for you.
+       Can you describe the issue?
+
+User: The package arrived damaged.
+
+[Function: hubspot.ticket.create]
+Input: { "subject": "Damaged package - Order inquiry",
+         "content": "Customer reports package arrived damaged.",
+         "priority": "HIGH", "contactId": "12345" }
+Output: { "id": "TKT-5678", "subject": "Damaged package...",
+          "status": "NEW" }
+
+Agent: I've created ticket TKT-5678 for you. Our team will reach out
+       within 24 hours. Is there anything else I can help with?
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| **Contact not found** | No match | Try alternate email/phone |
+| **Permission denied** | Missing scope | Reconnect with required permissions |
+| **Rate limited** | Too many calls | Enable request queuing |
+| **Invalid field** | Bad mapping | Check field mappings |
+
+### Reconnecting
+
+If the integration disconnects:
+
+1. Go to **Integrations** → **HubSpot**
+2. Click **Reconnect**
+3. Re-authorize access
+4. Test the connection
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Always look up first">
+    Check if a contact exists before creating a new one to avoid duplicates.
+  </Accordion>
+
+  <Accordion title="Use appropriate priorities">
+    Set ticket priorities based on issue severity, not caller demands.
+  </Accordion>
+
+  <Accordion title="Log detailed notes">
+    Include call summaries when logging activities for team visibility.
+  </Accordion>
+
+  <Accordion title="Handle failures gracefully">
+    If HubSpot is slow, let the caller know you're looking up their information.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Google Calendar" icon="google" href="/platform/integrations/google-calendar">
+    Add calendar integration
+  </Card>
+  <Card title="Custom Functions" icon="code" href="/platform/functions">
+    Build custom functions
+  </Card>
+  <Card title="Agent Configuration" icon="sliders" href="/platform/agents/configuration">
+    Configure your agent
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/platform/integrations/webhooks">
+    Custom integrations
+  </Card>
+</CardGroup>

@@ -1,0 +1,391 @@
+---
+title: Soniox
+description: Enterprise speech-to-text with custom vocabulary
+---
+
+# Soniox
+
+Soniox offers enterprise-grade STT with custom vocabulary training and low latency.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `soniox` |
+| Default Model | `precision` |
+| Streaming | ✅ Native support |
+| Latency | ~200-300ms |
+| Languages | 15+ |
+
+---
+
+## Available Models
+
+| Model | Accuracy | Latency | Best For |
+|-------|----------|---------|----------|
+| `precision` | 96%+ | ~300ms | Highest accuracy |
+| `precision_ivr` | 95% | ~250ms | IVR systems |
+| `speed` | 93% | ~150ms | Fastest response |
+
+<Note>
+**Recommended**: `precision` for general use, `speed` for ultra-low latency needs.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Enterprise Agent',
+  systemPrompt: 'You are a professional assistant.',
+  stt: {
+    provider: 'soniox',
+    model: 'precision'
+  }
+});
+```
+
+### Full Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Custom Agent',
+  systemPrompt: 'You are a specialized assistant.',
+  stt: {
+    provider: 'soniox',
+    model: 'precision',
+    language: 'en-US',
+    enableGlobalSpeakerDiarization: false,
+    speakerChangeSensitivity: 0.5,
+    customVocabularyId: 'vocab_medical_v1',
+    profanityFilter: false
+  }
+});
+```
+
+---
+
+## Why Soniox?
+
+### 1. Custom Vocabulary Training
+
+Train models on your domain vocabulary:
+
+```typescript
+// Upload custom vocabulary
+const vocab = await soniox.createVocabulary({
+  name: 'medical_terms',
+  words: [
+    { word: 'acetaminophen', pronunciation: 'ə.siː.tə.mɪn.ə.fən' },
+    { word: 'cardiovascular', pronunciation: 'kɑː.di.oʊ.væs.kjʊ.lər' }
+  ]
+});
+
+// Use in agent
+stt: {
+  provider: 'soniox',
+  customVocabularyId: vocab.id
+}
+```
+
+### 2. Enterprise Security
+
+- SOC 2 Type II certified
+- On-premise deployment available
+- Data processing agreements
+- Custom data retention
+
+### 3. Low Latency
+
+Optimized for real-time:
+- ~150ms with speed model
+- ~250ms with precision
+- Consistent performance under load
+
+### 4. Speaker Diarization
+
+Advanced speaker identification:
+
+```typescript
+stt: {
+  provider: 'soniox',
+  enableGlobalSpeakerDiarization: true,
+  minNumSpeakers: 2,
+  maxNumSpeakers: 4
+}
+```
+
+---
+
+## Custom Vocabulary
+
+### Creating Vocabulary
+
+Define domain-specific terms:
+
+```typescript
+const vocabulary = await soniox.createVocabulary({
+  name: 'financial_terms',
+  words: [
+    {
+      word: 'EBITDA',
+      pronunciation: 'iː.bɪt.dɑː',
+      displayAs: 'EBITDA'
+    },
+    {
+      word: 'forex',
+      pronunciation: 'fɒr.eks',
+      displayAs: 'Forex'
+    },
+    {
+      word: 'cryptocurrency',
+      pronunciation: 'krɪp.toʊ.kʌr.ən.si'
+    }
+  ]
+});
+```
+
+### Using Vocabulary
+
+```typescript
+stt: {
+  provider: 'soniox',
+  customVocabularyId: 'vocab_financial_v1'
+}
+```
+
+### Vocabulary Benefits
+
+- 30-50% accuracy improvement on domain terms
+- Proper capitalization and formatting
+- Acronym handling
+- Brand name recognition
+
+---
+
+## Use Cases
+
+### Financial Services
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Finance Agent',
+  systemPrompt: 'You help with financial inquiries.',
+  stt: {
+    provider: 'soniox',
+    model: 'precision',
+    customVocabularyId: 'vocab_finance'
+  }
+});
+```
+
+### Healthcare
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Medical Agent',
+  systemPrompt: 'You assist with medical inquiries.',
+  stt: {
+    provider: 'soniox',
+    model: 'precision',
+    customVocabularyId: 'vocab_medical'
+  }
+});
+```
+
+### IVR Systems
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'IVR Agent',
+  systemPrompt: 'You handle phone menu navigation.',
+  stt: {
+    provider: 'soniox',
+    model: 'precision_ivr',
+    customVocabularyId: 'vocab_company_products'
+  }
+});
+```
+
+### Multi-Speaker Calls
+
+```typescript
+stt: {
+  provider: 'soniox',
+  model: 'precision',
+  enableGlobalSpeakerDiarization: true,
+  speakerChangeSensitivity: 0.6  // 0-1, higher = more sensitive
+}
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Build Effective Vocabularies">
+    Tips for custom vocabularies:
+
+    1. **Include pronunciations** for unusual words
+    2. **Add common misspellings** as alternatives
+    3. **Specify display format** for abbreviations
+    4. **Test with real audio** samples
+
+    ```typescript
+    {
+      word: 'COVID-19',
+      pronunciation: 'koʊ.vɪd.naɪn.tiːn',
+      displayAs: 'COVID-19',
+      alternatives: ['covid', 'coronavirus']
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Optimize Latency">
+    For fastest response:
+
+    ```typescript
+    stt: {
+      provider: 'soniox',
+      model: 'speed',
+      endpointSilenceMs: 500
+    }
+    ```
+
+    Trade-off: Slightly lower accuracy for ~50ms faster response.
+  </Accordion>
+
+  <Accordion title="Speaker Diarization">
+    For multi-party calls:
+
+    ```typescript
+    stt: {
+      provider: 'soniox',
+      enableGlobalSpeakerDiarization: true,
+      speakerChangeSensitivity: 0.5,  // Default
+      minNumSpeakers: 2,
+      maxNumSpeakers: 5
+    }
+    ```
+
+    Sensitivity:
+    - Lower (0.3) = Fewer speaker changes detected
+    - Higher (0.7) = More sensitive to speaker changes
+  </Accordion>
+
+  <Accordion title="Enterprise Deployment">
+    For enterprise security requirements:
+
+    - Request on-premise deployment
+    - Configure data residency
+    - Set up custom data retention
+    - Enable audit logging
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Language Support
+
+Soniox focuses on enterprise languages:
+
+| Language | Code | Custom Vocab |
+|----------|------|--------------|
+| English (US) | `en-US` | ✅ |
+| English (UK) | `en-GB` | ✅ |
+| Spanish | `es` | ✅ |
+| French | `fr` | ✅ |
+| German | `de` | ✅ |
+| Portuguese | `pt` | ✅ |
+| Italian | `it` | ✅ |
+| Dutch | `nl` | ✅ |
+| Japanese | `ja` | ✅ |
+| Korean | `ko` | ✅ |
+| Chinese | `zh` | ✅ |
+| Hindi | `hi` | ✅ |
+| Arabic | `ar` | ✅ |
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+SONIOX_API_KEY=...
+```
+
+### Get Your Key
+
+1. Go to [Soniox Console](https://console.soniox.com)
+2. Sign up for enterprise trial
+3. Generate API credentials
+4. Add to your Vora environment
+
+---
+
+## Pricing
+
+Soniox uses enterprise pricing:
+
+| Tier | Volume | Price |
+|------|--------|-------|
+| Startup | < 1,000 hours/mo | Contact sales |
+| Growth | < 10,000 hours/mo | Volume discount |
+| Enterprise | Unlimited | Custom pricing |
+
+Features included:
+- Custom vocabulary training
+- Speaker diarization
+- Priority support
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Vocabulary Not Working">
+    If custom terms aren't recognized:
+
+    - Verify vocabulary ID is correct
+    - Check pronunciation format (IPA)
+    - Ensure vocabulary is published
+    - Test with clear audio samples
+  </Accordion>
+
+  <Accordion title="Diarization Issues">
+    If speakers aren't separated correctly:
+
+    - Adjust speakerChangeSensitivity
+    - Ensure distinct speaker voices
+    - Check audio quality
+    - Verify proper channel separation
+  </Accordion>
+
+  <Accordion title="Latency Problems">
+    If responses are slow:
+
+    - Switch to `speed` model
+    - Check network latency
+    - Reduce vocabulary size
+    - Enable streaming mode
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare STT" icon="scale-balanced" href="/providers/stt">
+    See all STT options
+  </Card>
+  <Card title="Enterprise Setup" icon="building" href="/self-hosting">
+    On-premise deployment
+  </Card>
+</CardGroup>

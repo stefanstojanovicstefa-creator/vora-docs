@@ -1,0 +1,520 @@
+---
+title: Database Troubleshooting
+description: Runbook for diagnosing and resolving database issues
+---
+
+# Database Troubleshooting
+
+This runbook covers common database issues and their resolutions for the Vora platform.
+
+---
+
+## Quick Diagnostics
+
+### Check Database Health
+
+```bash
+# Test connection
+psql $DATABASE_URL -c "SELECT 1"
+
+# Check database size
+psql $DATABASE_URL -c "SELECT pg_size_pretty(pg_database_size(current_database()))"
+
+# Check connection count
+psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity"
+
+# Check active queries
+psql $DATABASE_URL -c "
+  SELECT pid, state, query_start, query
+  FROM pg_stat_activity
+  WHERE state != 'idle'
+  ORDER BY query_start
+"
+```
+
+### Via Supabase Dashboard
+
+1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
+2. Select the `vora-production` project
+3. Navigate to:
+   - **Database** > **Health** - Overall status
+   - **Database** > **Logs** - Query logs
+   - **Database** > **Connection Pooling** - Pool status
+
+---
+
+## Connection Issues
+
+### Symptoms
+
+- `FATAL: too many connections`
+- `connection timeout`
+- Slow or hanging API requests
+
+### Diagnose
+
+```sql
+-- Check current connections
+SELECT count(*), state
+FROM pg_stat_activity
+GROUP BY state;
+
+-- Check connections by application
+SELECT count(*), application_name
+FROM pg_stat_activity
+GROUP BY application_name;
+
+-- Check max connections
+SHOW max_connections;
+```
+
+### Resolution
+
+#### 1. Kill Idle Connections
+
+```sql
+-- Find long-idle connections
+SELECT pid, usename, state, query_start, query
+FROM pg_stat_activity
+WHERE state = 'idle'
+AND query_start < NOW() - INTERVAL '10 minutes';
+
+-- Kill specific connection
+SELECT pg_terminate_backend(<pid>);
+
+-- Kill all idle connections older than 10 minutes
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE state = 'idle'
+AND query_start < NOW() - INTERVAL '10 minutes';
+```
+
+#### 2. Increase Connection Pool Size
+
+```bash
+# For Prisma - update environment variable
+fly secrets set DATABASE_POOL_SIZE=25 -a vora-api-production
+```
+
+#### 3. Enable Connection Pooling (PgBouncer)
+
+Via Supabase Dashboard:
+1. Go to **Database** > **Connection Pooling**
+2. Enable if not already enabled
+3. Use the pooler connection string
+
+```bash
+# Update to use pooler URL
+fly secrets set DATABASE_URL="postgres://...pooler.supabase.com:6543/postgres" -a vora-api-production
+```
+
+---
+
+## Slow Queries
+
+### Symptoms
+
+- API responses slow
+- Timeouts on specific endpoints
+- Database CPU spiking
+
+### Diagnose
+
+```sql
+-- Find slow queries (currently running)
+SELECT pid, now() - query_start as duration, query
+FROM pg_stat_activity
+WHERE state != 'idle'
+ORDER BY duration DESC;
+
+-- Find historically slow queries
+SELECT query, calls, mean_time, total_time
+FROM pg_stat_statements
+ORDER BY mean_time DESC
+LIMIT 20;
+
+-- Check for missing indexes
+SELECT schemaname, tablename, indexname, idx_scan
+FROM pg_stat_user_indexes
+ORDER BY idx_scan ASC
+LIMIT 20;
+```
+
+### Resolution
+
+#### 1. Add Missing Index
+
+```sql
+-- Example: Add index on agent sessions
+CREATE INDEX CONCURRENTLY idx_session_agent_status
+ON "Session" ("agentId", "status");
+```
+
+#### 2. Optimize Query
+
+```sql
+-- Use EXPLAIN ANALYZE to understand query plan
+EXPLAIN ANALYZE
+SELECT * FROM "Session"
+WHERE "agentId" = 'ag_123'
+AND "status" = 'active';
+
+-- Example optimization
+-- Before: SELECT * (fetches all columns)
+-- After: SELECT id, status (fetch only needed)
+```
+
+#### 3. Kill Long-Running Query
+
+```sql
+-- Find the query
+SELECT pid, query_start, query
+FROM pg_stat_activity
+WHERE state = 'active'
+ORDER BY query_start;
+
+-- Kill it
+SELECT pg_terminate_backend(<pid>);
+```
+
+---
+
+## Lock Issues
+
+### Symptoms
+
+- Queries hanging indefinitely
+- `deadlock detected` errors
+- Migrations not completing
+
+### Diagnose
+
+```sql
+-- Check for locks
+SELECT blocked_locks.pid AS blocked_pid,
+       blocked_activity.usename AS blocked_user,
+       blocking_locks.pid AS blocking_pid,
+       blocking_activity.usename AS blocking_user,
+       blocked_activity.query AS blocked_statement,
+       blocking_activity.query AS current_statement_in_blocking_process
+FROM pg_catalog.pg_locks blocked_locks
+JOIN pg_catalog.pg_stat_activity blocked_activity ON blocked_activity.pid = blocked_locks.pid
+JOIN pg_catalog.pg_locks blocking_locks
+    ON blocking_locks.locktype = blocked_locks.locktype
+    AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+    AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+    AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+    AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+    AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+    AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+    AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+    AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+    AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+    AND blocking_locks.pid != blocked_locks.pid
+JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+WHERE NOT blocked_locks.GRANTED;
+```
+
+### Resolution
+
+```sql
+-- Kill the blocking process
+SELECT pg_terminate_backend(<blocking_pid>);
+```
+
+**If migration is stuck:**
+
+```bash
+# 1. Check migration status
+DATABASE_URL=$PRODUCTION_DATABASE_URL npx prisma migrate status
+
+# 2. If lock held by migration, find and kill
+psql $DATABASE_URL -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE query LIKE '%prisma%'"
+
+# 3. Retry migration
+DATABASE_URL=$PRODUCTION_DATABASE_URL npx prisma migrate deploy
+```
+
+---
+
+## Disk Space Issues
+
+### Symptoms
+
+- `no space left on device`
+- Database becoming read-only
+- Inserts failing
+
+### Diagnose
+
+```sql
+-- Check database size
+SELECT pg_size_pretty(pg_database_size(current_database()));
+
+-- Check table sizes
+SELECT tablename,
+       pg_size_pretty(pg_total_relation_size(schemaname || '.' || tablename))
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY pg_total_relation_size(schemaname || '.' || tablename) DESC;
+
+-- Check for bloat
+SELECT tablename,
+       n_live_tup,
+       n_dead_tup,
+       round(n_dead_tup * 100.0 / nullif(n_live_tup, 0), 2) as dead_pct
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC;
+```
+
+### Resolution
+
+#### 1. Vacuum Tables
+
+```sql
+-- Vacuum specific table (reclaims space)
+VACUUM (VERBOSE, ANALYZE) "Session";
+
+-- Full vacuum (more aggressive, locks table)
+VACUUM FULL "Session";
+```
+
+#### 2. Clean Up Old Data
+
+```sql
+-- Delete old sessions (after backup!)
+DELETE FROM "Session"
+WHERE "createdAt" < NOW() - INTERVAL '90 days'
+AND "status" = 'completed';
+
+-- Archive to separate table first
+INSERT INTO "SessionArchive"
+SELECT * FROM "Session"
+WHERE "createdAt" < NOW() - INTERVAL '90 days';
+
+DELETE FROM "Session"
+WHERE "createdAt" < NOW() - INTERVAL '90 days';
+```
+
+#### 3. Upgrade Database Size
+
+Via Supabase Dashboard:
+1. Go to **Settings** > **Database**
+2. Upgrade to larger instance size
+3. This increases disk space allocation
+
+---
+
+## Replication Lag
+
+### Symptoms
+
+- Read replicas returning stale data
+- Eventual consistency issues
+- Reports showing old numbers
+
+### Diagnose
+
+```sql
+-- Check replication status (on primary)
+SELECT client_addr, state, sent_lsn, write_lsn, flush_lsn, replay_lsn,
+       pg_wal_lsn_diff(sent_lsn, replay_lsn) AS byte_lag
+FROM pg_stat_replication;
+```
+
+### Resolution
+
+```bash
+# 1. Check if it's transient
+# Wait 30 seconds and check again
+
+# 2. If persistent, route reads to primary
+fly secrets set USE_READ_REPLICA=false -a vora-api-production
+
+# 3. Contact Supabase support if lag persists
+```
+
+---
+
+## Migration Failures
+
+### Symptoms
+
+- `Migration failed to apply cleanly`
+- Schema mismatch errors
+- Prisma client errors
+
+### Diagnose
+
+```bash
+# Check migration status
+DATABASE_URL=$PRODUCTION_DATABASE_URL npx prisma migrate status
+
+# Check migration history
+psql $DATABASE_URL -c "SELECT * FROM _prisma_migrations ORDER BY started_at DESC LIMIT 5"
+```
+
+### Resolution
+
+#### 1. Failed Migration
+
+```bash
+# If migration partially applied, mark as rolled back
+npx prisma migrate resolve --rolled-back <migration_name>
+
+# Fix the migration file
+# Re-run
+DATABASE_URL=$PRODUCTION_DATABASE_URL npx prisma migrate deploy
+```
+
+#### 2. Schema Drift
+
+```bash
+# Check for drift
+npx prisma migrate diff \
+  --from-schema-datasource prisma/schema.prisma \
+  --to-schema-datamodel prisma/schema.prisma
+
+# Generate fix migration
+npx prisma migrate dev --name fix_schema_drift
+```
+
+#### 3. Manual Fix
+
+```sql
+-- If you need to manually adjust
+ALTER TABLE "Agent" ADD COLUMN "newField" TEXT;
+
+-- Then mark migration as applied
+INSERT INTO "_prisma_migrations" (id, checksum, migration_name, applied_steps_count, started_at, finished_at)
+VALUES (gen_random_uuid(), '<checksum>', '<migration_name>', 1, NOW(), NOW());
+```
+
+---
+
+## Backup and Restore
+
+### Check Backups
+
+Via Supabase Dashboard:
+1. Go to **Database** > **Backups**
+2. View available backup points
+
+### Create Manual Backup
+
+```bash
+# Using pg_dump
+pg_dump $PRODUCTION_DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Compressed
+pg_dump $PRODUCTION_DATABASE_URL | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
+```
+
+### Restore from Backup
+
+```bash
+# To staging for testing
+psql $STAGING_DATABASE_URL < backup.sql
+
+# For production restore, use Supabase PITR
+# 1. Go to Supabase Dashboard
+# 2. Database > Backups
+# 3. Select restore point
+# 4. Restore to new database or in-place
+```
+
+---
+
+## Emergency Procedures
+
+### Database Completely Down
+
+1. **Check Supabase Status**
+   - [status.supabase.com](https://status.supabase.com)
+
+2. **If Supabase issue:**
+   - Wait for resolution
+   - Enable maintenance mode in app
+   - Notify users
+
+3. **If our issue:**
+   ```bash
+   # Check if it's connection string
+   fly secrets list -a vora-api-production | grep DATABASE
+
+   # Test connection
+   psql $DATABASE_URL -c "SELECT 1"
+
+   # Restart application
+   fly machines restart -a vora-api-production
+   ```
+
+### Data Corruption
+
+1. **Stop all writes immediately**
+   ```bash
+   fly scale count 0 -a vora-api-production
+   ```
+
+2. **Assess damage**
+   ```sql
+   SELECT COUNT(*) FROM "Agent" WHERE ... -- verify data integrity
+   ```
+
+3. **Restore from backup**
+   - Use Supabase PITR
+   - Restore to before corruption occurred
+
+4. **Resume operations**
+   ```bash
+   fly scale count 4 -a vora-api-production
+   ```
+
+---
+
+## Performance Tuning
+
+### Recommended Settings
+
+```sql
+-- These are typically set in Supabase dashboard
+-- Shown for reference
+
+-- Work memory for complex queries
+SET work_mem = '256MB';
+
+-- Effective cache size (hint for planner)
+SET effective_cache_size = '4GB';
+
+-- Random page cost (lower for SSDs)
+SET random_page_cost = 1.1;
+```
+
+### Index Recommendations
+
+```sql
+-- Recommended indexes for Vora
+CREATE INDEX CONCURRENTLY idx_agent_user_status ON "Agent" ("userId", "status");
+CREATE INDEX CONCURRENTLY idx_session_agent_created ON "Session" ("agentId", "createdAt" DESC);
+CREATE INDEX CONCURRENTLY idx_session_user_status ON "Session" ("userId", "status");
+CREATE INDEX CONCURRENTLY idx_document_kb ON "Document" ("knowledgeBaseId");
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Migrations" icon="database" href="/internal/deployment/migrations">
+    Database migrations
+  </Card>
+  <Card title="Incident Response" icon="bell" href="/internal/runbooks/incident-response">
+    Incident handling
+  </Card>
+  <Card title="Provider Outages" icon="cloud" href="/internal/runbooks/provider-outages">
+    External service issues
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/internal/architecture/overview">
+    System architecture
+  </Card>
+</CardGroup>

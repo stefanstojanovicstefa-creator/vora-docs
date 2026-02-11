@@ -1,0 +1,659 @@
+---
+title: Codebase Tour
+description: A guided tour of the Vora codebase structure and key files
+---
+
+# Codebase Tour
+
+This guide walks you through the Vora codebase, explaining the purpose of each directory and key files.
+
+---
+
+## Repository Structure
+
+```
+vora/
+├── ventus-voice/              # Main application monorepo
+│   ├── backend/               # Express + TypeScript backend
+│   └── frontend/              # React + Vite frontend
+├── rlm-mcp-prototype/         # AI research prototype
+├── docs/                      # Documentation source
+├── docker-compose.yml         # Local development services
+└── package.json               # Root workspace config
+```
+
+---
+
+## Backend Structure
+
+```
+ventus-voice/backend/
+├── src/
+│   ├── index.ts               # Application entry point
+│   ├── app.ts                 # Express app configuration
+│   ├── routes/                # API route handlers
+│   ├── services/              # Business logic layer
+│   ├── providers/             # External service integrations
+│   ├── middleware/            # Express middleware
+│   ├── lib/                   # Shared utilities
+│   ├── workers/               # Background job processors
+│   └── types/                 # TypeScript type definitions
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   └── migrations/            # Database migrations
+├── tests/                     # Test files
+└── package.json
+```
+
+### Key Backend Files
+
+#### Entry Point
+
+```typescript
+// src/index.ts
+import { createApp } from './app';
+import { config } from './lib/config';
+import { logger } from './lib/logger';
+
+const app = createApp();
+
+app.listen(config.port, () => {
+  logger.info(`Server running on port ${config.port}`);
+});
+```
+
+#### Express App
+
+```typescript
+// src/app.ts
+import express from 'express';
+import cors from 'cors';
+import { errorHandler } from './middleware/error-handler';
+import { setupRoutes } from './routes';
+
+export function createApp() {
+  const app = express();
+
+  // Middleware
+  app.use(cors());
+  app.use(express.json());
+
+  // Routes
+  setupRoutes(app);
+
+  // Error handling
+  app.use(errorHandler);
+
+  return app;
+}
+```
+
+---
+
+## Routes Layer
+
+```
+src/routes/
+├── index.ts                   # Route registration
+├── agents.route.ts            # Agent CRUD endpoints
+├── sessions.route.ts          # Voice session endpoints
+├── knowledge.route.ts         # Knowledge base endpoints
+├── webhooks.route.ts          # External webhook handlers
+└── health.route.ts            # Health check endpoint
+```
+
+### Route Pattern
+
+```typescript
+// src/routes/agents.route.ts
+import { Router } from 'express';
+import { requireAuth } from '@/middleware/auth';
+import { validateBody } from '@/middleware/validation';
+import { agentService } from '@/services/agent.service';
+import { createAgentSchema, updateAgentSchema } from '@/schemas/agent.schema';
+
+const router = Router();
+
+// List agents for user
+router.get('/', requireAuth, async (req, res) => {
+  const agents = await agentService.listForUser(req.auth.userId);
+  res.json(agents);
+});
+
+// Create agent
+router.post('/',
+  requireAuth,
+  validateBody(createAgentSchema),
+  async (req, res) => {
+    const agent = await agentService.create(req.auth.userId, req.body);
+    res.status(201).json(agent);
+  }
+);
+
+// Get single agent
+router.get('/:id', requireAuth, async (req, res) => {
+  const agent = await agentService.findById(req.params.id, req.auth.userId);
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+  res.json(agent);
+});
+
+export default router;
+```
+
+---
+
+## Services Layer
+
+```
+src/services/
+├── agent.service.ts           # Agent business logic
+├── session.service.ts         # Session management
+├── knowledge.service.ts       # Knowledge base operations
+├── voice.service.ts           # Voice processing orchestration
+└── billing.service.ts         # Usage tracking and billing
+```
+
+### Service Pattern
+
+```typescript
+// src/services/agent.service.ts
+import { prisma } from '@/lib/prisma';
+import { Agent, CreateAgentInput } from '@/types';
+import { generateId } from '@/lib/utils';
+import { NotFoundError, ForbiddenError } from '@/lib/errors';
+
+class AgentService {
+  async create(userId: string, input: CreateAgentInput): Promise<Agent> {
+    return prisma.agent.create({
+      data: {
+        id: generateId('ag'),
+        userId,
+        name: input.name,
+        systemPrompt: input.systemPrompt,
+        llmConfig: input.llm,
+        sttConfig: input.stt,
+        ttsConfig: input.tts,
+        status: 'draft',
+      },
+    });
+  }
+
+  async findById(id: string, userId: string): Promise<Agent | null> {
+    const agent = await prisma.agent.findUnique({
+      where: { id },
+    });
+
+    if (agent && agent.userId !== userId) {
+      throw new ForbiddenError('Access denied');
+    }
+
+    return agent;
+  }
+
+  async listForUser(userId: string): Promise<Agent[]> {
+    return prisma.agent.findMany({
+      where: { userId, status: { not: 'archived' } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+}
+
+export const agentService = new AgentService();
+```
+
+---
+
+## Providers Layer
+
+```
+src/providers/
+├── llm/                       # LLM integrations
+│   ├── openai.provider.ts     # OpenAI (GPT-4)
+│   ├── gemini.provider.ts     # Google Gemini
+│   └── index.ts               # Provider factory
+├── stt/                       # Speech-to-Text
+│   ├── deepgram.provider.ts   # Deepgram
+│   └── index.ts
+├── tts/                       # Text-to-Speech
+│   ├── elevenlabs.provider.ts # ElevenLabs
+│   ├── cartesia.provider.ts   # Cartesia
+│   └── index.ts
+└── livekit/                   # LiveKit WebRTC
+    └── room.provider.ts
+```
+
+### Provider Pattern
+
+```typescript
+// src/providers/llm/openai.provider.ts
+import OpenAI from 'openai';
+import { LLMProvider, ChatRequest, ChatResponse } from '@/types';
+import { config } from '@/lib/config';
+
+export class OpenAIProvider implements LLMProvider {
+  private client: OpenAI;
+
+  constructor() {
+    this.client = new OpenAI({
+      apiKey: config.openai.apiKey,
+    });
+  }
+
+  async chat(request: ChatRequest): Promise<ChatResponse> {
+    const response = await this.client.chat.completions.create({
+      model: request.model || 'gpt-4',
+      messages: request.messages,
+      temperature: request.temperature || 0.7,
+      max_tokens: request.maxTokens,
+    });
+
+    return {
+      content: response.choices[0].message.content,
+      usage: {
+        promptTokens: response.usage?.prompt_tokens || 0,
+        completionTokens: response.usage?.completion_tokens || 0,
+      },
+    };
+  }
+}
+```
+
+---
+
+## Frontend Structure
+
+```
+ventus-voice/frontend/
+├── src/
+│   ├── main.tsx               # Application entry point
+│   ├── App.tsx                # Root component
+│   ├── components/            # Reusable UI components
+│   ├── pages/                 # Route page components
+│   ├── hooks/                 # Custom React hooks
+│   ├── services/              # API client layer
+│   ├── stores/                # State management
+│   ├── types/                 # TypeScript types
+│   └── utils/                 # Utility functions
+├── public/                    # Static assets
+└── package.json
+```
+
+### Key Frontend Files
+
+#### Entry Point
+
+```tsx
+// src/main.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ClerkProvider } from '@clerk/clerk-react';
+import App from './App';
+import './index.css';
+
+const queryClient = new QueryClient();
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </ClerkProvider>
+  </React.StrictMode>
+);
+```
+
+#### Routing
+
+```tsx
+// src/App.tsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthGuard } from './components/AuthGuard';
+import DashboardPage from './pages/Dashboard';
+import AgentsPage from './pages/Agents';
+import AgentDetailPage from './pages/AgentDetail';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<AuthGuard><DashboardPage /></AuthGuard>} />
+        <Route path="/agents" element={<AuthGuard><AgentsPage /></AuthGuard>} />
+        <Route path="/agents/:id" element={<AuthGuard><AgentDetailPage /></AuthGuard>} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+```
+
+---
+
+## Components Structure
+
+```
+src/components/
+├── ui/                        # shadcn/ui components
+│   ├── button.tsx
+│   ├── input.tsx
+│   ├── dialog.tsx
+│   └── ...
+├── agents/                    # Agent-specific components
+│   ├── AgentCard.tsx
+│   ├── AgentForm.tsx
+│   └── AgentList.tsx
+├── voice/                     # Voice UI components
+│   ├── VoiceRoom.tsx
+│   ├── AudioVisualizer.tsx
+│   └── ControlBar.tsx
+├── layout/                    # Layout components
+│   ├── Header.tsx
+│   ├── Sidebar.tsx
+│   └── MainLayout.tsx
+└── common/                    # Shared components
+    ├── LoadingSpinner.tsx
+    ├── ErrorBoundary.tsx
+    └── EmptyState.tsx
+```
+
+### Component Pattern
+
+```tsx
+// src/components/agents/AgentCard.tsx
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Agent } from '@/types';
+
+interface AgentCardProps {
+  agent: Agent;
+  onClick?: () => void;
+}
+
+export function AgentCard({ agent, onClick }: AgentCardProps) {
+  return (
+    <Card className="cursor-pointer hover:border-primary" onClick={onClick}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold">{agent.name}</h3>
+          <Badge variant={agent.status === 'active' ? 'success' : 'secondary'}>
+            {agent.status}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground line-clamp-2">
+          {agent.description}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+---
+
+## Hooks Layer
+
+```
+src/hooks/
+├── useAgents.ts               # Agent CRUD operations
+├── useSessions.ts             # Session management
+├── useVoice.ts                # Voice room connection
+├── useKnowledge.ts            # Knowledge base operations
+└── useAuth.ts                 # Authentication utilities
+```
+
+### Hook Pattern
+
+```tsx
+// src/hooks/useAgents.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { agentApi } from '@/services/api';
+import { CreateAgentInput } from '@/types';
+
+export function useAgents() {
+  return useQuery({
+    queryKey: ['agents'],
+    queryFn: () => agentApi.list(),
+  });
+}
+
+export function useAgent(id: string) {
+  return useQuery({
+    queryKey: ['agents', id],
+    queryFn: () => agentApi.get(id),
+    enabled: !!id,
+  });
+}
+
+export function useCreateAgent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateAgentInput) => agentApi.create(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+    },
+  });
+}
+```
+
+---
+
+## API Client Layer
+
+```
+src/services/
+├── api/
+│   ├── client.ts              # Axios instance
+│   ├── agents.api.ts          # Agent endpoints
+│   ├── sessions.api.ts        # Session endpoints
+│   └── knowledge.api.ts       # Knowledge endpoints
+└── index.ts
+```
+
+### API Client Pattern
+
+```tsx
+// src/services/api/client.ts
+import axios from 'axios';
+import { useAuth } from '@clerk/clerk-react';
+
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
+// Request interceptor for auth
+apiClient.interceptors.request.use(async (config) => {
+  const token = await window.Clerk?.session?.getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor for errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle auth error
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;
+```
+
+---
+
+## Database Schema
+
+```prisma
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id
+  email     String   @unique
+  name      String?
+  agents    Agent[]
+  sessions  Session[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Agent {
+  id           String   @id
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  name         String
+  description  String?
+  systemPrompt String   @db.Text
+  llmConfig    Json
+  sttConfig    Json
+  ttsConfig    Json
+  status       AgentStatus @default(draft)
+  sessions     Session[]
+  knowledgeBases AgentKnowledgeBase[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Session {
+  id        String        @id
+  agentId   String
+  agent     Agent         @relation(fields: [agentId], references: [id])
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  status    SessionStatus @default(pending)
+  startedAt DateTime?
+  endedAt   DateTime?
+  duration  Int           @default(0)
+  metadata  Json?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([agentId])
+  @@index([userId])
+}
+
+enum AgentStatus {
+  draft
+  active
+  paused
+  archived
+}
+
+enum SessionStatus {
+  pending
+  active
+  completed
+  failed
+}
+```
+
+---
+
+## Configuration Files
+
+### TypeScript Config
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  }
+}
+```
+
+### ESLint Config
+
+```javascript
+// eslint.config.js
+export default [
+  {
+    rules: {
+      'no-console': 'warn',
+      '@typescript-eslint/no-unused-vars': 'error',
+    },
+  },
+];
+```
+
+### Tailwind Config
+
+```javascript
+// tailwind.config.js
+export default {
+  content: ['./src/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#3B82F6',
+        secondary: '#6B7280',
+      },
+    },
+  },
+  plugins: [],
+};
+```
+
+---
+
+## Where to Find Things
+
+| Looking For | Location |
+|-------------|----------|
+| API route for agents | `backend/src/routes/agents.route.ts` |
+| Agent business logic | `backend/src/services/agent.service.ts` |
+| OpenAI integration | `backend/src/providers/llm/openai.provider.ts` |
+| Database schema | `backend/prisma/schema.prisma` |
+| React components | `frontend/src/components/` |
+| API hooks | `frontend/src/hooks/` |
+| Page layouts | `frontend/src/pages/` |
+| Styling utilities | `frontend/src/utils/cn.ts` |
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="First Contribution" icon="code-pull-request" href="/internal/onboarding/first-contribution">
+    Submit your first PR
+  </Card>
+  <Card title="Architecture Overview" icon="sitemap" href="/internal/architecture/overview">
+    Understand the system
+  </Card>
+  <Card title="Backend Architecture" icon="server" href="/internal/architecture/backend">
+    Deep dive into backend
+  </Card>
+  <Card title="Frontend Architecture" icon="browser" href="/internal/architecture/frontend">
+    Deep dive into frontend
+  </Card>
+</CardGroup>

@@ -1,0 +1,591 @@
+---
+title: Environment Variables
+description: Complete configuration reference for Vora self-hosting
+---
+
+# Environment Variables
+
+Complete reference for all environment variables used to configure Vora.
+
+---
+
+## Quick Reference
+
+```bash
+# .env.example - Copy and customize for your deployment
+
+# ============================================
+# REQUIRED CONFIGURATION
+# ============================================
+
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/vora
+
+# Redis
+REDIS_URL=redis://host:6379
+
+# Authentication (Clerk)
+CLERK_PUBLISHABLE_KEY=pk_live_...
+CLERK_SECRET_KEY=sk_live_...
+
+# AI Providers (at least one LLM required)
+OPENAI_API_KEY=sk-...
+
+# STT Provider (at least one required)
+DEEPGRAM_API_KEY=...
+
+# TTS Provider (at least one required)
+ELEVENLABS_API_KEY=...
+
+# LiveKit
+LIVEKIT_API_KEY=...
+LIVEKIT_API_SECRET=...
+LIVEKIT_URL=wss://your-server.livekit.cloud
+
+# ============================================
+# OPTIONAL CONFIGURATION
+# ============================================
+
+# Server
+NODE_ENV=production
+PORT=4000
+
+# Additional LLM Providers
+ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=AIza...
+GROQ_API_KEY=gsk_...
+
+# Additional STT Providers
+ASSEMBLYAI_API_KEY=...
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/creds.json
+
+# Additional TTS Providers
+CARTESIA_API_KEY=...
+
+# Feature Flags
+ENABLE_ANALYTICS=true
+ENABLE_RATE_LIMITING=true
+```
+
+---
+
+## Core Configuration
+
+### Server Settings
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `NODE_ENV` | No | `development` | Environment: `development`, `production`, `test` |
+| `PORT` | No | `4000` | HTTP server port |
+| `HOST` | No | `0.0.0.0` | Server bind address |
+| `LOG_LEVEL` | No | `info` | Logging level: `debug`, `info`, `warn`, `error` |
+| `CORS_ORIGINS` | No | `*` | Allowed CORS origins (comma-separated) |
+
+```bash
+NODE_ENV=production
+PORT=4000
+HOST=0.0.0.0
+LOG_LEVEL=info
+CORS_ORIGINS=https://app.yourdomain.com,https://admin.yourdomain.com
+```
+
+### Database (PostgreSQL)
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DATABASE_URL` | **Yes** | — | PostgreSQL connection string |
+| `DATABASE_POOL_MIN` | No | `2` | Minimum pool connections |
+| `DATABASE_POOL_MAX` | No | `10` | Maximum pool connections |
+| `DATABASE_SSL` | No | `false` | Enable SSL for database connection |
+
+```bash
+# Standard connection
+DATABASE_URL=postgresql://user:password@localhost:5432/vora
+
+# With SSL (Supabase, Neon, etc.)
+DATABASE_URL=postgresql://user:password@host:5432/vora?sslmode=require
+DATABASE_SSL=true
+
+# Connection pooling
+DATABASE_POOL_MIN=5
+DATABASE_POOL_MAX=20
+```
+
+### Redis
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `REDIS_URL` | **Yes** | — | Redis connection string |
+| `REDIS_TLS` | No | `false` | Enable TLS for Redis connection |
+
+```bash
+# Local Redis
+REDIS_URL=redis://localhost:6379
+
+# With password
+REDIS_URL=redis://:password@localhost:6379
+
+# With TLS (Upstash, etc.)
+REDIS_URL=rediss://default:password@host:6379
+REDIS_TLS=true
+```
+
+---
+
+## Authentication
+
+### Clerk
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `CLERK_PUBLISHABLE_KEY` | **Yes** | — | Clerk publishable key (frontend) |
+| `CLERK_SECRET_KEY` | **Yes** | — | Clerk secret key (backend) |
+| `CLERK_WEBHOOK_SECRET` | No | — | Webhook signing secret |
+
+```bash
+CLERK_PUBLISHABLE_KEY=pk_live_xxx
+CLERK_SECRET_KEY=sk_live_xxx
+CLERK_WEBHOOK_SECRET=whsec_xxx
+```
+
+<Note>
+Get your Clerk keys from [clerk.com/dashboard](https://clerk.com/dashboard).
+</Note>
+
+---
+
+## AI Providers
+
+### LLM Providers
+
+At least one LLM provider is required.
+
+#### OpenAI
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | Recommended | — | OpenAI API key |
+| `OPENAI_ORG_ID` | No | — | Organization ID |
+| `OPENAI_BASE_URL` | No | — | Custom API endpoint |
+
+```bash
+OPENAI_API_KEY=sk-xxx
+OPENAI_ORG_ID=org-xxx
+```
+
+#### Anthropic
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ANTHROPIC_API_KEY` | No | — | Anthropic API key |
+| `ANTHROPIC_BASE_URL` | No | — | Custom API endpoint |
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-xxx
+```
+
+#### Google (Gemini)
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GOOGLE_API_KEY` | No | — | Google AI API key |
+| `GOOGLE_PROJECT_ID` | No | — | GCP project ID (for Vertex AI) |
+
+```bash
+GOOGLE_API_KEY=AIza...
+```
+
+#### Groq
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GROQ_API_KEY` | No | — | Groq API key |
+
+```bash
+GROQ_API_KEY=gsk_xxx
+```
+
+#### Mistral
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `MISTRAL_API_KEY` | No | — | Mistral AI API key |
+
+```bash
+MISTRAL_API_KEY=xxx
+```
+
+#### Cohere
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `COHERE_API_KEY` | No | — | Cohere API key |
+
+```bash
+COHERE_API_KEY=xxx
+```
+
+---
+
+### STT Providers
+
+At least one STT provider is required.
+
+#### Deepgram
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DEEPGRAM_API_KEY` | Recommended | — | Deepgram API key |
+
+```bash
+DEEPGRAM_API_KEY=xxx
+```
+
+#### AssemblyAI
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ASSEMBLYAI_API_KEY` | No | — | AssemblyAI API key |
+
+```bash
+ASSEMBLYAI_API_KEY=xxx
+```
+
+#### Google Cloud STT
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GOOGLE_APPLICATION_CREDENTIALS` | No | — | Path to service account JSON |
+
+```bash
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+```
+
+#### Soniox
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `SONIOX_API_KEY` | No | — | Soniox API key |
+
+```bash
+SONIOX_API_KEY=xxx
+```
+
+---
+
+### TTS Providers
+
+At least one TTS provider is required.
+
+#### ElevenLabs
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ELEVENLABS_API_KEY` | Recommended | — | ElevenLabs API key |
+
+```bash
+ELEVENLABS_API_KEY=xxx
+```
+
+#### Cartesia
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `CARTESIA_API_KEY` | No | — | Cartesia API key |
+
+```bash
+CARTESIA_API_KEY=xxx
+```
+
+#### Google Cloud TTS
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GOOGLE_APPLICATION_CREDENTIALS` | No | — | Path to service account JSON |
+
+Uses same credentials as Google STT.
+
+---
+
+## LiveKit Configuration
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `LIVEKIT_API_KEY` | **Yes** | — | LiveKit API key |
+| `LIVEKIT_API_SECRET` | **Yes** | — | LiveKit API secret |
+| `LIVEKIT_URL` | **Yes** | — | LiveKit server WebSocket URL |
+| `LIVEKIT_HTTP_URL` | No | — | LiveKit HTTP API URL |
+
+```bash
+# LiveKit Cloud
+LIVEKIT_API_KEY=APIxxx
+LIVEKIT_API_SECRET=xxx
+LIVEKIT_URL=wss://your-project.livekit.cloud
+
+# Self-hosted LiveKit
+LIVEKIT_API_KEY=devkey
+LIVEKIT_API_SECRET=secret
+LIVEKIT_URL=wss://livekit.yourdomain.com
+LIVEKIT_HTTP_URL=https://livekit.yourdomain.com
+```
+
+---
+
+## Feature Flags
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_ANALYTICS` | `true` | Enable usage analytics |
+| `ENABLE_RATE_LIMITING` | `true` | Enable API rate limiting |
+| `ENABLE_WEBHOOKS` | `true` | Enable webhook delivery |
+| `ENABLE_KNOWLEDGE_BASE` | `true` | Enable RAG/knowledge base |
+| `ENABLE_VOICE_CLONING` | `false` | Enable voice cloning (requires ElevenLabs) |
+
+```bash
+ENABLE_ANALYTICS=true
+ENABLE_RATE_LIMITING=true
+ENABLE_WEBHOOKS=true
+ENABLE_KNOWLEDGE_BASE=true
+ENABLE_VOICE_CLONING=false
+```
+
+---
+
+## Rate Limiting
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RATE_LIMIT_WINDOW_MS` | `60000` | Rate limit window (ms) |
+| `RATE_LIMIT_MAX_REQUESTS` | `100` | Max requests per window |
+| `RATE_LIMIT_SKIP_SUCCESSFUL` | `false` | Skip successful requests in count |
+
+```bash
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX_REQUESTS=100
+```
+
+---
+
+## Storage
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `STORAGE_PROVIDER` | `local` | Storage: `local`, `s3`, `gcs` |
+| `STORAGE_PATH` | `./uploads` | Local storage path |
+| `S3_BUCKET` | — | S3 bucket name |
+| `S3_REGION` | — | S3 region |
+| `S3_ACCESS_KEY` | — | S3 access key |
+| `S3_SECRET_KEY` | — | S3 secret key |
+| `S3_ENDPOINT` | — | S3 endpoint (for compatible services) |
+
+```bash
+# Local storage
+STORAGE_PROVIDER=local
+STORAGE_PATH=/data/uploads
+
+# S3 storage
+STORAGE_PROVIDER=s3
+S3_BUCKET=vora-uploads
+S3_REGION=us-east-1
+S3_ACCESS_KEY=AKIA...
+S3_SECRET_KEY=xxx
+
+# S3-compatible (Cloudflare R2, MinIO)
+STORAGE_PROVIDER=s3
+S3_BUCKET=vora-uploads
+S3_ENDPOINT=https://xxx.r2.cloudflarestorage.com
+S3_ACCESS_KEY=xxx
+S3_SECRET_KEY=xxx
+```
+
+---
+
+## Observability
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SENTRY_DSN` | — | Sentry error tracking DSN |
+| `PROMETHEUS_ENABLED` | `false` | Enable Prometheus metrics |
+| `PROMETHEUS_PORT` | `9090` | Prometheus metrics port |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | — | OpenTelemetry collector endpoint |
+
+```bash
+# Sentry error tracking
+SENTRY_DSN=https://xxx@sentry.io/xxx
+
+# Prometheus metrics
+PROMETHEUS_ENABLED=true
+PROMETHEUS_PORT=9090
+
+# OpenTelemetry
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+```
+
+---
+
+## Security
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JWT_SECRET` | — | JWT signing secret (if not using Clerk) |
+| `ENCRYPTION_KEY` | — | Data encryption key (32 bytes, hex) |
+| `API_KEY_SALT` | — | Salt for API key hashing |
+
+```bash
+# Generate secure secrets
+openssl rand -hex 32  # For ENCRYPTION_KEY
+openssl rand -hex 16  # For API_KEY_SALT
+
+ENCRYPTION_KEY=abc123...  # 64 hex chars
+API_KEY_SALT=def456...    # 32 hex chars
+```
+
+---
+
+## Development Only
+
+These variables are for development environments only.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DEBUG` | `false` | Enable debug mode |
+| `MOCK_PROVIDERS` | `false` | Mock AI provider responses |
+| `SKIP_AUTH` | `false` | Skip authentication (DANGEROUS) |
+
+```bash
+# Development mode
+DEBUG=true
+MOCK_PROVIDERS=true
+
+# WARNING: Never use in production
+SKIP_AUTH=true
+```
+
+<Warning>
+Never set `SKIP_AUTH=true` or `MOCK_PROVIDERS=true` in production.
+</Warning>
+
+---
+
+## Environment Templates
+
+### Development
+
+```bash
+NODE_ENV=development
+PORT=4000
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/vora_dev
+REDIS_URL=redis://localhost:6379
+DEBUG=true
+
+CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+
+OPENAI_API_KEY=sk-...
+DEEPGRAM_API_KEY=...
+ELEVENLABS_API_KEY=...
+
+LIVEKIT_API_KEY=devkey
+LIVEKIT_API_SECRET=secret
+LIVEKIT_URL=ws://localhost:7880
+```
+
+### Production
+
+```bash
+NODE_ENV=production
+PORT=4000
+DATABASE_URL=postgresql://vora:xxx@db.example.com:5432/vora?sslmode=require
+DATABASE_SSL=true
+REDIS_URL=rediss://default:xxx@redis.example.com:6379
+REDIS_TLS=true
+
+CORS_ORIGINS=https://app.yourdomain.com
+
+CLERK_PUBLISHABLE_KEY=pk_live_...
+CLERK_SECRET_KEY=sk_live_...
+CLERK_WEBHOOK_SECRET=whsec_...
+
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+DEEPGRAM_API_KEY=...
+ELEVENLABS_API_KEY=...
+
+LIVEKIT_API_KEY=...
+LIVEKIT_API_SECRET=...
+LIVEKIT_URL=wss://your-project.livekit.cloud
+
+ENABLE_RATE_LIMITING=true
+SENTRY_DSN=https://xxx@sentry.io/xxx
+```
+
+---
+
+## Validation
+
+### Check Required Variables
+
+```bash
+#!/bin/bash
+# check-env.sh
+
+required_vars=(
+  "DATABASE_URL"
+  "REDIS_URL"
+  "CLERK_PUBLISHABLE_KEY"
+  "CLERK_SECRET_KEY"
+  "LIVEKIT_API_KEY"
+  "LIVEKIT_API_SECRET"
+  "LIVEKIT_URL"
+)
+
+for var in "${required_vars[@]}"; do
+  if [ -z "${!var}" ]; then
+    echo "ERROR: $var is not set"
+    exit 1
+  fi
+done
+
+echo "All required variables are set"
+```
+
+### Check Provider Keys
+
+```bash
+# Verify at least one LLM provider
+if [ -z "$OPENAI_API_KEY" ] && [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$GOOGLE_API_KEY" ]; then
+  echo "ERROR: At least one LLM provider API key required"
+  exit 1
+fi
+
+# Verify at least one STT provider
+if [ -z "$DEEPGRAM_API_KEY" ] && [ -z "$ASSEMBLYAI_API_KEY" ]; then
+  echo "ERROR: At least one STT provider API key required"
+  exit 1
+fi
+
+# Verify at least one TTS provider
+if [ -z "$ELEVENLABS_API_KEY" ] && [ -z "$CARTESIA_API_KEY" ]; then
+  echo "ERROR: At least one TTS provider API key required"
+  exit 1
+fi
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Database Setup" icon="database" href="/self-hosting/database">
+    Configure PostgreSQL
+  </Card>
+  <Card title="Redis Setup" icon="bolt" href="/self-hosting/redis">
+    Configure Redis
+  </Card>
+  <Card title="Docker Deployment" icon="docker" href="/self-hosting/docker">
+    Deploy with Docker
+  </Card>
+  <Card title="Fly.io Deployment" icon="paper-plane" href="/self-hosting/fly">
+    Deploy to Fly.io
+  </Card>
+</CardGroup>

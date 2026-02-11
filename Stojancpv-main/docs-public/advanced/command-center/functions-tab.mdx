@@ -1,0 +1,82 @@
+---
+title: Functions Tab
+description: Attach custom functions and tool calls to your agent
+---
+
+# Functions Tab
+
+The Functions tab lets you attach tool calls to your agent. Functions are actions the agent can execute during conversations - like booking appointments, checking order status, or transferring calls.
+
+---
+
+## How Functions Work
+
+1. You define a function with a name, description, and parameters
+2. During conversation, the LLM decides when to call the function
+3. Vora executes the function and returns the result
+4. The agent incorporates the result into its response
+
+---
+
+## Attaching Functions
+
+In the Functions tab, you'll see:
+- **Available functions** - Functions you've created or from templates
+- **Attached functions** - Functions currently active on this agent
+
+Click **Add Function** to browse available functions, or create a new one.
+
+---
+
+## Built-in Functions
+
+Vora includes several built-in functions:
+
+| Function | Description |
+|----------|-------------|
+| **transfer_call** | Transfer the caller to a human agent or phone number |
+| **end_call** | Gracefully end the conversation |
+| **book_appointment** | Schedule via Google Calendar integration |
+| **send_email** | Send an email via connected email service |
+| **lookup_crm** | Query connected CRM (HubSpot, etc.) |
+
+---
+
+## Custom Functions
+
+Create your own functions for agent-specific actions. See the [Custom Functions](/advanced/custom-functions) guide for:
+- Writing function code
+- Defining parameter schemas
+- Testing functions in isolation
+- Using function templates
+
+---
+
+## Function Parameters
+
+Each function defines parameters the LLM extracts from conversation:
+
+```json
+{
+  "name": "check_order_status",
+  "description": "Look up the status of a customer order",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "order_id": {
+        "type": "string",
+        "description": "The order ID to look up"
+      }
+    },
+    "required": ["order_id"]
+  }
+}
+```
+
+The LLM extracts `order_id` from the conversation (e.g., "Can you check order #12345?") and passes it to the function.
+
+---
+
+## Testing Functions
+
+Use the [Testing Tab](/advanced/command-center/testing-tab) to verify functions work correctly. During test calls, you'll see function calls logged in real-time with their inputs and outputs.

@@ -1,0 +1,530 @@
+---
+title: Backend Architecture
+description: Express + Prisma patterns and service layer architecture
+---
+
+# Backend Architecture
+
+The Vora backend is built with Express.js and TypeScript, using Prisma for database access and a service-oriented architecture.
+
+---
+
+## Technology Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| Runtime | Node.js 20+ | JavaScript runtime |
+| Framework | Express.js 4.x | HTTP server |
+| Language | TypeScript 5.x | Type safety |
+| ORM | Prisma | Database access |
+| Validation | Zod | Schema validation |
+| Queue | BullMQ | Background jobs |
+| Auth | Clerk | Authentication |
+
+---
+
+## Directory Structure
+
+```
+ventus-voice/backend/
+├── src/
+│   ├── index.ts              # Application entry point
+│   ├── routes/               # HTTP route handlers
+│   │   ├── agents.ts
+│   │   ├── sessions.ts
+│   │   ├── knowledge.ts
+│   │   └── ...
+│   ├── services/             # Business logic
+│   │   ├── agent.service.ts
+│   │   ├── session.service.ts
+│   │   └── ...
+│   ├── providers/            # External API integrations
+│   │   ├── llm/
+│   │   ├── stt/
+│   │   └── tts/
+│   ├── middleware/           # Express middleware
+│   │   ├── auth.ts
+│   │   ├── validation.ts
+│   │   └── error-handler.ts
+│   ├── workers/              # BullMQ job processors
+│   ├── utils/                # Shared utilities
+│   └── types/                # TypeScript types
+├── prisma/
+│   ├── schema.prisma         # Database schema
+│   └── migrations/           # Migration history
+└── tests/                    # Test files
+```
+
+---
+
+## Architectural Patterns
+
+### Service Layer Pattern
+
+Business logic is encapsulated in service classes, keeping routes thin.
+
+```typescript
+// routes/agents.ts - Route handler (thin)
+router.post('/', requireAuth, async (req, res, next) => {
+  try {
+    const validated = createAgentSchema.parse(req.body);
+    const agent = await agentService.create(req.auth.userId, validated);
+    res.status(201).json(agent);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// services/agent.service.ts - Business logic (thick)
+export class AgentService {
+  async create(userId: string, data: CreateAgentInput): Promise<Agent> {
+    // Validation logic
+    await this.validateProviderConfiguration(data);
+
+    // Business rules
+    const agent = await prisma.agent.create({
+      data: {
+        ...data,
+        userId,
+        status: 'draft',
+      },
+    });
+
+    // Side effects
+    await this.queueWelcomeEmail(userId, agent);
+
+    return agent;
+  }
+}
+```
+
+### Middleware Chain
+
+Routes use a consistent middleware ordering:
+
+```typescript
+router.post(
+  '/:id/deploy',
+  requireAuth,                // 1. Authentication
+  resourceAuthorization,      // 2. Authorization
+  zodValidation(deploySchema),// 3. Validation
+  handler                     // 4. Handler
+);
+```
+
+**Middleware Order:**
+1. `requireAuth` - Validates Clerk JWT, populates `req.auth`
+2. `resourceAuthorization` - Checks user owns the resource
+3. `zodValidation` - Validates request body/params
+4. Handler function - Actual route logic
+
+### Error Handling
+
+Centralized error handler with typed errors:
+
+```typescript
+// middleware/error-handler.ts
+export function errorHandler(
+  error: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  if (error instanceof AppError) {
+    return res.status(error.statusCode).json({
+      error: {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      },
+    });
+  }
+
+  // Log unexpected errors
+  logger.error('Unexpected error', { error, path: req.path });
+
+  res.status(500).json({
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'An unexpected error occurred',
+    },
+  });
+}
+
+// utils/errors.ts
+export class AppError extends Error {
+  constructor(
+    public statusCode: number,
+    public code: string,
+    message: string,
+    public details?: unknown
+  ) {
+    super(message);
+  }
+}
+
+export class NotFoundError extends AppError {
+  constructor(resource: string) {
+    super(404, 'NOT_FOUND', `${resource} not found`);
+  }
+}
+
+export class ValidationError extends AppError {
+  constructor(details: unknown) {
+    super(400, 'VALIDATION_ERROR', 'Validation failed', details);
+  }
+}
+```
+
+---
+
+## Prisma Patterns
+
+### Client Initialization
+
+```typescript
+// utils/prisma.ts
+import { PrismaClient } from '@prisma/client';
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development'
+      ? ['query', 'error', 'warn']
+      : ['error'],
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
+```
+
+### Transaction Pattern
+
+```typescript
+// Use transactions for multi-table operations
+async function createAgentWithKnowledgeBase(
+  data: CreateAgentWithKBInput
+): Promise<Agent> {
+  return prisma.$transaction(async (tx) => {
+    const agent = await tx.agent.create({
+      data: { name: data.name, userId: data.userId },
+    });
+
+    await tx.knowledgeBase.create({
+      data: {
+        agentId: agent.id,
+        name: `${agent.name} KB`,
+      },
+    });
+
+    return agent;
+  });
+}
+```
+
+### Query Patterns
+
+```typescript
+// Include related data
+const agent = await prisma.agent.findUnique({
+  where: { id },
+  include: {
+    knowledgeBase: true,
+    functions: true,
+    deployments: {
+      orderBy: { createdAt: 'desc' },
+      take: 1,
+    },
+  },
+});
+
+// Pagination
+const agents = await prisma.agent.findMany({
+  where: { userId },
+  skip: (page - 1) * limit,
+  take: limit,
+  orderBy: { createdAt: 'desc' },
+});
+
+// Count for pagination
+const total = await prisma.agent.count({
+  where: { userId },
+});
+```
+
+---
+
+## Zod Validation
+
+### Schema Definition
+
+```typescript
+// schemas/agent.schema.ts
+import { z } from 'zod';
+
+export const createAgentSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().optional(),
+  systemPrompt: z.string().max(10000),
+  llm: z.object({
+    provider: z.enum(['openai', 'anthropic', 'google', 'groq']),
+    model: z.string(),
+    temperature: z.number().min(0).max(2).default(0.7),
+  }),
+  stt: z.object({
+    provider: z.enum(['deepgram', 'assemblyai', 'google']),
+    language: z.string().default('en-US'),
+  }),
+  tts: z.object({
+    provider: z.enum(['elevenlabs', 'cartesia', 'google']),
+    voiceId: z.string(),
+  }),
+});
+
+export type CreateAgentInput = z.infer<typeof createAgentSchema>;
+```
+
+### Validation Middleware
+
+```typescript
+// middleware/validation.ts
+import { AnyZodObject, ZodError } from 'zod';
+
+export function zodValidation(schema: AnyZodObject) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await schema.parseAsync(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Request validation failed',
+            details: error.errors,
+          },
+        });
+      }
+      next(error);
+    }
+  };
+}
+```
+
+---
+
+## BullMQ Jobs
+
+### Queue Setup
+
+```typescript
+// workers/queue.ts
+import { Queue, Worker } from 'bullmq';
+import { redis } from '../utils/redis';
+
+export const knowledgeQueue = new Queue('knowledge', {
+  connection: redis,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 1000 },
+    removeOnComplete: 100,
+    removeOnFail: 500,
+  },
+});
+
+// Add job to queue
+await knowledgeQueue.add('index-document', {
+  documentId: doc.id,
+  userId: user.id,
+});
+```
+
+### Worker Definition
+
+```typescript
+// workers/knowledge.worker.ts
+import { Worker, Job } from 'bullmq';
+import { redis } from '../utils/redis';
+
+const worker = new Worker(
+  'knowledge',
+  async (job: Job) => {
+    const { documentId, userId } = job.data;
+
+    // Update progress
+    await job.updateProgress(10);
+
+    // Process document
+    const document = await prisma.document.findUnique({
+      where: { id: documentId },
+    });
+
+    await job.updateProgress(50);
+
+    // Generate embeddings
+    const embeddings = await generateEmbeddings(document.content);
+
+    await job.updateProgress(80);
+
+    // Store embeddings
+    await storeEmbeddings(documentId, embeddings);
+
+    await job.updateProgress(100);
+
+    return { success: true, chunks: embeddings.length };
+  },
+  { connection: redis, concurrency: 5 }
+);
+
+worker.on('completed', (job) => {
+  logger.info('Job completed', { jobId: job.id });
+});
+
+worker.on('failed', (job, err) => {
+  logger.error('Job failed', { jobId: job?.id, error: err.message });
+});
+```
+
+---
+
+## Provider Pattern
+
+### Provider Interface
+
+```typescript
+// providers/llm/types.ts
+export interface LLMProvider {
+  name: string;
+  chat(params: ChatParams): Promise<ChatResponse>;
+  stream(params: ChatParams): AsyncIterable<ChatChunk>;
+}
+
+export interface ChatParams {
+  model: string;
+  messages: Message[];
+  temperature?: number;
+  maxTokens?: number;
+}
+```
+
+### Provider Implementation
+
+```typescript
+// providers/llm/openai.ts
+import OpenAI from 'openai';
+import { LLMProvider, ChatParams, ChatResponse } from './types';
+
+export class OpenAIProvider implements LLMProvider {
+  name = 'openai';
+  private client: OpenAI;
+
+  constructor(apiKey: string) {
+    this.client = new OpenAI({ apiKey });
+  }
+
+  async chat(params: ChatParams): Promise<ChatResponse> {
+    const response = await this.client.chat.completions.create({
+      model: params.model,
+      messages: params.messages,
+      temperature: params.temperature,
+      max_tokens: params.maxTokens,
+    });
+
+    return {
+      content: response.choices[0].message.content,
+      usage: {
+        promptTokens: response.usage?.prompt_tokens ?? 0,
+        completionTokens: response.usage?.completion_tokens ?? 0,
+      },
+    };
+  }
+}
+```
+
+### Provider Factory
+
+```typescript
+// providers/llm/factory.ts
+export function getLLMProvider(config: LLMConfig): LLMProvider {
+  switch (config.provider) {
+    case 'openai':
+      return new OpenAIProvider(process.env.OPENAI_API_KEY!);
+    case 'anthropic':
+      return new AnthropicProvider(process.env.ANTHROPIC_API_KEY!);
+    case 'google':
+      return new GoogleProvider(process.env.GOOGLE_API_KEY!);
+    case 'groq':
+      return new GroqProvider(process.env.GROQ_API_KEY!);
+    default:
+      throw new Error(`Unknown LLM provider: ${config.provider}`);
+  }
+}
+```
+
+---
+
+## Testing Patterns
+
+### Service Test
+
+```typescript
+// tests/services/agent.service.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { AgentService } from '../../src/services/agent.service';
+import { prismaMock } from '../mocks/prisma';
+
+describe('AgentService', () => {
+  let service: AgentService;
+
+  beforeEach(() => {
+    service = new AgentService();
+    vi.clearAllMocks();
+  });
+
+  describe('create', () => {
+    it('creates an agent with valid data', async () => {
+      const input = {
+        name: 'Test Agent',
+        systemPrompt: 'You are a helpful assistant',
+        llm: { provider: 'openai', model: 'gpt-4' },
+      };
+
+      prismaMock.agent.create.mockResolvedValue({
+        id: '123',
+        ...input,
+        status: 'draft',
+      });
+
+      const result = await service.create('user-1', input);
+
+      expect(result.name).toBe('Test Agent');
+      expect(result.status).toBe('draft');
+      expect(prismaMock.agent.create).toHaveBeenCalledOnce();
+    });
+  });
+});
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="System Overview" icon="layer-group" href="/internal/architecture/overview">
+    5-layer architecture
+  </Card>
+  <Card title="Testing Patterns" icon="vial" href="/internal/testing/overview">
+    Testing strategies
+  </Card>
+  <Card title="Style Guide" icon="paint-brush" href="/internal/standards/style-guide">
+    Code formatting rules
+  </Card>
+  <Card title="Provider System" icon="puzzle-piece" href="/internal/architecture/providers">
+    Provider abstraction
+  </Card>
+</CardGroup>

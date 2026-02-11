@@ -1,0 +1,604 @@
+---
+title: Redis Setup
+description: Redis configuration for Vora caching and job queues
+---
+
+# Redis Setup
+
+Configure Redis for Vora's caching layer and BullMQ job queues.
+
+---
+
+## What Redis Does in Vora
+
+| Feature | Purpose |
+|---------|---------|
+| **Session Cache** | Fast session data access |
+| **Job Queues** | BullMQ background job processing |
+| **Rate Limiting** | API request throttling |
+| **Pub/Sub** | Real-time event distribution |
+| **Caching** | LLM response caching, knowledge base |
+
+---
+
+## Requirements
+
+| Requirement | Specification |
+|-------------|---------------|
+| Redis Version | 7.0+ |
+| Minimum Memory | 512 MB (production: 2+ GB) |
+| Persistence | AOF recommended |
+| Eviction Policy | `volatile-lru` or `noeviction` |
+
+---
+
+## Quick Start
+
+### Option 1: Docker (Development)
+
+```bash
+# Start Redis with Docker
+docker run -d \
+  --name vora-redis \
+  -p 6379:6379 \
+  -v redis_data:/data \
+  redis:7-alpine \
+  redis-server --appendonly yes
+
+# Connection string
+REDIS_URL=redis://localhost:6379
+```
+
+### Option 2: Managed Redis (Production)
+
+Recommended providers:
+
+| Provider | Features | Best For |
+|----------|----------|----------|
+| [Upstash](https://upstash.com) | Serverless, pay-per-request | Variable workloads |
+| [Redis Cloud](https://redis.com/cloud/) | Enterprise features | Large scale |
+| [AWS ElastiCache](https://aws.amazon.com/elasticache/) | AWS integration | AWS deployments |
+| [Fly.io Redis](https://fly.io/docs/reference/redis/) | Edge deployment | Fly.io users |
+
+### Option 3: Self-Managed
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install redis-server
+
+# Configure
+sudo nano /etc/redis/redis.conf
+
+# Start
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+```
+
+---
+
+## Connection Configuration
+
+### Connection String Format
+
+```
+redis://[username]:[password]@[host]:[port][/database]
+rediss://...  # For TLS connections
+```
+
+### Examples
+
+```bash
+# Local development
+REDIS_URL=redis://localhost:6379
+
+# With password
+REDIS_URL=redis://:your_password@localhost:6379
+
+# With TLS (Upstash, Redis Cloud)
+REDIS_URL=rediss://default:password@xxx.upstash.io:6379
+REDIS_TLS=true
+
+# Specific database
+REDIS_URL=redis://localhost:6379/1
+```
+
+---
+
+## Redis Configuration
+
+### Recommended Settings
+
+```conf
+# /etc/redis/redis.conf
+
+# Memory
+maxmemory 2gb
+maxmemory-policy volatile-lru
+
+# Persistence
+appendonly yes
+appendfsync everysec
+save 900 1
+save 300 10
+save 60 10000
+
+# Security
+requirepass your_secure_password
+protected-mode yes
+
+# Performance
+tcp-keepalive 300
+timeout 0
+
+# Connections
+maxclients 10000
+
+# Slow log
+slowlog-log-slower-than 10000
+slowlog-max-len 128
+```
+
+### Docker with Custom Config
+
+```yaml
+services:
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 2gb
+      --maxmemory-policy volatile-lru
+      --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+```
+
+---
+
+## BullMQ Configuration
+
+Vora uses BullMQ for background job processing.
+
+### Job Queue Types
+
+| Queue | Purpose | Priority |
+|-------|---------|----------|
+| `voice-sessions` | Active call processing | Critical |
+| `knowledge-indexing` | RAG document processing | High |
+| `analytics` | Usage tracking | Low |
+| `webhooks` | External notifications | Medium |
+| `cleanup` | Data maintenance | Low |
+
+### Worker Configuration
+
+```typescript
+// Worker connection settings
+const connection = {
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD,
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+};
+
+// Queue options
+const queueOptions = {
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 1000,
+    },
+    removeOnComplete: 100,  // Keep last 100 completed
+    removeOnFail: 1000,     // Keep last 1000 failed
+  },
+};
+```
+
+### Monitoring Jobs
+
+```bash
+# Connect to Redis
+redis-cli
+
+# View queue lengths
+LLEN bull:voice-sessions:wait
+LLEN bull:knowledge-indexing:wait
+
+# View active jobs
+SMEMBERS bull:voice-sessions:active
+
+# View failed jobs
+ZRANGE bull:voice-sessions:failed 0 -1
+```
+
+---
+
+## High Availability
+
+### Redis Sentinel
+
+For automatic failover:
+
+```yaml
+services:
+  redis-master:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+
+  redis-replica-1:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --replicaof redis-master 6379
+
+  redis-replica-2:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --replicaof redis-master 6379
+
+  redis-sentinel:
+    image: redis:7-alpine
+    command: >
+      redis-sentinel /etc/redis/sentinel.conf
+    volumes:
+      - ./sentinel.conf:/etc/redis/sentinel.conf
+```
+
+**sentinel.conf:**
+
+```conf
+sentinel monitor mymaster redis-master 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel failover-timeout mymaster 60000
+sentinel parallel-syncs mymaster 1
+```
+
+### Redis Cluster
+
+For horizontal scaling:
+
+```bash
+# Create cluster
+redis-cli --cluster create \
+  redis-1:6379 redis-2:6379 redis-3:6379 \
+  redis-4:6379 redis-5:6379 redis-6:6379 \
+  --cluster-replicas 1
+```
+
+### Upstash Multi-Region
+
+```bash
+# Upstash provides global replication automatically
+REDIS_URL=rediss://default:xxx@global-xxx.upstash.io:6379
+```
+
+---
+
+## Memory Management
+
+### Memory Policies
+
+| Policy | Description | Use Case |
+|--------|-------------|----------|
+| `noeviction` | Error on memory limit | Critical data |
+| `volatile-lru` | Evict expiring keys | Cache + persistent |
+| `allkeys-lru` | Evict any key | Pure cache |
+| `volatile-ttl` | Evict shortest TTL | Time-based cache |
+
+```bash
+# Check memory usage
+redis-cli INFO memory
+
+# Set memory limit
+redis-cli CONFIG SET maxmemory 2gb
+redis-cli CONFIG SET maxmemory-policy volatile-lru
+```
+
+### Memory Optimization
+
+```bash
+# Enable compression for large values
+redis-cli CONFIG SET hash-max-ziplist-entries 512
+redis-cli CONFIG SET hash-max-ziplist-value 64
+
+# Check key memory usage
+redis-cli MEMORY USAGE "key-name"
+
+# Find large keys
+redis-cli --bigkeys
+```
+
+---
+
+## Persistence
+
+### RDB Snapshots
+
+Point-in-time snapshots:
+
+```conf
+# Save every 15 minutes if at least 1 key changed
+save 900 1
+# Save every 5 minutes if at least 10 keys changed
+save 300 10
+# Save every minute if at least 10000 keys changed
+save 60 10000
+
+# RDB file location
+dbfilename dump.rdb
+dir /data
+```
+
+### AOF (Append Only File)
+
+For durability:
+
+```conf
+appendonly yes
+appendfilename "appendonly.aof"
+
+# Sync options
+appendfsync everysec  # Recommended (1 second max data loss)
+# appendfsync always  # Most durable (slowest)
+# appendfsync no      # Fastest (OS controls sync)
+```
+
+### Backup Strategy
+
+```bash
+# Manual backup
+redis-cli BGSAVE
+cp /data/dump.rdb /backups/redis_$(date +%Y%m%d).rdb
+
+# Automated backup script
+#!/bin/bash
+BACKUP_DIR=/backups
+DATE=$(date +%Y%m%d_%H%M%S)
+
+redis-cli BGSAVE
+sleep 5  # Wait for save
+cp /data/dump.rdb $BACKUP_DIR/redis_$DATE.rdb
+
+# Upload to S3
+aws s3 cp $BACKUP_DIR/redis_$DATE.rdb s3://bucket/redis-backups/
+
+# Keep 7 days
+find $BACKUP_DIR -name "redis_*.rdb" -mtime +7 -delete
+```
+
+---
+
+## Monitoring
+
+### Key Metrics
+
+| Metric | Command | Alert Threshold |
+|--------|---------|-----------------|
+| Memory usage | `INFO memory` | > 80% |
+| Connected clients | `INFO clients` | > 80% max |
+| Ops/sec | `INFO stats` | Depends on load |
+| Hit rate | `INFO stats` | < 95% |
+| Blocked clients | `INFO clients` | > 0 |
+
+### Monitoring Commands
+
+```bash
+# Real-time stats
+redis-cli MONITOR
+
+# Info overview
+redis-cli INFO
+
+# Memory usage
+redis-cli INFO memory
+
+# Connected clients
+redis-cli CLIENT LIST
+
+# Slow queries
+redis-cli SLOWLOG GET 10
+```
+
+### Prometheus Integration
+
+```yaml
+services:
+  redis-exporter:
+    image: oliver006/redis_exporter
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - "9121:9121"
+```
+
+---
+
+## Security
+
+### Authentication
+
+```conf
+# Require password
+requirepass your_strong_password_here
+
+# ACL (Redis 6+)
+user default off
+user vora on >password ~* +@all
+```
+
+### Network Security
+
+```conf
+# Bind to localhost only (if app on same host)
+bind 127.0.0.1
+
+# Protected mode
+protected-mode yes
+
+# Disable dangerous commands
+rename-command FLUSHALL ""
+rename-command FLUSHDB ""
+rename-command CONFIG ""
+rename-command DEBUG ""
+```
+
+### TLS Encryption
+
+```conf
+# Enable TLS
+tls-port 6379
+port 0
+
+tls-cert-file /path/to/redis.crt
+tls-key-file /path/to/redis.key
+tls-ca-cert-file /path/to/ca.crt
+
+tls-auth-clients yes
+```
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection refused">
+    **Check Redis is running:**
+    ```bash
+    # Docker
+    docker compose ps redis
+
+    # System
+    sudo systemctl status redis-server
+    ```
+
+    **Check binding:**
+    ```bash
+    redis-cli -h localhost ping
+    netstat -tlnp | grep 6379
+    ```
+
+    **Common issues:**
+    - Redis bound to localhost only
+    - Firewall blocking port
+    - Wrong password
+  </Accordion>
+
+  <Accordion title="Out of memory">
+    **Check memory:**
+    ```bash
+    redis-cli INFO memory
+    ```
+
+    **Solutions:**
+    - Increase `maxmemory`
+    - Set eviction policy
+    - Clean expired keys: `redis-cli --scan --pattern '*' | xargs redis-cli DEL`
+    - Find large keys: `redis-cli --bigkeys`
+  </Accordion>
+
+  <Accordion title="Slow performance">
+    **Check slow log:**
+    ```bash
+    redis-cli SLOWLOG GET 10
+    ```
+
+    **Check latency:**
+    ```bash
+    redis-cli --latency
+    redis-cli --latency-history
+    ```
+
+    **Solutions:**
+    - Enable pipelining in client
+    - Reduce key sizes
+    - Use appropriate data structures
+    - Check persistence settings
+  </Accordion>
+
+  <Accordion title="Jobs not processing">
+    **Check BullMQ queues:**
+    ```bash
+    redis-cli KEYS "bull:*"
+    redis-cli LLEN "bull:voice-sessions:wait"
+    redis-cli SMEMBERS "bull:voice-sessions:active"
+    ```
+
+    **Check for stuck jobs:**
+    ```bash
+    redis-cli ZRANGE "bull:voice-sessions:failed" 0 -1
+    ```
+
+    **Restart workers:**
+    ```bash
+    docker compose restart worker
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Best Practices
+
+### Connection Management
+
+```typescript
+// Use connection pooling
+import Redis from 'ioredis';
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD,
+  maxRetriesPerRequest: 3,
+  enableReadyCheck: true,
+  lazyConnect: true,
+});
+
+// Close on shutdown
+process.on('SIGTERM', async () => {
+  await redis.quit();
+});
+```
+
+### Key Naming
+
+```typescript
+// Use consistent prefixes
+const keys = {
+  session: (id: string) => `session:${id}`,
+  cache: (key: string) => `cache:${key}`,
+  rateLimit: (ip: string) => `ratelimit:${ip}`,
+  job: (type: string, id: string) => `job:${type}:${id}`,
+};
+```
+
+### TTL Strategy
+
+| Data Type | TTL | Reason |
+|-----------|-----|--------|
+| Session cache | 1 hour | Active sessions |
+| LLM cache | 24 hours | Reduce API costs |
+| Rate limit | 1 minute | Short window |
+| Job data | 7 days | Debugging |
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Database Setup" icon="database" href="/self-hosting/database">
+    Configure PostgreSQL
+  </Card>
+  <Card title="Scaling Guide" icon="arrows-alt" href="/self-hosting/scaling">
+    Scale Redis for production
+  </Card>
+  <Card title="Monitoring" icon="chart-area" href="/self-hosting/monitoring">
+    Set up observability
+  </Card>
+  <Card title="Environment Variables" icon="key" href="/self-hosting/environment">
+    Complete configuration
+  </Card>
+</CardGroup>

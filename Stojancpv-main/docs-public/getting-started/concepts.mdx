@@ -1,0 +1,185 @@
+---
+title: Core Concepts
+description: Understand the key building blocks of the Vora platform
+---
+
+# Core Concepts
+
+Before building your first voice agent, here are the key concepts you'll work with.
+
+---
+
+## Agents
+
+An **Agent** is a voice AI assistant that can handle phone calls, web chats, or in-app voice interactions. Each agent has:
+
+<Tabs>
+  <Tab title="Simple">
+    - **Personality** - What the agent sounds like and how it behaves
+    - **Knowledge** - Documents and information the agent can reference
+    - **Voice** - The voice it speaks with
+    - **Language** - What language(s) it speaks
+    - **Greeting** - The first thing it says to callers
+  </Tab>
+  <Tab title="Advanced">
+    - **System Prompt** - Instructions that define agent behavior
+    - **LLM Provider** - The AI model powering responses (Gemini, GPT-4, Claude, etc.)
+    - **STT Provider** - Speech-to-text engine (Deepgram, Google, AssemblyAI)
+    - **TTS Provider** - Text-to-speech voice (ElevenLabs, Cartesia, Google)
+    - **Knowledge Base** - RAG-powered document retrieval
+    - **Functions** - Custom tool calls the agent can execute
+    - **Deployment Config** - Phone numbers, web embeds, SIP trunks
+  </Tab>
+</Tabs>
+
+---
+
+## Voice Pipeline
+
+Every voice conversation flows through a pipeline:
+
+<Tabs>
+  <Tab title="Simple">
+    ```
+    Caller speaks → Vora understands → AI thinks → Vora responds
+    ```
+
+    It happens in real-time with sub-500ms latency. The caller has a natural conversation - they can interrupt, ask follow-ups, and the agent responds naturally.
+  </Tab>
+  <Tab title="Advanced">
+    ```
+    Audio In → STT (Deepgram/Google) → LLM (Gemini/GPT-4) → TTS (ElevenLabs/Cartesia) → Audio Out
+                                          ↕
+                                    Knowledge Base (RAG)
+                                          ↕
+                                    Functions (Tool Calls)
+    ```
+
+    The pipeline processes audio in real-time using WebRTC via LiveKit:
+    1. **STT** transcribes caller speech with streaming recognition
+    2. **LLM** processes the transcript with conversation history and RAG context
+    3. **TTS** converts the response to natural speech with streaming output
+    4. **Barge-in** detection allows callers to interrupt mid-response
+
+    Each provider in the pipeline can be independently configured per agent.
+  </Tab>
+</Tabs>
+
+---
+
+## Knowledge Base
+
+The Knowledge Base lets your agent answer questions using your own documents.
+
+<Tabs>
+  <Tab title="Simple">
+    Upload files (PDF, DOCX, TXT) or paste URLs, and your agent can reference that information during conversations. Think of it as giving your agent a manual to study.
+  </Tab>
+  <Tab title="Advanced">
+    The Knowledge Base uses RAG (Retrieval-Augmented Generation):
+    1. Documents are chunked and embedded using vector embeddings
+    2. During conversations, relevant chunks are retrieved based on semantic similarity
+    3. Retrieved context is injected into the LLM prompt
+    4. The agent generates responses grounded in your documents
+
+    Supported sources: PDF, DOCX, TXT, Markdown, URLs (auto-crawled), and direct text input.
+  </Tab>
+</Tabs>
+
+---
+
+## Sessions
+
+A **Session** is a single conversation between a caller and an agent.
+
+<Tabs>
+  <Tab title="Simple">
+    Each phone call or web chat creates a session. You can review sessions to see:
+    - Full conversation transcript
+    - Call duration and outcome
+    - Recording playback
+  </Tab>
+  <Tab title="Advanced">
+    Sessions track the full lifecycle of a conversation:
+    - **Transcript** - Timestamped speaker-labeled text
+    - **Events** - Connection, disconnection, function calls, transfers
+    - **Recordings** - Full audio recording (when enabled)
+    - **Metadata** - Duration, cost, tokens used, provider latency
+    - **Analytics** - Sentiment, topic classification, success metrics
+  </Tab>
+</Tabs>
+
+---
+
+## Functions
+
+Functions let your agent take actions during conversations.
+
+<Tabs>
+  <Tab title="Simple">
+    Functions are actions your agent can perform, like:
+    - Booking appointments on Google Calendar
+    - Looking up order status in your CRM
+    - Sending confirmation emails
+    - Transferring to a human agent
+
+    Vora includes built-in functions, or you can connect to external tools.
+  </Tab>
+  <Tab title="Advanced">
+    Functions use the LLM's tool-calling capability:
+    1. Define a function schema (name, description, parameters)
+    2. The LLM decides when to call the function based on conversation context
+    3. Vora executes the function and returns results to the LLM
+    4. The agent incorporates the result into its response
+
+    You can create functions via:
+    - **Built-in functions** - Calendar, CRM, transfer, end call
+    - **Custom functions** - Write code that runs on Vora's sandbox
+    - **Webhook functions** - Call external APIs with defined schemas
+    - **Function templates** - Pre-built templates for common use cases
+  </Tab>
+</Tabs>
+
+---
+
+## Deployment
+
+Once your agent is ready, deploy it to receive calls.
+
+<Tabs>
+  <Tab title="Simple">
+    Three ways to deploy:
+    1. **Phone Number** - Get a number or bring your own
+    2. **Web Widget** - Add a voice button to your website
+    3. **Test Call** - Try it from the dashboard first
+
+    Just click Deploy on your agent page to get started.
+  </Tab>
+  <Tab title="Advanced">
+    Deployment options:
+    - **Phone Numbers** - Provisioned via LiveKit/Twilio SIP
+    - **Web Embed** - JavaScript widget with customizable UI
+    - **SIP Trunk** - Connect your existing PBX/phone system
+    - **API** - Programmatically create sessions via REST API
+    - **Mobile SDK** - React Native integration via LiveKit
+
+    Each deployment channel supports:
+    - Custom greeting messages
+    - Webhook notifications for session events
+    - Rate limiting and concurrent session caps
+    - Geographic number selection
+  </Tab>
+</Tabs>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/platform/quickstart">
+    Create your first agent in 5 minutes
+  </Card>
+  <Card title="Simple & Advanced Modes" icon="toggle-on" href="/getting-started/modes">
+    Learn about the two interface modes
+  </Card>
+</CardGroup>

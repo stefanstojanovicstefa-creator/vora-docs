@@ -1,0 +1,95 @@
+---
+title: Campaigns
+description: Outbound voice campaigns for automated calling at scale
+---
+
+# Campaigns
+
+Campaigns let you make outbound calls at scale using your voice agents. Upload a contact list, configure the campaign, and let your agent make calls automatically.
+
+<Info>
+  Campaigns are available in **Advanced Mode** only.
+</Info>
+
+---
+
+## Creating a Campaign
+
+<Steps>
+  <Step title="Select an Agent">
+    Choose which agent will make the calls. The agent's configuration (voice, LLM, functions) applies to all campaign calls.
+  </Step>
+  <Step title="Upload Contacts">
+    Upload a CSV with contact information:
+    ```csv
+    name,phone,custom_field
+    John Smith,+15551234567,Order #12345
+    Jane Doe,+15559876543,Appointment follow-up
+    ```
+  </Step>
+  <Step title="Configure Schedule">
+    Set when calls should be made:
+    - **Start time** - When the campaign begins
+    - **End time** - Daily cutoff time
+    - **Timezone** - Respect contact timezone
+    - **Max concurrent** - Simultaneous calls
+  </Step>
+  <Step title="Set Greeting Override">
+    Optionally customize the greeting per campaign:
+    ```
+    Hi {{name}}, this is Sarah calling from Acme Corp about {{custom_field}}.
+    ```
+  </Step>
+  <Step title="Launch">
+    Click **Start Campaign** to begin dialing.
+  </Step>
+</Steps>
+
+---
+
+## Campaign Status
+
+| Status | Description |
+|--------|-------------|
+| **Scheduled** | Campaign is set to start at a future time |
+| **Running** | Campaign is actively making calls |
+| **Paused** | Campaign is temporarily stopped |
+| **Completed** | All contacts have been called |
+| **Cancelled** | Campaign was manually stopped |
+
+---
+
+## Campaign Analytics
+
+Track campaign performance in real-time:
+- **Calls made** - Total calls attempted
+- **Connected** - Calls that were answered
+- **Completed** - Calls that reached a successful outcome
+- **No answer** - Calls that went to voicemail or weren't answered
+- **Average duration** - Mean call length
+- **Cost** - Total campaign cost
+
+---
+
+## Contact Variables
+
+Use contact fields as variables in the agent's system prompt:
+- `{{name}}` - Contact name from CSV
+- `{{phone}}` - Contact phone number
+- `{{custom_field}}` - Any custom column from your CSV
+
+This personalizes each call based on the contact's information.
+
+---
+
+## Compliance
+
+<Warning>
+  Ensure your outbound campaigns comply with local regulations (TCPA in the US, GDPR in the EU, etc.). Vora does not provide legal advice - consult your compliance team.
+</Warning>
+
+Best practices:
+- Only call contacts who have opted in
+- Respect do-not-call lists
+- Identify the call as automated at the start
+- Provide an easy way to opt out

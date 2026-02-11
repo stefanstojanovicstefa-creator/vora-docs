@@ -1,0 +1,527 @@
+---
+title: Local Setup
+description: Complete guide to setting up your local development environment
+---
+
+# Local Development Setup
+
+This guide walks you through setting up a complete local development environment for Vora.
+
+---
+
+## Prerequisites
+
+### Required Software
+
+| Software | Version | Installation |
+|----------|---------|--------------|
+| Node.js | 20.x LTS | [nodejs.org](https://nodejs.org) or `nvm install 20` |
+| npm | 10.x | Comes with Node.js |
+| Docker | Latest | [docker.com](https://docker.com) |
+| Git | 2.40+ | [git-scm.com](https://git-scm.com) |
+
+### Recommended Tools
+
+| Tool | Purpose | Installation |
+|------|---------|--------------|
+| VS Code | Code editor | [code.visualstudio.com](https://code.visualstudio.com) |
+| GitHub CLI | Git operations | `brew install gh` or [cli.github.com](https://cli.github.com) |
+| Fly CLI | Backend deployments | `brew install flyctl` |
+| Vercel CLI | Frontend deployments | `npm i -g vercel` |
+
+### VS Code Extensions
+
+```json
+// .vscode/extensions.json (recommended)
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "prisma.prisma",
+    "ms-azuretools.vscode-docker",
+    "eamodio.gitlens"
+  ]
+}
+```
+
+---
+
+## Step 1: Clone the Repository
+
+```bash
+# Using GitHub CLI (recommended)
+gh repo clone vora-ai/vora
+
+# Or using git
+git clone git@github.com:vora-ai/vora.git
+
+# Navigate to the project
+cd vora
+```
+
+---
+
+## Step 2: Install Dependencies
+
+```bash
+# Install all dependencies
+npm install
+
+# This installs dependencies for:
+# - Root workspace
+# - ventus-voice/backend
+# - ventus-voice/frontend
+```
+
+---
+
+## Step 3: Set Up Environment Variables
+
+### Backend Environment
+
+```bash
+# Copy example env file
+cp ventus-voice/backend/.env.example ventus-voice/backend/.env
+```
+
+Edit `ventus-voice/backend/.env`:
+
+```bash
+# Database (Docker Compose will create this)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/vora_dev"
+
+# Redis (Docker Compose will create this)
+REDIS_URL="redis://localhost:6379"
+
+# Clerk (Get from 1Password or Clerk dashboard)
+CLERK_SECRET_KEY="sk_test_..."
+CLERK_PUBLISHABLE_KEY="pk_test_..."
+
+# OpenAI (Get from 1Password)
+OPENAI_API_KEY="sk-..."
+
+# Deepgram (Get from 1Password)
+DEEPGRAM_API_KEY="..."
+
+# ElevenLabs (Get from 1Password)
+ELEVENLABS_API_KEY="..."
+
+# LiveKit (Get from 1Password or run local LiveKit)
+LIVEKIT_API_KEY="..."
+LIVEKIT_API_SECRET="..."
+LIVEKIT_URL="ws://localhost:7880"
+
+# Server
+PORT=4000
+NODE_ENV=development
+LOG_LEVEL=debug
+```
+
+### Frontend Environment
+
+```bash
+# Copy example env file
+cp ventus-voice/frontend/.env.example ventus-voice/frontend/.env
+```
+
+Edit `ventus-voice/frontend/.env`:
+
+```bash
+# API
+VITE_API_URL="http://localhost:4000"
+
+# Clerk
+VITE_CLERK_PUBLISHABLE_KEY="pk_test_..."
+
+# LiveKit
+VITE_LIVEKIT_URL="ws://localhost:7880"
+```
+
+### Getting API Keys
+
+1. Open 1Password
+2. Search for "Vora Development"
+3. Copy the required keys to your `.env` files
+
+**Alternatively, request access from your team lead.**
+
+---
+
+## Step 4: Start Docker Services
+
+```bash
+# Start PostgreSQL and Redis
+docker-compose up -d
+
+# Verify containers are running
+docker-compose ps
+
+# Expected output:
+# NAME                COMMAND                  STATUS          PORTS
+# vora-postgres       "docker-entrypoint.s…"   Up              0.0.0.0:5432->5432/tcp
+# vora-redis          "docker-entrypoint.s…"   Up              0.0.0.0:6379->6379/tcp
+```
+
+### Docker Compose Configuration
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  postgres:
+    container_name: vora-postgres
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vora_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    container_name: vora-redis
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+---
+
+## Step 5: Set Up the Database
+
+```bash
+# Navigate to backend
+cd ventus-voice/backend
+
+# Generate Prisma client
+npx prisma generate
+
+# Run migrations
+npx prisma migrate dev
+
+# (Optional) Seed with sample data
+npx prisma db seed
+```
+
+### Verify Database
+
+```bash
+# Open Prisma Studio
+npx prisma studio
+
+# Opens browser at http://localhost:5555
+# Verify tables were created
+```
+
+---
+
+## Step 6: Start Development Servers
+
+### Option A: Run All Services
+
+```bash
+# From root directory
+npm run dev
+
+# This starts:
+# - Backend on http://localhost:4000
+# - Frontend on http://localhost:3000
+```
+
+### Option B: Run Services Separately
+
+```bash
+# Terminal 1: Backend
+cd ventus-voice/backend
+npm run dev
+
+# Terminal 2: Frontend
+cd ventus-voice/frontend
+npm run dev
+```
+
+---
+
+## Step 7: Verify Everything Works
+
+### Health Check
+
+```bash
+# Backend health
+curl http://localhost:4000/health
+
+# Expected:
+# {"status":"healthy","version":"1.0.0"}
+```
+
+### Frontend
+
+Open http://localhost:3000 in your browser.
+
+You should see the Vora login page.
+
+### Test Authentication
+
+1. Click "Sign Up" or "Sign In"
+2. Use your work email or test credentials
+3. Verify you reach the dashboard
+
+### Test Voice
+
+1. Create a test agent
+2. Start a voice session
+3. Verify audio is working
+
+---
+
+## Troubleshooting
+
+### "Cannot connect to database"
+
+```bash
+# Check if Docker is running
+docker ps
+
+# Check PostgreSQL container
+docker logs vora-postgres
+
+# Try restarting
+docker-compose down
+docker-compose up -d
+```
+
+### "Prisma migration failed"
+
+```bash
+# Reset database (WARNING: deletes all data)
+npx prisma migrate reset
+
+# Or manually drop and recreate
+docker-compose down -v
+docker-compose up -d
+npx prisma migrate dev
+```
+
+### "Port already in use"
+
+```bash
+# Find process using port
+lsof -i :4000  # macOS/Linux
+netstat -ano | findstr :4000  # Windows
+
+# Kill the process
+kill -9 <PID>  # macOS/Linux
+taskkill /PID <PID> /F  # Windows
+```
+
+### "npm install fails"
+
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Delete node_modules
+rm -rf node_modules
+rm -rf ventus-voice/backend/node_modules
+rm -rf ventus-voice/frontend/node_modules
+
+# Reinstall
+npm install
+```
+
+### "Clerk authentication fails"
+
+1. Verify CLERK_SECRET_KEY in backend `.env`
+2. Verify VITE_CLERK_PUBLISHABLE_KEY in frontend `.env`
+3. Check Clerk dashboard for the correct keys
+4. Ensure you're using test keys (sk_test_*, pk_test_*)
+
+### "LiveKit not connecting"
+
+For local development without LiveKit:
+
+```bash
+# Option 1: Use cloud LiveKit (get keys from team)
+LIVEKIT_URL="wss://your-livekit-cloud.livekit.cloud"
+
+# Option 2: Run local LiveKit (requires installation)
+# See https://docs.livekit.io/self-hosting/
+```
+
+---
+
+## Development Workflow
+
+### Running Tests
+
+```bash
+# All tests
+npm run test
+
+# Backend tests only
+cd ventus-voice/backend && npm run test
+
+# Frontend tests only
+cd ventus-voice/frontend && npm run test
+
+# Watch mode
+npm run test:watch
+```
+
+### Linting
+
+```bash
+# Check for issues
+npm run lint
+
+# Auto-fix issues
+npm run lint:fix
+```
+
+### Type Checking
+
+```bash
+# Check types
+npm run typecheck
+```
+
+### Building for Production
+
+```bash
+# Build all
+npm run build
+
+# Build backend only
+cd ventus-voice/backend && npm run build
+
+# Build frontend only
+cd ventus-voice/frontend && npm run build
+```
+
+---
+
+## IDE Configuration
+
+### VS Code Settings
+
+```json
+// .vscode/settings.json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
+}
+```
+
+### Launch Configurations
+
+```json
+// .vscode/launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Backend",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/ventus-voice/backend",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vitest", "--no-file-parallelism"],
+      "cwd": "${workspaceFolder}/ventus-voice/backend",
+      "console": "integratedTerminal"
+    }
+  ]
+}
+```
+
+---
+
+## Useful Commands
+
+### Database
+
+```bash
+# Open Prisma Studio
+npx prisma studio
+
+# Generate client after schema changes
+npx prisma generate
+
+# Create new migration
+npx prisma migrate dev --name <migration-name>
+
+# Reset database
+npx prisma migrate reset
+```
+
+### Docker
+
+```bash
+# Start services
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Restart a service
+docker-compose restart postgres
+```
+
+### Git
+
+```bash
+# Create feature branch
+git checkout -b feature/my-feature
+
+# Update from develop
+git checkout develop
+git pull
+git checkout feature/my-feature
+git rebase develop
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Codebase Tour" icon="map" href="/internal/onboarding/codebase-tour">
+    Learn the code structure
+  </Card>
+  <Card title="First Contribution" icon="code-pull-request" href="/internal/onboarding/first-contribution">
+    Submit your first PR
+  </Card>
+  <Card title="Architecture Overview" icon="sitemap" href="/internal/architecture/overview">
+    Understand the system
+  </Card>
+  <Card title="Coding Standards" icon="code" href="/internal/standards/style-guide">
+    Follow our conventions
+  </Card>
+</CardGroup>

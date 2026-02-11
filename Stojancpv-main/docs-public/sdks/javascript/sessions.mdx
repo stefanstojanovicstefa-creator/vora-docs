@@ -1,0 +1,500 @@
+---
+title: Sessions API
+description: Create and manage voice sessions with the JavaScript SDK
+---
+
+# Sessions API
+
+The Sessions API handles voice conversations between users and agents. Sessions provide real-time audio streaming through LiveKit.
+
+---
+
+## Overview
+
+```typescript
+import { VoraClient } from '@vora-ai/sdk';
+
+const vora = new VoraClient({ apiKey: process.env.VORA_API_KEY });
+
+// Access sessions methods
+vora.sessions.create(...)
+vora.sessions.get(...)
+vora.sessions.list(...)
+vora.sessions.end(...)
+vora.sessions.getTranscript(...)
+```
+
+---
+
+## Create Session
+
+Create a new voice session:
+
+```typescript
+const session = await vora.sessions.create({
+  // Required
+  agentId: 'agent_abc123',
+
+  // User identification
+  userId: 'user_123',
+
+  // Context variables (available in system prompt)
+  variables: {
+    customerName: 'John Smith',
+    accountId: 'acc_456',
+    orderHistory: ['ORD-001', 'ORD-002']
+  },
+
+  // Custom metadata (for your tracking)
+  metadata: {
+    source: 'web_widget',
+    page: '/pricing',
+    campaign: 'spring_promo'
+  },
+
+  // Session options
+  options: {
+    initialMessage: 'Hello! I see you have questions about pricing.',
+    skipGreeting: false,
+    recordingEnabled: true
+  }
+});
+
+console.log('Session created:', session.id);
+console.log('Room URL:', session.roomUrl);
+console.log('Token:', session.token);
+```
+
+### Response
+
+```typescript
+interface Session {
+  id: string;                    // sess_xyz789
+  agentId: string;
+  userId?: string;
+  status: 'created' | 'connecting' | 'active' | 'ending' | 'completed' | 'failed';
+  token: string;                 // JWT for LiveKit connection
+  roomUrl: string;               // WebSocket URL
+  variables?: Record<string, any>;
+  metadata?: Record<string, any>;
+  expiresAt: Date;               // Token expiry
+  createdAt: Date;
+}
+```
+
+---
+
+## Connect to Session
+
+Use the session credentials to connect via LiveKit:
+
+```typescript
+import { Room, RoomEvent } from 'livekit-client';
+
+const room = new Room();
+
+// Set up event handlers
+room.on(RoomEvent.Connected, () => {
+  console.log('Connected to voice session');
+});
+
+room.on(RoomEvent.Disconnected, (reason) => {
+  console.log('Disconnected:', reason);
+});
+
+room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+  if (track.kind === 'audio') {
+    const element = track.attach();
+    document.body.appendChild(element);
+  }
+});
+
+// Connect
+await room.connect(session.roomUrl, session.token);
+
+// Enable microphone
+await room.localParticipant.setMicrophoneEnabled(true);
+```
+
+---
+
+## Get Session
+
+Retrieve session details:
+
+```typescript
+const session = await vora.sessions.get('sess_xyz789');
+
+console.log(session.status);     // 'active'
+console.log(session.duration);   // seconds elapsed
+console.log(session.createdAt);  // Date
+```
+
+### Include Additional Data
+
+```typescript
+const session = await vora.sessions.get('sess_xyz789', {
+  include: ['transcript', 'recording', 'analytics']
+});
+
+console.log(session.transcript);   // Conversation messages
+console.log(session.recording);    // Recording URL (if completed)
+console.log(session.analytics);    // Session metrics
+```
+
+---
+
+## List Sessions
+
+List sessions with filters:
+
+```typescript
+const { data, hasMore, total } = await vora.sessions.list({
+  // Pagination
+  limit: 50,
+  after: 'sess_abc123',
+
+  // Filters
+  agentId: 'agent_abc123',
+  userId: 'user_123',
+  status: 'completed',
+
+  // Date range
+  startDate: '2024-01-01',
+  endDate: '2024-01-31',
+
+  // Sorting
+  orderBy: 'createdAt',
+  order: 'desc'
+});
+
+for (const session of data) {
+  console.log(`${session.id}: ${session.status} (${session.duration}s)`);
+}
+```
+
+### Active Sessions
+
+```typescript
+const active = await vora.sessions.list({
+  status: 'active',
+  limit: 100
+});
+
+console.log(`${active.total} active sessions`);
+```
+
+---
+
+## Update Session
+
+Update session metadata during the call:
+
+```typescript
+await vora.sessions.update('sess_xyz789', {
+  metadata: {
+    resolution: 'ticket_created',
+    ticketId: 'TKT-123',
+    satisfaction: 5
+  }
+});
+```
+
+---
+
+## End Session
+
+End a session programmatically:
+
+```typescript
+await vora.sessions.end('sess_xyz789', {
+  reason: 'user_request',        // or 'timeout', 'error', 'transfer'
+  message: 'Thank you for calling. Goodbye!'
+});
+```
+
+### Reason Codes
+
+| Reason | Description |
+|--------|-------------|
+| `user_request` | User ended the call |
+| `agent_request` | Agent ended the call |
+| `timeout` | Session timed out |
+| `transfer` | Transferred to human |
+| `error` | Technical error |
+| `admin` | Administrative action |
+
+---
+
+## Session Transcript
+
+Get the conversation transcript:
+
+```typescript
+const transcript = await vora.sessions.getTranscript('sess_xyz789');
+
+console.log(transcript);
+// {
+//   sessionId: 'sess_xyz789',
+//   messages: [
+//     { speaker: 'agent', text: 'Hello!...', timestamp: Date },
+//     { speaker: 'user', text: 'I need...', timestamp: Date },
+//     ...
+//   ],
+//   duration: 180,
+//   wordCount: 245
+// }
+```
+
+### Format Options
+
+```typescript
+// Get as plain text
+const text = await vora.sessions.getTranscript('sess_xyz789', {
+  format: 'text'
+});
+
+// Get with timestamps
+const timestamped = await vora.sessions.getTranscript('sess_xyz789', {
+  format: 'json',
+  includeTimestamps: true
+});
+```
+
+---
+
+## Session Recording
+
+Access session recordings (if enabled):
+
+```typescript
+const recording = await vora.sessions.getRecording('sess_xyz789');
+
+console.log(recording);
+// {
+//   url: 'https://storage.vora.ai/recordings/sess_xyz789.mp3',
+//   duration: 180,
+//   format: 'mp3',
+//   size: 2150000,
+//   expiresAt: Date
+// }
+```
+
+<Note>
+  Recording URLs are temporary and expire after 24 hours. Store the audio file if you need permanent access.
+</Note>
+
+---
+
+## Session Events
+
+Listen for session events in real-time:
+
+```typescript
+room.on(RoomEvent.DataReceived, (data, participant) => {
+  const message = JSON.parse(new TextDecoder().decode(data));
+
+  switch (message.type) {
+    case 'transcript':
+      // Real-time transcript
+      console.log(`${message.speaker}: ${message.text}`);
+      break;
+
+    case 'function_call':
+      // Agent called a function
+      console.log(`Calling ${message.name} with`, message.parameters);
+      break;
+
+    case 'function_result':
+      // Function returned
+      console.log(`Result:`, message.result);
+      break;
+
+    case 'agent_thinking':
+      // Agent is processing
+      showThinkingIndicator();
+      break;
+
+    case 'error':
+      // Session error
+      console.error(`Error: ${message.error.code}`);
+      break;
+  }
+});
+```
+
+---
+
+## Session Variables
+
+Pass context to the agent:
+
+```typescript
+const session = await vora.sessions.create({
+  agentId: 'agent_abc123',
+  variables: {
+    // User information
+    customerName: 'John Smith',
+    accountTier: 'premium',
+
+    // Recent activity
+    lastOrder: 'ORD-12345',
+    cartItems: ['Product A', 'Product B'],
+
+    // Context
+    currentPage: '/checkout',
+    referrer: 'email_campaign'
+  }
+});
+```
+
+Variables are available in the system prompt:
+
+```
+System: You are helping {{customerName}}, a {{accountTier}} customer.
+Their last order was {{lastOrder}}.
+```
+
+### Update Variables Mid-Session
+
+```typescript
+// Via data channel
+room.localParticipant.publishData(
+  new TextEncoder().encode(JSON.stringify({
+    type: 'update_variables',
+    variables: {
+      currentStep: 'payment'
+    }
+  })),
+  { reliable: true }
+);
+```
+
+---
+
+## Transfer Session
+
+Transfer a voice session to a human agent:
+
+```typescript
+const transfer = await vora.sessions.transfer('sess_xyz789', {
+  destination: '+15551234567',  // Phone number
+  // Or
+  // destination: 'agent_human_id',  // Another Vora agent
+
+  context: {
+    summary: 'Customer needs help with billing dispute',
+    sentiment: 'frustrated',
+    priorConversation: transcript
+  },
+
+  warmTransfer: true,  // Agent stays on briefly
+  whisperMessage: 'Customer is upset about charge on Jan 15th'
+});
+
+console.log(transfer.status);  // 'transferring'
+```
+
+---
+
+## Session Analytics
+
+Get detailed session metrics:
+
+```typescript
+const analytics = await vora.sessions.getAnalytics('sess_xyz789');
+
+console.log(analytics);
+// {
+//   duration: 180,
+//   turns: 12,
+//   avgTurnDuration: 15,
+//   latency: {
+//     p50: 450,
+//     p95: 820
+//   },
+//   sentiment: 0.75,
+//   topics: ['order_status', 'shipping'],
+//   functionCalls: [
+//     { name: 'get_order_status', result: 'success', latency: 180 }
+//   ],
+//   interruptions: 2,
+//   silenceDuration: 25
+// }
+```
+
+---
+
+## Batch Operations
+
+Work with multiple sessions:
+
+```typescript
+// End multiple sessions
+await vora.sessions.endMany({
+  sessionIds: ['sess_1', 'sess_2', 'sess_3'],
+  reason: 'maintenance'
+});
+
+// Get transcripts for multiple sessions
+const transcripts = await Promise.all(
+  sessionIds.map(id => vora.sessions.getTranscript(id))
+);
+```
+
+---
+
+## Error Handling
+
+```typescript
+import { NotFoundError, SessionExpiredError } from '@vora-ai/sdk';
+
+try {
+  const session = await vora.sessions.get('sess_xyz789');
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    console.log('Session not found');
+  } else if (error instanceof SessionExpiredError) {
+    console.log('Session has expired');
+  }
+}
+```
+
+---
+
+## TypeScript Types
+
+```typescript
+import {
+  Session,
+  CreateSessionInput,
+  SessionStatus,
+  Transcript,
+  TranscriptMessage,
+  Recording,
+  SessionAnalytics
+} from '@vora-ai/sdk';
+
+// Full type safety
+const input: CreateSessionInput = {
+  agentId: 'agent_123',
+  userId: 'user_456',
+  variables: { name: 'John' }
+};
+
+const session: Session = await vora.sessions.create(input);
+const transcript: Transcript = await vora.sessions.getTranscript(session.id);
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Voice Components" icon="microphone" href="/sdks/javascript/voice">
+    React components for voice
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/developers/webhooks">
+    Receive session events
+  </Card>
+</CardGroup>

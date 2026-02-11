@@ -1,0 +1,937 @@
+---
+title: Vanilla JavaScript Integration
+description: LiveKit integration without frameworks
+---
+
+# Vanilla JavaScript Integration
+
+Complete guide to integrating LiveKit with plain JavaScript for Vora voice sessions.
+
+---
+
+## Installation
+
+### NPM
+
+```bash
+npm install livekit-client
+```
+
+### CDN
+
+```html
+<script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.js"></script>
+```
+
+---
+
+## Quick Start
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voice Chat</title>
+  <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.js"></script>
+</head>
+<body>
+  <div id="app">
+    <button id="startBtn">Start Voice Chat</button>
+    <div id="session" style="display:none">
+      <div id="status"></div>
+      <div id="transcript"></div>
+      <button id="muteBtn">Mute</button>
+      <button id="endBtn">End Call</button>
+    </div>
+  </div>
+
+  <script>
+    const { Room, RoomEvent, ConnectionState } = LivekitClient;
+
+    let room = null;
+
+    document.getElementById('startBtn').addEventListener('click', startSession);
+    document.getElementById('muteBtn').addEventListener('click', toggleMute);
+    document.getElementById('endBtn').addEventListener('click', endSession);
+
+    async function startSession() {
+      // Get session from your backend
+      const response = await fetch('/api/voice-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: 'agent_abc123' })
+      });
+      const { token, roomUrl } = await response.json();
+
+      // Create and configure room
+      room = new Room({
+        adaptiveStream: true,
+        dynacast: true
+      });
+
+      setupEventHandlers();
+
+      // Connect
+      await room.connect(roomUrl, token);
+      await room.localParticipant.setMicrophoneEnabled(true);
+
+      // Show session UI
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('session').style.display = 'block';
+    }
+
+    function setupEventHandlers() {
+      room.on(RoomEvent.ConnectionStateChanged, (state) => {
+        document.getElementById('status').textContent = state;
+      });
+
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (track.kind === 'audio') {
+          const element = track.attach();
+          document.body.appendChild(element);
+        }
+      });
+
+      room.on(RoomEvent.DataReceived, (data) => {
+        const message = JSON.parse(new TextDecoder().decode(data));
+        if (message.type === 'transcript') {
+          addTranscript(message.speaker, message.text);
+        }
+      });
+    }
+
+    function addTranscript(speaker, text) {
+      const div = document.createElement('div');
+      div.className = speaker;
+      div.textContent = `${speaker}: ${text}`;
+      document.getElementById('transcript').appendChild(div);
+    }
+
+    async function toggleMute() {
+      const enabled = room.localParticipant.isMicrophoneEnabled;
+      await room.localParticipant.setMicrophoneEnabled(!enabled);
+      document.getElementById('muteBtn').textContent = enabled ? 'Unmute' : 'Mute';
+    }
+
+    async function endSession() {
+      if (room) {
+        await room.disconnect();
+        room = null;
+      }
+      document.getElementById('session').style.display = 'none';
+      document.getElementById('startBtn').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
+```
+
+---
+
+## Using ES Modules
+
+```javascript
+import { Room, RoomEvent, ConnectionState, Track } from 'livekit-client';
+
+class VoiceChat {
+  constructor() {
+    this.room = null;
+    this.transcript = [];
+    this.agentState = 'idle';
+  }
+
+  async connect(token, roomUrl) {
+    this.room = new Room({
+      adaptiveStream: true,
+      dynacast: true,
+      audioCaptureDefaults: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    });
+
+    this.setupEventHandlers();
+
+    await this.room.connect(roomUrl, token);
+    await this.room.localParticipant.setMicrophoneEnabled(true);
+
+    return this.room;
+  }
+
+  setupEventHandlers() {
+    // Connection state
+    this.room.on(RoomEvent.ConnectionStateChanged, (state) => {
+      this.onConnectionStateChanged(state);
+    });
+
+    // Audio tracks
+    this.room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+      if (track.kind === Track.Kind.Audio) {
+        this.handleAudioTrack(track, participant);
+      }
+    });
+
+    this.room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+      this.cleanupTrack(track, participant);
+    });
+
+    // Data channel
+    this.room.on(RoomEvent.DataReceived, (data, participant) => {
+      this.handleData(data, participant);
+    });
+
+    // Disconnection
+    this.room.on(RoomEvent.Disconnected, (reason) => {
+      this.onDisconnected(reason);
+    });
+  }
+
+  onConnectionStateChanged(state) {
+    console.log('Connection state:', state);
+    // Implement your UI update logic
+  }
+
+  handleAudioTrack(track, participant) {
+    const audioElement = track.attach();
+    audioElement.id = `audio-${participant.identity}`;
+    document.getElementById('audio-container').appendChild(audioElement);
+  }
+
+  cleanupTrack(track, participant) {
+    const audioElement = document.getElementById(`audio-${participant.identity}`);
+    if (audioElement) {
+      track.detach(audioElement);
+      audioElement.remove();
+    }
+  }
+
+  handleData(data, participant) {
+    const message = JSON.parse(new TextDecoder().decode(data));
+
+    switch (message.type) {
+      case 'transcript':
+        this.transcript.push({
+          speaker: message.speaker,
+          text: message.text,
+          timestamp: new Date()
+        });
+        this.onTranscriptUpdate(message);
+        break;
+
+      case 'agent_state':
+        this.agentState = message.state;
+        this.onAgentStateChange(message.state);
+        break;
+
+      case 'function_call':
+        this.onFunctionCall(message.name, message.parameters);
+        break;
+
+      case 'function_result':
+        this.onFunctionResult(message.result);
+        break;
+
+      case 'error':
+        this.onError(message.error);
+        break;
+    }
+  }
+
+  onTranscriptUpdate(message) {
+    // Override in your implementation
+    console.log(`${message.speaker}: ${message.text}`);
+  }
+
+  onAgentStateChange(state) {
+    // Override in your implementation
+    console.log('Agent state:', state);
+  }
+
+  onFunctionCall(name, parameters) {
+    console.log('Function call:', name, parameters);
+  }
+
+  onFunctionResult(result) {
+    console.log('Function result:', result);
+  }
+
+  onError(error) {
+    console.error('Session error:', error);
+  }
+
+  onDisconnected(reason) {
+    console.log('Disconnected:', reason);
+    this.cleanup();
+  }
+
+  async toggleMute() {
+    const enabled = this.room.localParticipant.isMicrophoneEnabled;
+    await this.room.localParticipant.setMicrophoneEnabled(!enabled);
+    return !enabled;
+  }
+
+  get isMuted() {
+    return !this.room?.localParticipant.isMicrophoneEnabled;
+  }
+
+  sendData(data) {
+    const encoded = new TextEncoder().encode(JSON.stringify(data));
+    this.room.localParticipant.publishData(encoded, { reliable: true });
+  }
+
+  updateVariables(variables) {
+    this.sendData({
+      type: 'update_variables',
+      variables
+    });
+  }
+
+  async disconnect() {
+    if (this.room) {
+      await this.room.disconnect();
+    }
+  }
+
+  cleanup() {
+    // Clean up all audio elements using safe DOM methods
+    const audioContainer = document.getElementById('audio-container');
+    if (audioContainer) {
+      while (audioContainer.firstChild) {
+        audioContainer.removeChild(audioContainer.firstChild);
+      }
+    }
+    this.room = null;
+    this.transcript = [];
+    this.agentState = 'idle';
+  }
+}
+
+export default VoiceChat;
+```
+
+---
+
+## Usage Example
+
+```javascript
+import VoiceChat from './voice-chat.js';
+
+const voiceChat = new VoiceChat();
+
+// Override event handlers
+voiceChat.onTranscriptUpdate = (message) => {
+  const transcriptEl = document.getElementById('transcript');
+  const div = document.createElement('div');
+  div.className = `message ${message.speaker}`;
+  div.textContent = message.text;
+  transcriptEl.appendChild(div);
+  transcriptEl.scrollTop = transcriptEl.scrollHeight;
+};
+
+voiceChat.onAgentStateChange = (state) => {
+  document.getElementById('agent-state').textContent = state;
+};
+
+voiceChat.onConnectionStateChanged = (state) => {
+  document.getElementById('connection-status').textContent = state;
+};
+
+// Start session
+async function start() {
+  const response = await fetch('/api/voice-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ agentId: 'agent_abc123' })
+  });
+  const { token, roomUrl } = await response.json();
+
+  await voiceChat.connect(token, roomUrl);
+}
+
+// Toggle mute
+async function toggleMute() {
+  const isMuted = await voiceChat.toggleMute();
+  document.getElementById('mute-btn').textContent = isMuted ? 'Unmute' : 'Mute';
+}
+
+// End session
+async function end() {
+  await voiceChat.disconnect();
+}
+```
+
+---
+
+## Audio Visualization
+
+Create a simple audio level visualizer:
+
+```javascript
+class AudioVisualizer {
+  constructor(canvasId) {
+    this.canvas = document.getElementById(canvasId);
+    this.ctx = this.canvas.getContext('2d');
+    this.analyser = null;
+    this.dataArray = null;
+    this.animationId = null;
+  }
+
+  attachToTrack(track) {
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(
+      new MediaStream([track.mediaStreamTrack])
+    );
+
+    this.analyser = audioContext.createAnalyser();
+    this.analyser.fftSize = 256;
+
+    source.connect(this.analyser);
+
+    const bufferLength = this.analyser.frequencyBinCount;
+    this.dataArray = new Uint8Array(bufferLength);
+
+    this.draw();
+  }
+
+  draw() {
+    this.animationId = requestAnimationFrame(() => this.draw());
+
+    if (!this.analyser) return;
+
+    this.analyser.getByteFrequencyData(this.dataArray);
+
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+
+    this.ctx.fillStyle = '#1a1a1a';
+    this.ctx.fillRect(0, 0, width, height);
+
+    const barWidth = (width / this.dataArray.length) * 2.5;
+    let x = 0;
+
+    for (let i = 0; i < this.dataArray.length; i++) {
+      const barHeight = (this.dataArray[i] / 255) * height;
+
+      // Gradient from blue to purple
+      const hue = 220 + (i / this.dataArray.length) * 60;
+      this.ctx.fillStyle = `hsl(${hue}, 80%, 50%)`;
+
+      this.ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+      x += barWidth + 1;
+    }
+  }
+
+  stop() {
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+    }
+  }
+}
+
+// Usage
+const visualizer = new AudioVisualizer('audio-canvas');
+
+room.on(RoomEvent.TrackSubscribed, (track) => {
+  if (track.kind === 'audio') {
+    visualizer.attachToTrack(track);
+  }
+});
+```
+
+---
+
+## Microphone Permission
+
+Handle microphone permission gracefully:
+
+```javascript
+async function checkMicrophonePermission() {
+  try {
+    // Check if permission API is available
+    if (navigator.permissions) {
+      const result = await navigator.permissions.query({ name: 'microphone' });
+
+      switch (result.state) {
+        case 'granted':
+          return 'granted';
+        case 'denied':
+          return 'denied';
+        case 'prompt':
+          return 'prompt';
+      }
+    }
+
+    // Fallback: try to access microphone
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(track => track.stop());
+    return 'granted';
+
+  } catch (error) {
+    if (error.name === 'NotAllowedError') {
+      return 'denied';
+    }
+    return 'error';
+  }
+}
+
+async function requestMicrophoneAccess() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    });
+
+    // Stop the stream immediately - we just needed permission
+    stream.getTracks().forEach(track => track.stop());
+
+    return true;
+  } catch (error) {
+    console.error('Microphone access denied:', error);
+    return false;
+  }
+}
+
+// Usage
+document.getElementById('startBtn').addEventListener('click', async () => {
+  const permission = await checkMicrophonePermission();
+
+  if (permission === 'denied') {
+    showError('Microphone access is blocked. Please enable it in your browser settings.');
+    return;
+  }
+
+  if (permission === 'prompt') {
+    const granted = await requestMicrophoneAccess();
+    if (!granted) {
+      showError('Microphone access is required for voice calls.');
+      return;
+    }
+  }
+
+  // Now start the session
+  await startSession();
+});
+```
+
+---
+
+## Device Selection
+
+Let users choose their audio devices:
+
+```javascript
+async function getAudioDevices() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return {
+    inputs: devices.filter(d => d.kind === 'audioinput'),
+    outputs: devices.filter(d => d.kind === 'audiooutput')
+  };
+}
+
+function populateDeviceSelectors() {
+  getAudioDevices().then(({ inputs, outputs }) => {
+    const inputSelect = document.getElementById('mic-select');
+    // Clear existing options safely
+    while (inputSelect.firstChild) {
+      inputSelect.removeChild(inputSelect.firstChild);
+    }
+    inputs.forEach(d => {
+      const option = document.createElement('option');
+      option.value = d.deviceId;
+      option.textContent = d.label || 'Microphone';
+      inputSelect.appendChild(option);
+    });
+
+    const outputSelect = document.getElementById('speaker-select');
+    while (outputSelect.firstChild) {
+      outputSelect.removeChild(outputSelect.firstChild);
+    }
+    outputs.forEach(d => {
+      const option = document.createElement('option');
+      option.value = d.deviceId;
+      option.textContent = d.label || 'Speaker';
+      outputSelect.appendChild(option);
+    });
+  });
+}
+
+async function changeInputDevice(deviceId) {
+  await room.switchActiveDevice('audioinput', deviceId);
+}
+
+async function changeOutputDevice(deviceId) {
+  // Update all audio elements
+  const audioElements = document.querySelectorAll('audio');
+  audioElements.forEach(el => {
+    if (el.setSinkId) {
+      el.setSinkId(deviceId);
+    }
+  });
+}
+
+// Listen for device changes
+navigator.mediaDevices.addEventListener('devicechange', populateDeviceSelectors);
+```
+
+---
+
+## Complete HTML Template
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Chat</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+    }
+
+    .start-screen, .session-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .hidden { display: none !important; }
+
+    h1 { font-size: 28px; font-weight: 600; }
+    p { color: #888; }
+
+    .btn {
+      padding: 16px 32px;
+      border: none;
+      border-radius: 32px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .btn:hover { transform: scale(1.05); }
+    .btn:active { transform: scale(0.95); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-primary { background: #0066FF; color: #fff; }
+    .btn-danger { background: #FF4444; color: #fff; }
+    .btn-secondary { background: #333; color: #fff; }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 12px 16px;
+      background: #222;
+      border-radius: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+      display: inline-block;
+    }
+
+    .status-dot.connected { background: #00CC88; }
+    .status-dot.connecting { background: #FFA500; animation: pulse 1s infinite; }
+    .status-dot.disconnected { background: #FF4444; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .transcript {
+      width: 100%;
+      height: 300px;
+      overflow-y: auto;
+      background: #222;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 16px;
+      max-width: 80%;
+    }
+
+    .message.agent {
+      background: #333;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.user {
+      background: #0066FF;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .controls .btn {
+      width: 64px;
+      height: 64px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 24px;
+    }
+
+    .controls .btn.muted { background: #666; }
+
+    #audio-container { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Start Screen -->
+    <div id="start-screen" class="start-screen">
+      <h1>Voice Assistant</h1>
+      <p>Tap to start a conversation</p>
+      <button id="start-btn" class="btn btn-primary">Start Call</button>
+    </div>
+
+    <!-- Session Screen -->
+    <div id="session-screen" class="session-screen hidden">
+      <div class="status-bar">
+        <div>
+          <span id="status-dot" class="status-dot connecting"></span>
+          <span id="status-text">Connecting</span>
+        </div>
+        <span id="agent-state">Waiting</span>
+      </div>
+
+      <div id="transcript" class="transcript"></div>
+
+      <div class="controls">
+        <button id="mute-btn" class="btn btn-secondary">Mic</button>
+        <button id="end-btn" class="btn btn-danger">End</button>
+      </div>
+    </div>
+
+    <div id="audio-container"></div>
+  </div>
+
+  <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.js"></script>
+  <script>
+    const { Room, RoomEvent, ConnectionState, Track } = LivekitClient;
+
+    // Elements
+    const startScreen = document.getElementById('start-screen');
+    const sessionScreen = document.getElementById('session-screen');
+    const startBtn = document.getElementById('start-btn');
+    const muteBtn = document.getElementById('mute-btn');
+    const endBtn = document.getElementById('end-btn');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const agentStateEl = document.getElementById('agent-state');
+    const transcriptEl = document.getElementById('transcript');
+    const audioContainer = document.getElementById('audio-container');
+
+    let room = null;
+
+    // Event listeners
+    startBtn.addEventListener('click', startSession);
+    muteBtn.addEventListener('click', toggleMute);
+    endBtn.addEventListener('click', endSession);
+
+    async function startSession() {
+      startBtn.disabled = true;
+      startBtn.textContent = 'Connecting...';
+
+      try {
+        // Get session from backend
+        const response = await fetch('/api/voice-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentId: 'agent_abc123' })
+        });
+        const { token, roomUrl } = await response.json();
+
+        // Create room
+        room = new Room({
+          adaptiveStream: true,
+          dynacast: true
+        });
+
+        setupEventHandlers();
+
+        // Connect
+        await room.connect(roomUrl, token);
+        await room.localParticipant.setMicrophoneEnabled(true);
+
+        // Show session UI
+        startScreen.classList.add('hidden');
+        sessionScreen.classList.remove('hidden');
+
+      } catch (error) {
+        console.error('Failed to start session:', error);
+        startBtn.disabled = false;
+        startBtn.textContent = 'Start Call';
+        alert('Failed to connect. Please try again.');
+      }
+    }
+
+    function setupEventHandlers() {
+      room.on(RoomEvent.ConnectionStateChanged, (state) => {
+        updateConnectionStatus(state);
+      });
+
+      room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        if (track.kind === Track.Kind.Audio) {
+          const audioEl = track.attach();
+          audioEl.id = 'audio-' + participant.identity;
+          audioContainer.appendChild(audioEl);
+        }
+      });
+
+      room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+        const audioEl = document.getElementById('audio-' + participant.identity);
+        if (audioEl) {
+          track.detach(audioEl);
+          audioEl.remove();
+        }
+      });
+
+      room.on(RoomEvent.DataReceived, (data) => {
+        const message = JSON.parse(new TextDecoder().decode(data));
+        handleMessage(message);
+      });
+
+      room.on(RoomEvent.Disconnected, () => {
+        cleanup();
+      });
+    }
+
+    function updateConnectionStatus(state) {
+      statusDot.className = 'status-dot';
+
+      switch (state) {
+        case ConnectionState.Connecting:
+          statusDot.classList.add('connecting');
+          statusText.textContent = 'Connecting';
+          break;
+        case ConnectionState.Connected:
+          statusDot.classList.add('connected');
+          statusText.textContent = 'Connected';
+          break;
+        case ConnectionState.Reconnecting:
+          statusDot.classList.add('connecting');
+          statusText.textContent = 'Reconnecting';
+          break;
+        case ConnectionState.Disconnected:
+          statusDot.classList.add('disconnected');
+          statusText.textContent = 'Disconnected';
+          break;
+      }
+    }
+
+    function handleMessage(message) {
+      switch (message.type) {
+        case 'transcript':
+          addTranscript(message.speaker, message.text);
+          break;
+        case 'agent_state':
+          updateAgentState(message.state);
+          break;
+      }
+    }
+
+    function addTranscript(speaker, text) {
+      const div = document.createElement('div');
+      div.className = 'message ' + speaker;
+      div.textContent = text;
+      transcriptEl.appendChild(div);
+      transcriptEl.scrollTop = transcriptEl.scrollHeight;
+    }
+
+    function updateAgentState(state) {
+      const labels = {
+        idle: 'Waiting',
+        listening: 'Listening',
+        thinking: 'Thinking',
+        speaking: 'Speaking'
+      };
+      agentStateEl.textContent = labels[state] || state;
+    }
+
+    async function toggleMute() {
+      const enabled = room.localParticipant.isMicrophoneEnabled;
+      await room.localParticipant.setMicrophoneEnabled(!enabled);
+
+      muteBtn.textContent = enabled ? 'Unmute' : 'Mute';
+      muteBtn.classList.toggle('muted', enabled);
+    }
+
+    async function endSession() {
+      if (room) {
+        await room.disconnect();
+      }
+    }
+
+    function cleanup() {
+      room = null;
+      // Safe cleanup of audio container
+      while (audioContainer.firstChild) {
+        audioContainer.removeChild(audioContainer.firstChild);
+      }
+      // Safe cleanup of transcript
+      while (transcriptEl.firstChild) {
+        transcriptEl.removeChild(transcriptEl.firstChild);
+      }
+
+      sessionScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+      startBtn.disabled = false;
+      startBtn.textContent = 'Start Call';
+      muteBtn.textContent = 'Mute';
+      muteBtn.classList.remove('muted');
+    }
+  </script>
+</body>
+</html>
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="React Integration" icon="react" href="/sdks/livekit/react">
+    React components and hooks
+  </Card>
+  <Card title="LiveKit Overview" icon="code" href="/sdks/livekit">
+    Platform overview
+  </Card>
+</CardGroup>

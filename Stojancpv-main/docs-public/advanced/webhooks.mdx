@@ -1,0 +1,120 @@
+---
+title: Webhooks
+description: Receive real-time notifications for session and agent events
+---
+
+# Webhooks
+
+Webhooks notify your server when events occur on the Vora platform. Use them to integrate with CRMs, trigger workflows, or log conversation data.
+
+<Info>
+  Webhooks are available in **Advanced Mode**. Configure them per-agent in the [Deploy Tab](/advanced/command-center/deploy-tab) or globally in Settings.
+</Info>
+
+---
+
+## Configuring Webhooks
+
+<Steps>
+  <Step title="Set your endpoint URL">
+    Provide a publicly accessible HTTPS URL that can receive POST requests.
+  </Step>
+  <Step title="Select events">
+    Choose which events trigger a webhook call.
+  </Step>
+  <Step title="Verify setup">
+    Vora sends a test event to verify your endpoint is reachable.
+  </Step>
+</Steps>
+
+---
+
+## Event Types
+
+| Event | When It Fires |
+|-------|--------------|
+| `session.started` | A new call or chat session begins |
+| `session.ended` | A session ends (caller hangup, agent hangup, timeout) |
+| `session.transcript` | Full transcript available after session ends |
+| `function.called` | A function was executed during conversation |
+| `function.failed` | A function execution failed |
+| `transfer.initiated` | Call transfer to human or number was triggered |
+| `transfer.completed` | Call transfer was successful |
+| `agent.deployed` | An agent was activated or updated |
+| `agent.error` | An agent encountered a runtime error |
+
+---
+
+## Payload Format
+
+All webhook payloads follow this structure:
+
+```json
+{
+  "event": "session.ended",
+  "timestamp": "2026-02-11T14:30:00Z",
+  "data": {
+    "sessionId": "ses_abc123",
+    "agentId": "agt_xyz789",
+    "duration": 145,
+    "status": "completed",
+    "metadata": {
+      "callerNumber": "+15551234567",
+      "channel": "phone"
+    }
+  }
+}
+```
+
+---
+
+## Security
+
+### Signature Verification
+
+Each webhook includes a signature header for verification:
+
+```
+X-Vora-Signature: sha256=abc123...
+```
+
+Verify the signature by computing HMAC-SHA256 of the payload body using your webhook secret:
+
+```javascript
+const crypto = require('crypto');
+
+function verifyWebhook(payload, signature, secret) {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  return `sha256=${expected}` === signature;
+}
+```
+
+---
+
+## Retry Policy
+
+If your endpoint returns a non-2xx status code, Vora retries:
+- **Attempt 1** - Immediate
+- **Attempt 2** - After 30 seconds
+- **Attempt 3** - After 2 minutes
+- **Attempt 4** - After 10 minutes
+- **Attempt 5** - After 1 hour
+
+After 5 failed attempts, the webhook is marked as failed. You can retry manually from the webhook logs.
+
+---
+
+## Webhook Logs
+
+View delivery history in the webhook settings:
+- **Status** - Success, Failed, Pending
+- **Response code** - HTTP status from your server
+- **Response time** - How long your server took to respond
+- **Payload** - Full request body sent
+
+<Tip>
+  Use webhook logs to debug integration issues. Each failed delivery shows the error response from your server.
+</Tip>

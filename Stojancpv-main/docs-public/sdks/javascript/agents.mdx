@@ -1,0 +1,525 @@
+---
+title: Agents API
+description: Create and manage voice agents with the JavaScript SDK
+---
+
+# Agents API
+
+The Agents API allows you to create, configure, and manage voice agents programmatically.
+
+---
+
+## Overview
+
+```typescript
+import { VoraClient } from '@vora-ai/sdk';
+
+const vora = new VoraClient({ apiKey: process.env.VORA_API_KEY });
+
+// Access agents methods
+vora.agents.create(...)
+vora.agents.get(...)
+vora.agents.update(...)
+vora.agents.list(...)
+vora.agents.delete(...)
+```
+
+---
+
+## Create Agent
+
+Create a new voice agent:
+
+```typescript
+const agent = await vora.agents.create({
+  // Required
+  name: 'Customer Support',
+  systemPrompt: `You are a friendly customer support agent.
+
+Your responsibilities:
+- Answer questions about products
+- Help with orders
+- Provide excellent service
+
+Keep responses concise and helpful.`,
+
+  // Voice configuration
+  voice: {
+    provider: 'elevenlabs',
+    voiceId: 'EXAVITQu4vr4xnSDxMaL',
+    model: 'eleven_turbo_v2',
+    stability: 0.5,
+    similarityBoost: 0.75
+  },
+
+  // Model configuration
+  model: {
+    provider: 'openai',
+    model: 'gpt-4-turbo',
+    temperature: 0.7,
+    maxTokens: 1024
+  },
+
+  // Optional settings
+  greeting: 'Hello! How can I help you today?',
+  endConversationPhrases: ['goodbye', 'thanks bye', 'end call'],
+
+  // Functions (tool calling)
+  functions: [
+    {
+      name: 'get_order_status',
+      description: 'Look up order status by order ID',
+      parameters: {
+        type: 'object',
+        properties: {
+          orderId: {
+            type: 'string',
+            description: 'The order ID'
+          }
+        },
+        required: ['orderId']
+      },
+      handler: {
+        type: 'webhook',
+        url: 'https://api.yoursite.com/orders/status'
+      }
+    }
+  ],
+
+  // Metadata
+  metadata: {
+    department: 'support',
+    version: '1.0'
+  }
+});
+
+console.log(`Created agent: ${agent.id}`);
+```
+
+### Response
+
+```typescript
+interface Agent {
+  id: string;                    // agent_abc123
+  name: string;
+  systemPrompt: string;
+  voice?: VoiceConfig;
+  model?: ModelConfig;
+  greeting?: string;
+  endConversationPhrases?: string[];
+  functions?: FunctionDefinition[];
+  knowledgeBase?: { id: string; enabled: boolean };
+  status: 'draft' | 'active' | 'paused' | 'archived';
+  metadata?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+---
+
+## Get Agent
+
+Retrieve an agent by ID:
+
+```typescript
+const agent = await vora.agents.get('agent_abc123');
+
+console.log(agent.name);        // "Customer Support"
+console.log(agent.status);      // "active"
+console.log(agent.voice);       // { provider: 'elevenlabs', ... }
+```
+
+### Options
+
+```typescript
+const agent = await vora.agents.get('agent_abc123', {
+  include: ['functions', 'knowledgeBase']  // Include related data
+});
+```
+
+---
+
+## List Agents
+
+List all agents with pagination:
+
+```typescript
+const { data, hasMore, total } = await vora.agents.list({
+  limit: 20,
+  after: 'agent_xyz789',        // Cursor for pagination
+  status: 'active',             // Filter by status
+  orderBy: 'createdAt',         // Sort field
+  order: 'desc'                 // Sort direction
+});
+
+console.log(`Found ${total} agents`);
+for (const agent of data) {
+  console.log(`${agent.id}: ${agent.name}`);
+}
+```
+
+### Pagination
+
+```typescript
+async function getAllAgents() {
+  const agents: Agent[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const result = await vora.agents.list({
+      limit: 100,
+      after: cursor
+    });
+
+    agents.push(...result.data);
+    cursor = result.hasMore ? result.data.at(-1)?.id : undefined;
+  } while (cursor);
+
+  return agents;
+}
+```
+
+---
+
+## Update Agent
+
+Update an existing agent:
+
+```typescript
+const agent = await vora.agents.update('agent_abc123', {
+  name: 'Updated Support Agent',
+  systemPrompt: 'Updated prompt...',
+  voice: {
+    voiceId: 'new_voice_id'
+  },
+  model: {
+    temperature: 0.5
+  }
+});
+```
+
+### Partial Updates
+
+Only specified fields are updated:
+
+```typescript
+// Update just the greeting
+await vora.agents.update('agent_abc123', {
+  greeting: 'Welcome! I am here to assist you.'
+});
+
+// Update just the model temperature
+await vora.agents.update('agent_abc123', {
+  model: {
+    temperature: 0.3
+  }
+});
+```
+
+---
+
+## Delete Agent
+
+Delete an agent:
+
+```typescript
+await vora.agents.delete('agent_abc123');
+```
+
+<Warning>
+  Deleting an agent is permanent. Active sessions will continue but no new sessions can be created.
+</Warning>
+
+---
+
+## Agent Status
+
+Manage agent lifecycle:
+
+```typescript
+// Pause agent (stops new sessions)
+await vora.agents.pause('agent_abc123');
+
+// Resume agent
+await vora.agents.resume('agent_abc123');
+
+// Archive agent (soft delete)
+await vora.agents.archive('agent_abc123');
+```
+
+---
+
+## Voice Configuration
+
+Configure text-to-speech settings:
+
+```typescript
+interface VoiceConfig {
+  provider: 'elevenlabs' | 'cartesia' | 'google';
+
+  // ElevenLabs
+  voiceId?: string;
+  model?: 'eleven_turbo_v2' | 'eleven_multilingual_v2';
+  stability?: number;           // 0-1
+  similarityBoost?: number;     // 0-1
+  style?: number;               // 0-1
+  useSpeakerBoost?: boolean;
+
+  // Cartesia
+  // voiceId?: string;
+  // speed?: number;             // 0.5-2.0
+
+  // Google
+  // languageCode?: string;
+  // voiceName?: string;
+  // speakingRate?: number;      // 0.25-4.0
+}
+```
+
+### ElevenLabs Example
+
+```typescript
+voice: {
+  provider: 'elevenlabs',
+  voiceId: 'EXAVITQu4vr4xnSDxMaL',
+  model: 'eleven_turbo_v2',
+  stability: 0.5,
+  similarityBoost: 0.75,
+  style: 0.5,
+  useSpeakerBoost: true
+}
+```
+
+### Cartesia Example
+
+```typescript
+voice: {
+  provider: 'cartesia',
+  voiceId: 'a0e99841-438c-4a64-b679-ae501e7d6091',
+  speed: 1.0
+}
+```
+
+---
+
+## Model Configuration
+
+Configure the LLM:
+
+```typescript
+interface ModelConfig {
+  provider: 'openai' | 'anthropic' | 'google' | 'groq';
+  model: string;
+  temperature?: number;         // 0-2
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+}
+```
+
+### OpenAI Example
+
+```typescript
+model: {
+  provider: 'openai',
+  model: 'gpt-4-turbo',
+  temperature: 0.7,
+  maxTokens: 1024,
+  topP: 1.0,
+  frequencyPenalty: 0.0,
+  presencePenalty: 0.0
+}
+```
+
+### Anthropic Example
+
+```typescript
+model: {
+  provider: 'anthropic',
+  model: 'claude-3-sonnet-20240229',
+  temperature: 0.7,
+  maxTokens: 1024
+}
+```
+
+---
+
+## Functions (Tool Calling)
+
+Add callable functions to agents:
+
+```typescript
+functions: [
+  {
+    name: 'get_order_status',
+    description: 'Look up order status by ID',
+    parameters: {
+      type: 'object',
+      properties: {
+        orderId: {
+          type: 'string',
+          description: 'Order ID (e.g., ORD-12345)'
+        }
+      },
+      required: ['orderId']
+    },
+    handler: {
+      type: 'webhook',
+      url: 'https://api.yoursite.com/orders/status',
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer {{API_KEY}}'
+      }
+    }
+  },
+  {
+    name: 'book_appointment',
+    description: 'Book an appointment',
+    parameters: {
+      type: 'object',
+      properties: {
+        date: { type: 'string', format: 'date' },
+        time: { type: 'string', format: 'time' },
+        serviceType: {
+          type: 'string',
+          enum: ['consultation', 'followup']
+        }
+      },
+      required: ['date', 'time', 'serviceType']
+    },
+    handler: {
+      type: 'webhook',
+      url: 'https://api.yoursite.com/appointments'
+    }
+  }
+]
+```
+
+---
+
+## Knowledge Base
+
+Connect a knowledge base to an agent:
+
+```typescript
+// Create agent with knowledge base
+const agent = await vora.agents.create({
+  name: 'Support Agent',
+  systemPrompt: '...',
+  knowledgeBase: {
+    id: 'kb_xyz789',
+    enabled: true,
+    topK: 5,
+    threshold: 0.7
+  }
+});
+
+// Update knowledge base settings
+await vora.agents.update('agent_abc123', {
+  knowledgeBase: {
+    id: 'kb_xyz789',
+    enabled: true,
+    topK: 10,
+    threshold: 0.6,
+    rerank: true
+  }
+});
+```
+
+---
+
+## Clone Agent
+
+Create a copy of an existing agent:
+
+```typescript
+const clone = await vora.agents.clone('agent_abc123', {
+  name: 'Support Agent (Copy)',
+  status: 'draft'
+});
+
+console.log(`Cloned to: ${clone.id}`);
+```
+
+---
+
+## Test Agent
+
+Test an agent without creating a full session:
+
+```typescript
+const response = await vora.agents.test('agent_abc123', {
+  message: 'What are your store hours?',
+  variables: {
+    customerName: 'Test User'
+  }
+});
+
+console.log(response.reply);    // Agent's response
+console.log(response.latency);  // Response time in ms
+```
+
+---
+
+## Usage Statistics
+
+Get agent usage metrics:
+
+```typescript
+const stats = await vora.agents.getStats('agent_abc123', {
+  startDate: '2024-01-01',
+  endDate: '2024-01-31'
+});
+
+console.log(stats);
+// {
+//   totalSessions: 1500,
+//   avgDuration: 180,
+//   totalMinutes: 4500,
+//   functionCalls: 890,
+//   errorRate: 0.02
+// }
+```
+
+---
+
+## TypeScript Types
+
+```typescript
+import {
+  Agent,
+  CreateAgentInput,
+  UpdateAgentInput,
+  VoiceConfig,
+  ModelConfig,
+  FunctionDefinition,
+  AgentStatus
+} from '@vora-ai/sdk';
+
+// Create with full type safety
+const input: CreateAgentInput = {
+  name: 'Support',
+  systemPrompt: '...',
+  voice: {
+    provider: 'elevenlabs',
+    voiceId: 'abc123'
+  }
+};
+
+const agent: Agent = await vora.agents.create(input);
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Sessions API" icon="comments" href="/sdks/javascript/sessions">
+    Create voice sessions
+  </Card>
+  <Card title="Functions Guide" icon="function" href="/developers/concepts/functions">
+    Add agent capabilities
+  </Card>
+</CardGroup>

@@ -1,0 +1,381 @@
+---
+title: Transcripts
+description: Access and analyze conversation transcripts
+---
+
+# Transcripts
+
+Every conversation is automatically transcribed, providing a complete text record of agent-user interactions.
+
+---
+
+## Transcript Overview
+
+A transcript is a text representation of a conversation:
+
+```
+[10:30:45] Agent: Hi! Thanks for calling Acme Corp. I'm Sarah,
+                  your virtual assistant. How can I help you today?
+
+[10:30:52] User:  Yeah, I need to know when my package is arriving.
+
+[10:30:56] Agent: I'd be happy to help you track your order.
+                  Could you provide your order number or the email
+                  address on your account?
+
+[10:31:05] User:  It's john@example.com
+
+[10:31:08] Agent: Thank you. Let me look that up for you.
+           [Function: order_lookup executed]
+
+[10:31:12] Agent: I found your order. It shipped yesterday and is
+                  expected to arrive by Friday, January 17th.
+```
+
+---
+
+## Viewing Transcripts
+
+### In the Dashboard
+
+1. Go to **Sessions** → Select a session
+2. Click the **Transcript** tab
+3. View the full conversation
+
+### Transcript Features
+
+| Feature | Description |
+|---------|-------------|
+| **Timestamps** | Time of each utterance |
+| **Speaker labels** | Agent vs User identification |
+| **Function calls** | Inline function executions |
+| **Sentiment** | Per-message sentiment |
+| **Confidence** | Transcription confidence scores |
+| **Search** | Find specific text |
+
+---
+
+## Transcript Format
+
+### Standard Format
+
+Default transcript display:
+
+```
+[HH:MM:SS] Speaker: Message content
+```
+
+### Detailed Format
+
+Includes additional metadata:
+
+```
+[10:30:45] Agent (confidence: 0.98, sentiment: 0.7):
+           Hi! Thanks for calling Acme Corp.
+
+[10:30:52] User (confidence: 0.95, sentiment: 0.4):
+           I need to know when my package is arriving.
+```
+
+### JSON Format
+
+Structured data for programmatic access:
+
+```json
+{
+  "transcript": [
+    {
+      "timestamp": "2024-01-15T10:30:45Z",
+      "speaker": "agent",
+      "text": "Hi! Thanks for calling Acme Corp.",
+      "confidence": 0.98,
+      "sentiment": 0.7,
+      "duration_ms": 2500
+    },
+    {
+      "timestamp": "2024-01-15T10:30:52Z",
+      "speaker": "user",
+      "text": "I need to know when my package is arriving.",
+      "confidence": 0.95,
+      "sentiment": 0.4,
+      "duration_ms": 3200
+    }
+  ]
+}
+```
+
+---
+
+## Transcript Analysis
+
+### Sentiment Indicators
+
+Visual sentiment markers in transcripts:
+
+| Sentiment | Indicator | Range |
+|-----------|-----------|-------|
+| 😊 Positive | Green | 0.6 - 1.0 |
+| 😐 Neutral | Gray | 0.4 - 0.6 |
+| 😠 Negative | Red | 0.0 - 0.4 |
+
+### Key Moments
+
+Transcripts highlight important events:
+
+- 🎯 **Goal achieved** - User's request was fulfilled
+- ⚠️ **Confusion detected** - User seemed confused
+- 🔄 **Repeat request** - Same question asked again
+- ⬆️ **Escalation** - Transfer to human requested
+- ⚡ **Function executed** - Action was taken
+
+### Topic Detection
+
+Automatically identified topics:
+
+| Topic | Frequency | Sentiment |
+|-------|-----------|-----------|
+| Order tracking | 3 mentions | 0.65 |
+| Delivery time | 2 mentions | 0.58 |
+| Account | 1 mention | 0.70 |
+
+---
+
+## Transcript Search
+
+### Within a Session
+
+Search within a single transcript:
+
+```
+/order
+```
+
+Highlights all occurrences of "order" in the transcript.
+
+### Across All Sessions
+
+Search transcripts across all sessions:
+
+1. Go to **Sessions** → **Search**
+2. Enter your query with `transcript:` prefix
+
+```
+transcript:"shipping delay"
+```
+
+### Search Operators
+
+| Operator | Example | Matches |
+|----------|---------|---------|
+| `""` | `"order status"` | Exact phrase |
+| `AND` | `order AND refund` | Both words |
+| `OR` | `shipping OR delivery` | Either word |
+| `NOT` | `order NOT cancelled` | Excludes word |
+| `*` | `ship*` | Wildcard |
+
+---
+
+## Editing Transcripts
+
+### Why Edit?
+
+- Correct transcription errors
+- Redact sensitive information
+- Add context or notes
+- Mark important sections
+
+### Manual Corrections
+
+1. Click on a message
+2. Select **Edit**
+3. Make corrections
+4. Save changes
+
+Original text is preserved with edit history.
+
+### Redaction
+
+Remove sensitive information:
+
+1. Select the text to redact
+2. Click **Redact**
+3. Choose replacement: `[REDACTED]`, `[PHONE]`, `[EMAIL]`, etc.
+
+```
+[10:31:05] User: My credit card number is [REDACTED]
+```
+
+<Note>
+  Redaction is permanent and cannot be undone. Original audio may still contain the sensitive information.
+</Note>
+
+---
+
+## Transcript Export
+
+### Export Formats
+
+| Format | Description | Use Case |
+|--------|-------------|----------|
+| **Text** | Plain text transcript | Simple sharing |
+| **JSON** | Structured with metadata | Analysis, integration |
+| **PDF** | Formatted document | Reports, compliance |
+| **SRT** | Subtitle format | Video/audio sync |
+| **VTT** | WebVTT subtitles | Web players |
+
+### Export Options
+
+```javascript
+// Export transcript via API
+const transcript = await vora.sessions.exportTranscript('sess_abc123', {
+  format: 'json',
+  includeMetadata: true,
+  includeSentiment: true,
+  redactPII: true,
+});
+```
+
+### Bulk Export
+
+Export multiple transcripts:
+
+1. Select sessions to export
+2. Click **Export** → **Transcripts**
+3. Choose format
+4. Download ZIP file
+
+---
+
+## Real-Time Transcription
+
+### Streaming Transcripts
+
+Receive transcripts in real-time via webhook:
+
+```javascript
+// Webhook payload for transcript event
+{
+  "event": "transcript.updated",
+  "sessionId": "sess_abc123",
+  "data": {
+    "speaker": "user",
+    "text": "When will my order arrive?",
+    "timestamp": "2024-01-15T10:30:52Z",
+    "isFinal": true
+  }
+}
+```
+
+### Interim vs Final
+
+| Type | Description |
+|------|-------------|
+| **Interim** | In-progress transcription (may change) |
+| **Final** | Confirmed transcription (stable) |
+
+Configure webhooks in **Settings** → **Webhooks**.
+
+---
+
+## Transcription Settings
+
+### Language Settings
+
+| Setting | Options |
+|---------|---------|
+| **Primary language** | en-US, en-GB, es, fr, etc. |
+| **Auto-detect** | Enable/disable |
+| **Supported languages** | List of fallback languages |
+
+### Quality Settings
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Model** | General, Phone, Medical, Legal | General |
+| **Punctuation** | Auto-punctuate | Enabled |
+| **Profanity filter** | Mask profane words | Disabled |
+| **Numerals** | Format numbers | Smart |
+
+### Provider Selection
+
+| Provider | Accuracy | Latency | Languages |
+|----------|----------|---------|-----------|
+| **Deepgram** | 98% | 100ms | 30+ |
+| **AssemblyAI** | 97% | 150ms | 20+ |
+| **Google** | 96% | 200ms | 100+ |
+
+---
+
+## Compliance
+
+### Retention
+
+Configure how long transcripts are kept:
+
+| Setting | Options |
+|---------|---------|
+| **Retention period** | 7, 30, 90, 365 days, Forever |
+| **Auto-delete** | Enable/disable |
+| **Archive option** | Move to cold storage |
+
+### Access Control
+
+Control who can view transcripts:
+
+| Role | View | Edit | Export | Delete |
+|------|------|------|--------|--------|
+| Admin | ✓ | ✓ | ✓ | ✓ |
+| Manager | ✓ | ✓ | ✓ | ✗ |
+| Agent | ✓ | ✗ | ✗ | ✗ |
+| Viewer | ✓ | ✗ | ✗ | ✗ |
+
+### Audit Trail
+
+All transcript access is logged:
+
+| Action | User | Time |
+|--------|------|------|
+| Viewed | sarah@company.com | Jan 15, 10:45 |
+| Exported | mike@company.com | Jan 15, 11:30 |
+| Edited | sarah@company.com | Jan 15, 12:00 |
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Review for training data">
+    Use transcripts to identify patterns and create training scenarios for improving your agent.
+  </Accordion>
+
+  <Accordion title="Redact PII promptly">
+    Establish a process to review and redact sensitive information from transcripts.
+  </Accordion>
+
+  <Accordion title="Correct errors for accuracy">
+    Fix obvious transcription errors, especially for critical business data.
+  </Accordion>
+
+  <Accordion title="Use search for insights">
+    Search across transcripts to identify common issues, frequently asked questions, and trends.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Recordings" icon="microphone" href="/platform/sessions/recordings">
+    Audio recordings
+  </Card>
+  <Card title="Sessions" icon="list" href="/platform/sessions">
+    Session management
+  </Card>
+  <Card title="Analytics" icon="chart-line" href="/platform/analytics">
+    Aggregate analysis
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/api/webhooks">
+    Real-time transcripts
+  </Card>
+</CardGroup>

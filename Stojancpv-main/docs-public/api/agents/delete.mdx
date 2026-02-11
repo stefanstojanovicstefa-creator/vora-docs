@@ -1,0 +1,318 @@
+---
+title: Delete Agent
+description: Delete a voice agent
+api: DELETE /agents/:id
+---
+
+# Delete Agent
+
+Delete an agent from your organization. This performs a **soft delete** — the agent is marked as deleted but can be recovered within 30 days.
+
+<Warning>
+  Deleting a deployed agent will immediately stop it from receiving new calls. Any active calls will complete, but no new sessions can be started.
+</Warning>
+
+## Request
+
+```
+DELETE https://api.voicevora.com/v1/agents/:id
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | The agent ID to delete |
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `permanent` | boolean | `false` | Permanently delete (no recovery) |
+
+## Response
+
+<Tabs>
+  <Tab title="Success (200)">
+    ```json
+    {
+      "data": {
+        "id": "agent_abc123xyz",
+        "deleted": true,
+        "deleted_at": "2024-01-15T18:30:00Z",
+        "recoverable_until": "2024-02-14T18:30:00Z"
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Permanent Delete (200)">
+    ```json
+    {
+      "data": {
+        "id": "agent_abc123xyz",
+        "deleted": true,
+        "deleted_at": "2024-01-15T18:30:00Z",
+        "recoverable_until": null
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Not Found (404)">
+    ```json
+    {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Agent not found",
+        "details": {
+          "resource_type": "agent",
+          "resource_id": "agent_invalid"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Active Session (409)">
+    ```json
+    {
+      "error": {
+        "code": "CONFLICT",
+        "message": "Cannot delete agent with active sessions",
+        "details": {
+          "active_sessions": 3,
+          "hint": "Wait for sessions to complete or use force=true"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Examples
+
+### Soft Delete (Recoverable)
+
+<CodeGroup>
+```javascript JavaScript
+const result = await vora.agents.delete('agent_abc123xyz');
+
+console.log(`Agent deleted at: ${result.deleted_at}`);
+console.log(`Recoverable until: ${result.recoverable_until}`);
+```
+
+```python Python
+result = vora.agents.delete('agent_abc123xyz')
+
+print(f"Agent deleted at: {result.deleted_at}")
+print(f"Recoverable until: {result.recoverable_until}")
+```
+
+```bash cURL
+curl -X DELETE https://api.voicevora.com/v1/agents/agent_abc123xyz \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+### Permanent Delete
+
+<CodeGroup>
+```javascript JavaScript
+const result = await vora.agents.delete('agent_abc123xyz', {
+  permanent: true
+});
+
+console.log('Agent permanently deleted');
+```
+
+```python Python
+result = vora.agents.delete('agent_abc123xyz', permanent=True)
+print('Agent permanently deleted')
+```
+
+```bash cURL
+curl -X DELETE "https://api.voicevora.com/v1/agents/agent_abc123xyz?permanent=true" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+### Delete Multiple Agents
+
+<CodeGroup>
+```javascript JavaScript
+const agentIds = ['agent_abc123', 'agent_def456', 'agent_ghi789'];
+
+const results = await Promise.all(
+  agentIds.map(id => vora.agents.delete(id))
+);
+
+console.log(`Deleted ${results.length} agents`);
+```
+
+```python Python
+agent_ids = ['agent_abc123', 'agent_def456', 'agent_ghi789']
+
+for agent_id in agent_ids:
+    vora.agents.delete(agent_id)
+
+print(f"Deleted {len(agent_ids)} agents")
+```
+</CodeGroup>
+
+## Recovering Deleted Agents
+
+Soft-deleted agents can be recovered within 30 days using the restore endpoint:
+
+```
+POST https://api.voicevora.com/v1/agents/:id/restore
+```
+
+<CodeGroup>
+```javascript JavaScript
+// Restore a deleted agent
+const agent = await vora.agents.restore('agent_abc123xyz');
+
+console.log(`Agent restored: ${agent.name}`);
+console.log(`Status: ${agent.status}`); // Returns to 'draft'
+```
+
+```python Python
+# Restore a deleted agent
+agent = vora.agents.restore('agent_abc123xyz')
+
+print(f"Agent restored: {agent.name}")
+print(f"Status: {agent.status}")  # Returns to 'draft'
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/agents/agent_abc123xyz/restore \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+<Note>
+  Restored agents return to `draft` status and must be redeployed.
+</Note>
+
+## Listing Deleted Agents
+
+To see agents pending permanent deletion:
+
+<CodeGroup>
+```javascript JavaScript
+const { data: deletedAgents } = await vora.agents.list({
+  status: 'deleted'
+});
+
+deletedAgents.forEach(agent => {
+  console.log(`${agent.name} - recoverable until ${agent.recoverable_until}`);
+});
+```
+
+```python Python
+deleted = vora.agents.list(status='deleted')
+
+for agent in deleted.data:
+    print(f"{agent.name} - recoverable until {agent.recoverable_until}")
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/agents?status=deleted" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+## What Gets Deleted
+
+When you delete an agent:
+
+| Resource | Soft Delete | Permanent Delete |
+|----------|-------------|------------------|
+| Agent configuration | Preserved (30 days) | Removed |
+| Session history | Preserved | Preserved |
+| Transcripts | Preserved | Preserved |
+| Analytics data | Preserved | Preserved |
+| Knowledge base links | Unlinked | Unlinked |
+| Function associations | Unlinked | Unlinked |
+
+<Info>
+  Knowledge bases and functions are **not** deleted when you delete an agent. They remain available for other agents.
+</Info>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Check for active sessions first">
+    Before deleting a deployed agent, check for active sessions:
+
+    ```javascript
+    const { data: sessions } = await vora.sessions.list({
+      agent_id: agentId,
+      status: 'active'
+    });
+
+    if (sessions.length > 0) {
+      console.log(`Warning: ${sessions.length} active sessions`);
+      // Wait or force delete
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Archive instead of delete">
+    For agents you might need later, consider creating an archive:
+
+    ```javascript
+    async function archiveAgent(agentId) {
+      // Get full agent configuration
+      const agent = await vora.agents.get(agentId);
+
+      // Save to your storage
+      await saveToArchive({
+        originalId: agent.id,
+        config: agent.config,
+        knowledgeBases: agent.knowledge_bases,
+        functions: agent.functions,
+        archivedAt: new Date().toISOString()
+      });
+
+      // Then delete
+      await vora.agents.delete(agentId);
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Use soft delete in production">
+    Always use soft delete (the default) in production environments. This allows recovery from accidental deletions.
+
+    ```javascript
+    // ✅ Good - soft delete
+    await vora.agents.delete(agentId);
+
+    // ⚠️ Caution - only for cleanup
+    await vora.agents.delete(agentId, { permanent: true });
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Error Codes
+
+| Code | Description | Resolution |
+|------|-------------|------------|
+| `NOT_FOUND` | Agent doesn't exist | Verify agent ID |
+| `CONFLICT` | Active sessions exist | Wait for sessions or use force |
+| `ALREADY_DELETED` | Agent already deleted | Use restore to recover |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Agent" icon="plus" href="/api/agents/create">
+    Create a new agent
+  </Card>
+  <Card title="List Agents" icon="list" href="/api/agents/get">
+    View all agents
+  </Card>
+</CardGroup>

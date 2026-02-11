@@ -1,0 +1,190 @@
+---
+title: OpenAI
+description: GPT-4o, GPT-4o-mini, and GPT-5 integration for Vora agents
+---
+
+# OpenAI
+
+OpenAI provides GPT-4o and GPT-5, industry-leading language models for quality and reliability.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `openai` |
+| Default Model | `gpt-4o` |
+| Context Window | Up to 128K tokens |
+| Streaming | Supported |
+| Function Calling | Native support |
+
+---
+
+## Available Models
+
+| Model | Context | Best For | Cost (per 1M tokens) |
+|-------|---------|----------|----------------------|
+| `gpt-5` | 128K | Advanced reasoning | $1.25 in / $10 out |
+| `gpt-4o` | 128K | General quality | $5 in / $15 out |
+| `gpt-4o-mini` | 128K | Fast, cost-effective | $0.15 in / $0.60 out |
+
+<Note>
+**Recommended**: `gpt-4o` for quality, `gpt-4o-mini` for speed and cost.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Support Agent',
+  systemPrompt: 'You are a helpful customer support agent.',
+  model: {
+    provider: 'openai',
+    model: 'gpt-4o'
+  }
+});
+```
+
+### Advanced Options
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Creative Agent',
+  systemPrompt: 'You are a creative assistant.',
+  model: {
+    provider: 'openai',
+    model: 'gpt-4o',
+    temperature: 0.9,
+    maxTokens: 2048,
+    topP: 0.95,
+    frequencyPenalty: 0.5,
+    presencePenalty: 0.5
+  }
+});
+```
+
+---
+
+## Function Calling
+
+OpenAI has native function calling support:
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Booking Agent',
+  systemPrompt: 'You help users book appointments.',
+  model: {
+    provider: 'openai',
+    model: 'gpt-4o'
+  },
+  functions: [
+    {
+      name: 'check_availability',
+      description: 'Check appointment availability',
+      parameters: {
+        type: 'object',
+        properties: {
+          date: { type: 'string', format: 'date' },
+          service: { type: 'string' }
+        },
+        required: ['date']
+      },
+      handler: {
+        type: 'webhook',
+        url: 'https://api.example.com/availability'
+      }
+    }
+  ]
+});
+```
+
+---
+
+## Latency Benchmarks
+
+| Model | TTFT (P50) | TTFT (P95) |
+|-------|------------|------------|
+| gpt-4o-mini | ~150ms | ~300ms |
+| gpt-5 | ~200ms | ~400ms |
+| gpt-4o | ~300ms | ~600ms |
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for Voice">
+    ```typescript
+    model: {
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      maxTokens: 150,
+      temperature: 0.7
+    }
+    ```
+    Use `gpt-4o-mini` for fastest responses at lowest cost.
+  </Accordion>
+
+  <Accordion title="Control Costs">
+    - Use `gpt-4o-mini` for simple conversations ($0.15/1M input)
+    - Use `gpt-4o` for complex reasoning ($5/1M input)
+    - Set appropriate `maxTokens` limits
+    - Monitor usage in Analytics
+  </Accordion>
+
+  <Accordion title="Improve Quality">
+    - Clear, specific system prompts
+    - Few-shot examples in system prompt
+    - `temperature: 0.3-0.5` for consistent responses
+    - `presencePenalty` for diverse responses
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+OPENAI_API_KEY=sk-proj-...
+```
+
+### Get Your Key
+
+1. Go to [OpenAI Platform](https://platform.openai.com)
+2. Navigate to API Keys
+3. Create a new secret key
+4. Add to your Vora environment or use [BYOK](/advanced/api-keys)
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Rate Limit Errors">
+    Request rate limit increase from OpenAI or configure fallback to another provider (e.g., Gemini Flash).
+  </Accordion>
+
+  <Accordion title="Slow Responses">
+    Switch from `gpt-4o` to `gpt-4o-mini`, reduce `maxTokens`, or configure latency-based fallback to Groq.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Custom Functions" icon="function" href="/advanced/custom-functions">
+    Add tools to your agent
+  </Card>
+  <Card title="Compare LLM Providers" icon="scale-balanced" href="/providers/llm">
+    See all 15 LLM options
+  </Card>
+</CardGroup>

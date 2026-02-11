@@ -1,0 +1,528 @@
+---
+title: Get Sessions
+description: Retrieve session details or list all sessions
+api: GET /sessions
+---
+
+# Get Sessions
+
+Retrieve information about a specific session or list all sessions with optional filtering.
+
+## Get a Specific Session
+
+Retrieve detailed information about a single session by ID.
+
+```
+GET https://api.voicevora.com/v1/sessions/:id
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | The session ID (e.g., `session_abc123`) |
+
+### Response
+
+<Tabs>
+  <Tab title="Success (200)">
+    ```json
+    {
+      "data": {
+        "id": "session_abc123xyz",
+        "agent_id": "agent_def456uvw",
+        "status": "completed",
+        "participant": {
+          "phone_number": "+1234567890",
+          "name": "John Doe",
+          "metadata": {
+            "customer_id": "cust_123"
+          }
+        },
+        "room": {
+          "name": "room_xyz789"
+        },
+        "started_at": "2024-01-15T10:30:00Z",
+        "ended_at": "2024-01-15T10:35:30Z",
+        "duration_seconds": 330,
+        "metrics": {
+          "turns": 12,
+          "agent_words": 245,
+          "user_words": 89,
+          "avg_response_time_ms": 850,
+          "interruptions": 2,
+          "sentiment_score": 0.8
+        },
+        "test_mode": false,
+        "metadata": {},
+        "created_at": "2024-01-15T10:29:55Z"
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Not Found (404)">
+    ```json
+    {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Session not found",
+        "details": {
+          "resource_type": "session",
+          "resource_id": "session_invalid"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Example
+
+<CodeGroup>
+```javascript JavaScript
+const session = await vora.sessions.get('session_abc123xyz');
+
+console.log(`Session status: ${session.status}`);
+console.log(`Duration: ${session.duration_seconds} seconds`);
+console.log(`Turns: ${session.metrics.turns}`);
+```
+
+```python Python
+session = vora.sessions.get('session_abc123xyz')
+
+print(f"Session status: {session.status}")
+print(f"Duration: {session.duration_seconds} seconds")
+print(f"Turns: {session.metrics['turns']}")
+```
+
+```bash cURL
+curl https://api.voicevora.com/v1/sessions/session_abc123xyz \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+---
+
+## List All Sessions
+
+Retrieve a paginated list of sessions with optional filtering.
+
+```
+GET https://api.voicevora.com/v1/sessions
+```
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | integer | `20` | Number of sessions per page (max: 100) |
+| `cursor` | string | - | Pagination cursor |
+| `agent_id` | string | - | Filter by agent ID |
+| `status` | string | - | Filter by status |
+| `started_after` | string | - | Filter by start date (ISO 8601) |
+| `started_before` | string | - | Filter by start date (ISO 8601) |
+| `test_mode` | boolean | - | Filter by test mode |
+| `order` | string | `desc` | Sort order: `asc` or `desc` |
+| `order_by` | string | `created_at` | Sort field |
+
+### Response
+
+<Tabs>
+  <Tab title="Success (200)">
+    ```json
+    {
+      "data": [
+        {
+          "id": "session_abc123xyz",
+          "agent_id": "agent_def456uvw",
+          "status": "completed",
+          "participant": {
+            "name": "John Doe"
+          },
+          "started_at": "2024-01-15T10:30:00Z",
+          "ended_at": "2024-01-15T10:35:30Z",
+          "duration_seconds": 330,
+          "metrics": {
+            "turns": 12,
+            "sentiment_score": 0.8
+          },
+          "test_mode": false
+        },
+        {
+          "id": "session_def456uvw",
+          "agent_id": "agent_def456uvw",
+          "status": "completed",
+          "participant": {
+            "name": "Jane Smith"
+          },
+          "started_at": "2024-01-15T09:15:00Z",
+          "ended_at": "2024-01-15T09:22:45Z",
+          "duration_seconds": 465,
+          "metrics": {
+            "turns": 18,
+            "sentiment_score": 0.9
+          },
+          "test_mode": false
+        }
+      ],
+      "pagination": {
+        "has_more": true,
+        "next_cursor": "eyJpZCI6InNlc3Npb25fZGVmNDU2In0",
+        "prev_cursor": null,
+        "total": 1250
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Examples
+
+#### List All Sessions
+
+<CodeGroup>
+```javascript JavaScript
+const { data: sessions, pagination } = await vora.sessions.list();
+
+console.log(`Found ${pagination.total} sessions`);
+sessions.forEach(s => {
+  console.log(`${s.id}: ${s.status} - ${s.duration_seconds}s`);
+});
+```
+
+```python Python
+result = vora.sessions.list()
+
+print(f"Found {result.pagination.total} sessions")
+for session in result.data:
+    print(f"{session.id}: {session.status} - {session.duration_seconds}s")
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/sessions" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+#### Filter by Agent
+
+<CodeGroup>
+```javascript JavaScript
+const { data: agentSessions } = await vora.sessions.list({
+  agent_id: 'agent_abc123xyz'
+});
+
+console.log(`Found ${agentSessions.length} sessions for this agent`);
+```
+
+```python Python
+result = vora.sessions.list(agent_id='agent_abc123xyz')
+print(f"Found {len(result.data)} sessions for this agent")
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/sessions?agent_id=agent_abc123xyz" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+#### Filter by Status
+
+<CodeGroup>
+```javascript JavaScript
+// Get active sessions
+const { data: activeSessions } = await vora.sessions.list({
+  status: 'active'
+});
+
+// Get completed sessions
+const { data: completedSessions } = await vora.sessions.list({
+  status: 'completed'
+});
+
+// Get failed sessions
+const { data: failedSessions } = await vora.sessions.list({
+  status: 'failed'
+});
+```
+
+```python Python
+# Get active sessions
+active = vora.sessions.list(status='active')
+
+# Get completed sessions
+completed = vora.sessions.list(status='completed')
+
+# Get failed sessions
+failed = vora.sessions.list(status='failed')
+```
+
+```bash cURL
+# Get active sessions
+curl "https://api.voicevora.com/v1/sessions?status=active" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+#### Filter by Date Range
+
+<CodeGroup>
+```javascript JavaScript
+// Sessions from the last 24 hours
+const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+const { data: recentSessions } = await vora.sessions.list({
+  started_after: yesterday
+});
+
+// Sessions from a specific date range
+const { data: periodSessions } = await vora.sessions.list({
+  started_after: '2024-01-01T00:00:00Z',
+  started_before: '2024-01-31T23:59:59Z'
+});
+```
+
+```python Python
+from datetime import datetime, timedelta
+
+# Sessions from the last 24 hours
+yesterday = (datetime.utcnow() - timedelta(days=1)).isoformat() + 'Z'
+recent = vora.sessions.list(started_after=yesterday)
+
+# Sessions from a specific date range
+period = vora.sessions.list(
+    started_after='2024-01-01T00:00:00Z',
+    started_before='2024-01-31T23:59:59Z'
+)
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/sessions?started_after=2024-01-15T00:00:00Z" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+#### Exclude Test Sessions
+
+<CodeGroup>
+```javascript JavaScript
+// Only production sessions
+const { data: prodSessions } = await vora.sessions.list({
+  test_mode: false
+});
+```
+
+```python Python
+# Only production sessions
+prod = vora.sessions.list(test_mode=False)
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/sessions?test_mode=false" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+#### Paginate Through All Sessions
+
+<CodeGroup>
+```javascript JavaScript
+async function* getAllSessions(filters = {}) {
+  let cursor = null;
+
+  do {
+    const response = await vora.sessions.list({
+      ...filters,
+      limit: 100,
+      cursor
+    });
+
+    for (const session of response.data) {
+      yield session;
+    }
+
+    cursor = response.pagination.next_cursor;
+  } while (cursor);
+}
+
+// Process all sessions
+let totalDuration = 0;
+for await (const session of getAllSessions({ status: 'completed' })) {
+  totalDuration += session.duration_seconds;
+}
+
+console.log(`Total talk time: ${totalDuration} seconds`);
+```
+
+```python Python
+def get_all_sessions(**filters):
+    cursor = None
+
+    while True:
+        response = vora.sessions.list(limit=100, cursor=cursor, **filters)
+
+        for session in response.data:
+            yield session
+
+        cursor = response.pagination.next_cursor
+        if not cursor:
+            break
+
+# Process all sessions
+total_duration = sum(
+    s.duration_seconds
+    for s in get_all_sessions(status='completed')
+)
+print(f"Total talk time: {total_duration} seconds")
+```
+</CodeGroup>
+
+## Monitoring Active Sessions
+
+Track currently active sessions for your dashboard:
+
+<CodeGroup>
+```javascript JavaScript
+async function monitorActiveSessions() {
+  const { data: active, pagination } = await vora.sessions.list({
+    status: 'active',
+    limit: 100
+  });
+
+  console.log(`Active sessions: ${pagination.total}`);
+
+  active.forEach(session => {
+    const duration = Math.floor(
+      (Date.now() - new Date(session.started_at).getTime()) / 1000
+    );
+    console.log(`  ${session.id}: ${duration}s (${session.participant?.name || 'Anonymous'})`);
+  });
+
+  return active;
+}
+
+// Poll every 5 seconds
+setInterval(monitorActiveSessions, 5000);
+```
+
+```python Python
+import time
+from datetime import datetime
+
+def monitor_active_sessions():
+    result = vora.sessions.list(status='active', limit=100)
+
+    print(f"Active sessions: {result.pagination.total}")
+
+    for session in result.data:
+        started = datetime.fromisoformat(session.started_at.replace('Z', '+00:00'))
+        duration = int((datetime.now(started.tzinfo) - started).total_seconds())
+        name = session.participant.get('name', 'Anonymous') if session.participant else 'Anonymous'
+        print(f"  {session.id}: {duration}s ({name})")
+
+    return result.data
+
+# Poll every 5 seconds
+while True:
+    monitor_active_sessions()
+    time.sleep(5)
+```
+</CodeGroup>
+
+## Session Analytics
+
+Aggregate session data for analytics:
+
+<CodeGroup>
+```javascript JavaScript
+async function getSessionAnalytics(agentId, startDate, endDate) {
+  const sessions = [];
+
+  for await (const session of getAllSessions({
+    agent_id: agentId,
+    status: 'completed',
+    started_after: startDate,
+    started_before: endDate
+  })) {
+    sessions.push(session);
+  }
+
+  const analytics = {
+    totalSessions: sessions.length,
+    totalDuration: sessions.reduce((sum, s) => sum + s.duration_seconds, 0),
+    avgDuration: sessions.length > 0
+      ? sessions.reduce((sum, s) => sum + s.duration_seconds, 0) / sessions.length
+      : 0,
+    avgTurns: sessions.length > 0
+      ? sessions.reduce((sum, s) => sum + s.metrics.turns, 0) / sessions.length
+      : 0,
+    avgSentiment: sessions.length > 0
+      ? sessions.reduce((sum, s) => sum + s.metrics.sentiment_score, 0) / sessions.length
+      : 0
+  };
+
+  return analytics;
+}
+
+const stats = await getSessionAnalytics(
+  'agent_abc123xyz',
+  '2024-01-01T00:00:00Z',
+  '2024-01-31T23:59:59Z'
+);
+
+console.log(`Sessions: ${stats.totalSessions}`);
+console.log(`Avg duration: ${Math.round(stats.avgDuration)}s`);
+console.log(`Avg sentiment: ${stats.avgSentiment.toFixed(2)}`);
+```
+
+```python Python
+def get_session_analytics(agent_id, start_date, end_date):
+    sessions = list(get_all_sessions(
+        agent_id=agent_id,
+        status='completed',
+        started_after=start_date,
+        started_before=end_date
+    ))
+
+    if not sessions:
+        return {
+            'total_sessions': 0,
+            'total_duration': 0,
+            'avg_duration': 0,
+            'avg_turns': 0,
+            'avg_sentiment': 0
+        }
+
+    return {
+        'total_sessions': len(sessions),
+        'total_duration': sum(s.duration_seconds for s in sessions),
+        'avg_duration': sum(s.duration_seconds for s in sessions) / len(sessions),
+        'avg_turns': sum(s.metrics['turns'] for s in sessions) / len(sessions),
+        'avg_sentiment': sum(s.metrics['sentiment_score'] for s in sessions) / len(sessions)
+    }
+
+stats = get_session_analytics(
+    'agent_abc123xyz',
+    '2024-01-01T00:00:00Z',
+    '2024-01-31T23:59:59Z'
+)
+
+print(f"Sessions: {stats['total_sessions']}")
+print(f"Avg duration: {round(stats['avg_duration'])}s")
+print(f"Avg sentiment: {stats['avg_sentiment']:.2f}")
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Transcripts" icon="file-lines" href="/api/sessions/transcripts">
+    Access conversation history
+  </Card>
+  <Card title="Create Session" icon="plus" href="/api/sessions/create">
+    Start a new session
+  </Card>
+</CardGroup>

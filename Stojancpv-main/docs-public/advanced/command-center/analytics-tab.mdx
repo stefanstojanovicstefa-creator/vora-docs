@@ -1,0 +1,63 @@
+---
+title: Analytics Tab
+description: View per-agent performance metrics and conversation insights
+---
+
+# Analytics Tab
+
+The Analytics tab shows performance metrics specific to this agent, helping you understand how well it's performing and where to improve.
+
+---
+
+## Key Metrics
+
+| Metric | Description |
+|--------|-------------|
+| **Total Sessions** | Number of calls/conversations handled |
+| **Average Duration** | Mean conversation length |
+| **Success Rate** | Percentage of conversations that achieved their goal |
+| **Cost per Session** | Average cost including STT, LLM, and TTS usage |
+| **Avg Response Latency** | Time from caller speech end to agent response start |
+
+---
+
+## Time Range
+
+View analytics for different periods:
+- **Last 24 hours** - Recent activity
+- **Last 7 days** - Weekly trends
+- **Last 30 days** - Monthly overview
+- **Custom range** - Select specific dates
+
+---
+
+## Conversation Insights
+
+The Analytics tab surfaces patterns from your agent's conversations:
+- **Top topics** - Most common questions and subjects
+- **Unhandled queries** - Questions the agent couldn't answer
+- **Transfer rate** - How often calls are transferred to humans
+- **Drop-off points** - Where callers tend to hang up
+
+<Tip>
+  Review **Unhandled queries** weekly and add relevant information to your Knowledge Base or system prompt to improve coverage.
+</Tip>
+
+---
+
+## Cost Breakdown
+
+See per-component costs for this agent:
+
+| Component | Metric |
+|-----------|--------|
+| **STT** | Cost per minute of transcription |
+| **LLM** | Cost per 1K tokens (input + output) |
+| **TTS** | Cost per 1K characters of speech |
+| **Total** | Combined cost per session |
+
+---
+
+## Exporting Data
+
+Export analytics data as CSV for external analysis. Click **Export** in the top-right of the Analytics tab.

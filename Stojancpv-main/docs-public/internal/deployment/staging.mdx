@@ -1,0 +1,467 @@
+---
+title: Staging Deployment
+description: Guide to deploying and managing the staging environment
+---
+
+# Staging Deployment
+
+The staging environment mirrors production for testing and validation before releases.
+
+---
+
+## Environment Details
+
+### URLs
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://staging.vora.ai |
+| Backend API | https://staging-api.vora.ai |
+| LiveKit | wss://staging-livekit.vora.ai |
+
+### Infrastructure
+
+```yaml
+Frontend:
+  Platform: Vercel (Preview)
+  Branch: develop
+  Auto-deploy: Yes
+
+Backend:
+  Platform: Fly.io
+  App: vora-api-staging
+  Region: iad (US East)
+  Machines: 2 (shared-cpu-1x, 256MB)
+
+Database:
+  Platform: Supabase
+  Instance: vora-staging
+  Size: Small (2 vCPU, 2GB RAM)
+
+Redis:
+  Platform: Upstash
+  Instance: vora-staging-redis
+  Max Memory: 100MB
+```
+
+---
+
+## Automatic Deployment
+
+Staging deploys automatically when code is merged to `develop`.
+
+### GitHub Actions Flow
+
+```yaml
+# .github/workflows/deploy-staging.yml
+name: Deploy Staging
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+
+      - name: Deploy to Fly.io
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - run: flyctl deploy --config fly.staging.toml
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          alias-domains: staging.vora.ai
+```
+
+---
+
+## Manual Deployment
+
+### Backend Deployment
+
+```bash
+# 1. Ensure you're on develop branch
+git checkout develop
+git pull origin develop
+
+# 2. Run tests locally
+npm run test
+
+# 3. Deploy to Fly.io staging
+fly deploy --config fly.staging.toml
+
+# 4. Verify deployment
+fly status -a vora-api-staging
+
+# 5. Check logs
+fly logs -a vora-api-staging
+```
+
+### Frontend Deployment
+
+```bash
+# 1. Ensure you're on develop branch
+git checkout develop
+git pull origin develop
+
+# 2. Build locally to verify
+npm run build
+
+# 3. Deploy preview to Vercel
+vercel
+
+# 4. Or use Vercel CLI with alias
+vercel --alias staging.vora.ai
+```
+
+### Database Migrations
+
+```bash
+# 1. Set staging database URL
+export DATABASE_URL="postgresql://user:pass@staging-db.supabase.co:5432/postgres"
+
+# 2. Review pending migrations
+npx prisma migrate status
+
+# 3. Deploy migrations
+npx prisma migrate deploy
+
+# 4. Verify migration
+npx prisma db pull --print
+```
+
+---
+
+## Configuration
+
+### Fly.io Staging Config
+
+```toml
+# fly.staging.toml
+app = "vora-api-staging"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "staging"
+  LOG_LEVEL = "debug"
+  PORT = "4000"
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 4000
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "10s"
+    timeout = "2s"
+    grace_period = "5s"
+    path = "/health"
+```
+
+### Environment Variables
+
+```bash
+# Set staging secrets on Fly.io
+fly secrets set -a vora-api-staging \
+  DATABASE_URL="postgresql://..." \
+  REDIS_URL="redis://..." \
+  CLERK_SECRET_KEY="sk_test_..." \
+  OPENAI_API_KEY="sk-..." \
+  DEEPGRAM_API_KEY="..." \
+  ELEVENLABS_API_KEY="..." \
+  LIVEKIT_API_KEY="..." \
+  LIVEKIT_API_SECRET="..."
+```
+
+### Vercel Environment Variables
+
+```bash
+# Set via Vercel dashboard or CLI
+vercel env add NEXT_PUBLIC_API_URL staging
+# Enter: https://staging-api.vora.ai
+
+vercel env add NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY staging
+# Enter: pk_test_...
+
+vercel env add NEXT_PUBLIC_LIVEKIT_URL staging
+# Enter: wss://staging-livekit.vora.ai
+```
+
+---
+
+## Testing on Staging
+
+### Smoke Tests
+
+Run after every deployment:
+
+```bash
+# Health check
+curl https://staging-api.vora.ai/health
+
+# API connectivity
+curl -H "Authorization: Bearer $TEST_TOKEN" \
+  https://staging-api.vora.ai/api/agents
+
+# WebSocket connectivity
+wscat -c wss://staging-api.vora.ai/ws
+```
+
+### E2E Tests
+
+```bash
+# Run Playwright against staging
+PLAYWRIGHT_BASE_URL=https://staging.vora.ai \
+  npx playwright test
+
+# Run specific test suite
+PLAYWRIGHT_BASE_URL=https://staging.vora.ai \
+  npx playwright test agents/
+```
+
+### Load Tests
+
+```bash
+# Run k6 load test
+k6 run \
+  -e BASE_URL=https://staging-api.vora.ai \
+  -e VUS=50 \
+  -e DURATION=5m \
+  tests/load/api-load.js
+```
+
+---
+
+## Database Management
+
+### Seeding Test Data
+
+```bash
+# Seed staging database with test data
+DATABASE_URL=$STAGING_DATABASE_URL npx prisma db seed
+
+# Or run custom seed script
+DATABASE_URL=$STAGING_DATABASE_URL node scripts/seed-staging.js
+```
+
+### Resetting Staging Data
+
+```bash
+# WARNING: This deletes all staging data
+# Only do this for major resets
+
+# 1. SSH into staging machine
+fly ssh console -a vora-api-staging
+
+# 2. Run reset script
+node scripts/reset-staging-data.js
+
+# Or use Prisma reset (drops all tables)
+DATABASE_URL=$STAGING_DATABASE_URL npx prisma migrate reset --force
+```
+
+### Copying Production Data
+
+```bash
+# 1. Export anonymized production data
+pg_dump $PRODUCTION_DATABASE_URL \
+  --no-owner \
+  --no-acl \
+  -t agents \
+  -t knowledge_bases \
+  > production-export.sql
+
+# 2. Anonymize sensitive data
+python scripts/anonymize-data.py production-export.sql > staging-data.sql
+
+# 3. Import to staging
+psql $STAGING_DATABASE_URL < staging-data.sql
+```
+
+---
+
+## Debugging
+
+### View Logs
+
+```bash
+# Stream all logs
+fly logs -a vora-api-staging
+
+# Filter by level
+fly logs -a vora-api-staging | grep -E "(ERROR|WARN)"
+
+# Last 100 lines
+fly logs -a vora-api-staging -n 100
+```
+
+### SSH Access
+
+```bash
+# Connect to staging machine
+fly ssh console -a vora-api-staging
+
+# Run commands
+> node -v
+> cat /app/package.json | jq .version
+> printenv | grep -E "(DATABASE|REDIS)"
+```
+
+### Database Access
+
+```bash
+# Connect to staging database via psql
+psql $STAGING_DATABASE_URL
+
+# Or use Supabase dashboard
+# https://supabase.com/dashboard/project/vora-staging
+```
+
+### Redis Access
+
+```bash
+# Connect to Upstash Redis CLI
+# https://console.upstash.com/redis/vora-staging
+
+# Or use redis-cli with TLS
+redis-cli -u $STAGING_REDIS_URL --tls
+```
+
+---
+
+## Common Issues
+
+### Deployment Failures
+
+**Build Fails:**
+```bash
+# Check build logs
+fly logs -a vora-api-staging --build
+
+# Common fixes:
+# - Missing environment variable
+# - npm install failing
+# - TypeScript errors
+```
+
+**Health Check Fails:**
+```bash
+# Machine fails to start
+fly status -a vora-api-staging
+
+# Check startup logs
+fly logs -a vora-api-staging | head -100
+
+# Common causes:
+# - Database connection failing
+# - Missing secrets
+# - Port mismatch
+```
+
+### Database Issues
+
+**Migration Fails:**
+```bash
+# Check migration status
+npx prisma migrate status
+
+# View migration history
+SELECT * FROM _prisma_migrations ORDER BY started_at DESC;
+
+# Manual fix if needed
+npx prisma migrate resolve --applied <migration-name>
+```
+
+**Connection Pool Exhausted:**
+```bash
+# Check active connections
+SELECT count(*) FROM pg_stat_activity;
+
+# Kill idle connections
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE state = 'idle'
+AND query_start < NOW() - INTERVAL '10 minutes';
+```
+
+---
+
+## Staging vs Production
+
+| Aspect | Staging | Production |
+|--------|---------|------------|
+| Auto-deploy | Yes (develop) | No (requires approval) |
+| Data | Test/anonymized | Real customer data |
+| Scale | 2 machines | 4+ machines |
+| Monitoring | Basic | Full observability |
+| Backups | Daily | Hourly + PITR |
+| Access | All developers | DevOps + Leads |
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Deployment Overview" icon="globe" href="/internal/deployment/overview">
+    Architecture overview
+  </Card>
+  <Card title="Production Deployment" icon="rocket" href="/internal/deployment/production">
+    Production releases
+  </Card>
+  <Card title="Migrations" icon="database" href="/internal/deployment/migrations">
+    Database migrations
+  </Card>
+  <Card title="Rollback" icon="rotate-left" href="/internal/deployment/rollback">
+    Rollback procedures
+  </Card>
+</CardGroup>

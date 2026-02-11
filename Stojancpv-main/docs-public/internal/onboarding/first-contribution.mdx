@@ -1,0 +1,449 @@
+---
+title: First Contribution
+description: Step-by-step guide to making your first contribution
+---
+
+# Your First Contribution
+
+This guide walks you through making your first contribution to the Vora codebase, from finding an issue to getting your PR merged.
+
+---
+
+## Finding Your First Issue
+
+### Good First Issues
+
+Look for issues labeled with:
+- `good first issue` - Simple, well-defined tasks
+- `beginner friendly` - Extra documentation provided
+- `documentation` - Docs improvements
+- `bug` - Small bug fixes
+
+### Where to Look
+
+```bash
+# Using GitHub CLI
+gh issue list --label "good first issue"
+
+# Or visit:
+# https://github.com/vora-ai/vora/labels/good%20first%20issue
+```
+
+### Example First Issues
+
+| Type | Example | Complexity |
+|------|---------|------------|
+| Typo fix | "Fix typo in README" | Very Low |
+| Docs | "Add JSDoc to AgentService" | Low |
+| UI | "Add loading state to button" | Low |
+| Bug | "Fix date formatting in logs" | Medium |
+| Feature | "Add copy button to code blocks" | Medium |
+
+---
+
+## Step-by-Step Guide
+
+### Step 1: Claim the Issue
+
+Comment on the issue to let others know you're working on it:
+
+```markdown
+👋 Hi! I'd like to work on this issue. I'm a new contributor and this will be my first PR.
+```
+
+A maintainer will assign the issue to you.
+
+### Step 2: Create a Branch
+
+```bash
+# Make sure you're on develop
+git checkout develop
+git pull origin develop
+
+# Create a feature branch
+git checkout -b feature/fix-loading-state
+
+# Branch naming conventions:
+# - feature/description - New features
+# - fix/description - Bug fixes
+# - docs/description - Documentation
+# - refactor/description - Code refactoring
+```
+
+### Step 3: Make Your Changes
+
+#### Example: Adding a Loading State
+
+Let's say the issue is: "Add loading state to the Save button in AgentForm"
+
+```tsx
+// Before: src/components/agents/AgentForm.tsx
+<Button type="submit">
+  Save Agent
+</Button>
+
+// After: src/components/agents/AgentForm.tsx
+<Button type="submit" disabled={isSubmitting}>
+  {isSubmitting ? (
+    <>
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      Saving...
+    </>
+  ) : (
+    'Save Agent'
+  )}
+</Button>
+```
+
+### Step 4: Test Your Changes
+
+```bash
+# Run the relevant tests
+npm run test
+
+# Check types
+npm run typecheck
+
+# Check linting
+npm run lint
+
+# Test manually in the browser
+npm run dev
+```
+
+### Step 5: Commit Your Changes
+
+```bash
+# Stage your changes
+git add src/components/agents/AgentForm.tsx
+
+# Commit with a descriptive message
+git commit -m "feat(agents): add loading state to save button
+
+- Shows spinner while form is submitting
+- Disables button to prevent double submission
+- Updates button text to 'Saving...'
+
+Closes #123"
+```
+
+#### Commit Message Format
+
+```
+type(scope): short description
+
+- Bullet point details
+- What changed and why
+
+Closes #issue-number
+```
+
+**Types:**
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation
+- `style` - Formatting
+- `refactor` - Code restructuring
+- `test` - Adding tests
+- `chore` - Maintenance
+
+### Step 6: Push Your Branch
+
+```bash
+git push -u origin feature/fix-loading-state
+```
+
+### Step 7: Create a Pull Request
+
+Using GitHub CLI:
+
+```bash
+gh pr create --title "feat(agents): add loading state to save button" --body "
+## What
+
+Added loading state to the Save button in AgentForm component.
+
+## Why
+
+Users were clicking the button multiple times, causing duplicate submissions.
+
+## Changes
+
+- Added spinner icon when submitting
+- Disabled button during submission
+- Updated button text to show loading state
+
+## Testing
+
+1. Open Agent creation form
+2. Fill in required fields
+3. Click Save
+4. Verify button shows loading state
+5. Verify button is disabled
+
+## Screenshots
+
+[Add before/after screenshots]
+
+Closes #123
+"
+```
+
+Or create via GitHub web UI at:
+```
+https://github.com/vora-ai/vora/compare/develop...your-branch
+```
+
+---
+
+## PR Checklist
+
+Before submitting, verify:
+
+- [ ] Code follows the [style guide](/internal/standards/style-guide)
+- [ ] Tests added/updated for changes
+- [ ] All tests passing (`npm run test`)
+- [ ] No TypeScript errors (`npm run typecheck`)
+- [ ] No lint errors (`npm run lint`)
+- [ ] PR description is complete
+- [ ] Screenshots added for UI changes
+- [ ] Issue linked in PR description
+
+---
+
+## Code Review Process
+
+### What to Expect
+
+1. **Automated checks** run within minutes
+   - Tests, linting, type checking
+   - Fix any failures before review
+
+2. **Initial review** within 1-2 business days
+   - A team member will review your code
+   - They may leave comments or request changes
+
+3. **Address feedback**
+   - Respond to all comments
+   - Push additional commits for fixes
+   - Mark resolved conversations
+
+4. **Approval and merge**
+   - Once approved, a maintainer will merge
+   - Your branch will be deleted automatically
+
+### Responding to Feedback
+
+```markdown
+# If you agree with the feedback:
+"Good catch! Fixed in the latest commit."
+
+# If you need clarification:
+"Could you elaborate on what you mean by X?"
+
+# If you disagree:
+"I see your point, but I chose this approach because...
+What do you think?"
+```
+
+### Making Requested Changes
+
+```bash
+# Make the requested changes
+# Then commit
+git add .
+git commit -m "fix: address review feedback
+
+- Renamed variable per suggestion
+- Added null check"
+
+# Push to update the PR
+git push
+```
+
+---
+
+## Common Mistakes to Avoid
+
+### Don't
+
+```tsx
+// ❌ Don't include unrelated changes
+// If you're fixing a button, don't also refactor other components
+
+// ❌ Don't commit console.logs
+console.log('debugging'); // Remove before committing
+
+// ❌ Don't commit commented code
+// const oldImplementation = ...
+
+// ❌ Don't ignore TypeScript errors
+// @ts-ignore
+```
+
+### Do
+
+```tsx
+// ✅ Keep changes focused on the issue
+
+// ✅ Write clean, self-documenting code
+const isFormSubmitting = formState.isSubmitting;
+
+// ✅ Add helpful comments only when needed
+// Using early return pattern for better readability
+if (!user) return null;
+
+// ✅ Follow existing patterns in the codebase
+```
+
+---
+
+## Example Pull Request
+
+Here's a complete example of a good first PR:
+
+### Issue: Add confirmation dialog when deleting an agent
+
+**Branch:** `feature/delete-confirmation-dialog`
+
+**PR Title:** `feat(agents): add confirmation dialog for agent deletion`
+
+**PR Description:**
+
+```markdown
+## What
+
+Added a confirmation dialog that appears when users try to delete an agent.
+
+## Why
+
+Users were accidentally deleting agents with no way to undo. This adds
+a safety check before permanent deletion.
+
+## Changes
+
+- Added `ConfirmDialog` component in `src/components/common/`
+- Updated `AgentCard` to show dialog on delete click
+- Added red "Delete" button styling for destructive actions
+
+## Testing
+
+1. Go to Agents page
+2. Click delete button on any agent
+3. Verify dialog appears with agent name
+4. Click Cancel - verify nothing happens
+5. Click Delete - verify agent is deleted
+
+## Screenshots
+
+### Before
+[Screenshot of current delete behavior]
+
+### After
+[Screenshot of new confirmation dialog]
+
+## Checklist
+
+- [x] Tests added for ConfirmDialog component
+- [x] Follows existing dialog patterns
+- [x] Accessible (keyboard navigation, ARIA labels)
+- [x] Works on mobile
+
+Closes #456
+```
+
+---
+
+## After Your PR is Merged
+
+### Celebrate! 🎉
+
+Your contribution is now part of Vora!
+
+### Clean Up
+
+```bash
+# Switch back to develop
+git checkout develop
+
+# Pull the latest (includes your changes)
+git pull origin develop
+
+# Delete your local branch
+git branch -d feature/fix-loading-state
+```
+
+### What's Next?
+
+1. Look for another issue to work on
+2. Consider slightly harder issues
+3. Start reviewing other PRs
+4. Share what you learned in #til
+
+---
+
+## Getting Help
+
+### If You're Stuck
+
+1. **Check existing code** - Look for similar patterns
+2. **Search Slack** - Someone might have solved it
+3. **Ask in #engineering** - The team is here to help
+4. **Comment on the issue** - Ask for clarification
+
+### Sample Help Request
+
+```markdown
+Hey team! 👋
+
+I'm working on #123 (add loading state to save button) and I'm stuck.
+
+**What I've tried:**
+- Added isSubmitting state
+- Tried using formState from react-hook-form
+
+**What's not working:**
+The button updates but the form still submits twice.
+
+**Code link:** [link to your branch]
+
+Any suggestions? Thanks!
+```
+
+---
+
+## Recognition
+
+### Your Contribution Matters
+
+- You'll be listed in Contributors
+- Your commits appear in git history
+- You've helped make Vora better!
+
+### Growing Your Contributions
+
+| Milestone | What's Next |
+|-----------|-------------|
+| 1st PR merged | Try a medium difficulty issue |
+| 5 PRs merged | Start reviewing others' PRs |
+| 10 PRs merged | Consider becoming a code owner |
+| Ongoing | Mentor new contributors |
+
+---
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="Coding Standards" icon="code" href="/internal/standards/style-guide">
+    Follow our conventions
+  </Card>
+  <Card title="Git Workflow" icon="git-alt" href="/internal/standards/git">
+    Git best practices
+  </Card>
+  <Card title="Testing Guide" icon="flask" href="/internal/testing/overview">
+    Write good tests
+  </Card>
+  <Card title="Codebase Tour" icon="map" href="/internal/onboarding/codebase-tour">
+    Navigate the code
+  </Card>
+</CardGroup>

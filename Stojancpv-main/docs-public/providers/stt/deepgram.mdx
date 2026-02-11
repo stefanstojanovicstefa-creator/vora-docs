@@ -1,0 +1,304 @@
+---
+title: Deepgram
+description: Nova-3 speech-to-text for ultra-fast streaming
+---
+
+# Deepgram
+
+Deepgram's Nova-3 model offers the best combination of speed and accuracy for real-time voice applications. **Deepgram is Vora's default STT provider.**
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `deepgram` |
+| Default Model | `nova-3` |
+| Streaming | Native support |
+| Latency | ~100ms |
+| Languages | 30+ |
+| Pricing | $0.0077/min |
+
+---
+
+## Available Models
+
+| Model | Accuracy | Speed | Best For |
+|-------|----------|-------|----------|
+| `nova-3` | 97%+ | Fastest | General conversations (default) |
+| `nova-3-phonecall` | 97%+ | Fast | Phone calls |
+| `nova-3-meeting` | 96% | Fast | Multi-speaker meetings |
+
+<Note>
+**Recommended**: `nova-3` for voice AI - best speed/accuracy balance, lowest latency of any STT provider.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Voice Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  stt: {
+    provider: 'deepgram',
+    model: 'nova-3'
+  }
+});
+```
+
+### Full Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Custom Agent',
+  systemPrompt: 'You are a specialized assistant.',
+  stt: {
+    provider: 'deepgram',
+    model: 'nova-3',
+    language: 'en-US',
+    punctuate: true,
+    numerals: true,
+    profanityFilter: false,
+    keywords: ['your-product', 'specific-terms'],
+    interimResults: true,
+    utteranceEndMs: 800,
+    endpointing: 300
+  }
+});
+```
+
+---
+
+## Configuration Options
+
+### Core Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `model` | string | `nova-3` | STT model |
+| `language` | string | `en` | Language code |
+| `punctuate` | boolean | `true` | Add punctuation |
+| `numerals` | boolean | `false` | Convert numbers |
+
+### Real-Time Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `interimResults` | boolean | `true` | Partial transcripts |
+| `utteranceEndMs` | number | `1000` | Silence before end |
+| `endpointing` | number | `300` | Sentence detection (ms) |
+
+### Accuracy Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `keywords` | string[] | `[]` | Boost specific words |
+| `profanityFilter` | boolean | `false` | Filter profanity |
+| `redact` | string[] | `[]` | Redact PII types |
+
+---
+
+## Why Deepgram?
+
+### 1. Fastest STT
+
+~100ms streaming latency - fastest of any provider:
+
+| Provider | First Result |
+|----------|-------------|
+| Deepgram Nova-3 | ~100ms |
+| Soniox v4 | ~150ms |
+| Google Cloud | ~200-300ms |
+| AssemblyAI | ~300ms |
+
+### 2. Best Value
+
+$0.0077/min - excellent accuracy at low cost.
+
+### 3. Streaming Native
+
+Built for real-time: WebSocket connections, interim results, endpointing detection.
+
+### 4. Nova-3 Accuracy
+
+97%+ general accuracy with strong noise robustness.
+
+---
+
+## Use Cases
+
+### Conversational Voice AI
+
+```typescript
+stt: {
+  provider: 'deepgram',
+  model: 'nova-3',
+  punctuate: true,
+  utteranceEndMs: 800,
+  endpointing: 300
+}
+```
+
+### Phone Support
+
+```typescript
+stt: {
+  provider: 'deepgram',
+  model: 'nova-3-phonecall',
+  punctuate: true,
+  numerals: true
+}
+```
+
+### HIPAA Compliant
+
+```typescript
+stt: {
+  provider: 'deepgram',
+  model: 'nova-3',
+  redact: ['ssn', 'credit_card', 'phone']
+}
+```
+
+---
+
+## Keywords Boost
+
+Improve accuracy for specific terms:
+
+```typescript
+stt: {
+  provider: 'deepgram',
+  model: 'nova-3',
+  keywords: [
+    'Vora',
+    'LiveKit',
+    'your-product-name'
+  ]
+}
+```
+
+---
+
+## Language Support
+
+Deepgram Nova-3 supports 30+ languages including English, Spanish, French, German, Portuguese, Japanese, Chinese, Arabic, and more.
+
+```typescript
+stt: {
+  provider: 'deepgram',
+  model: 'nova-3',
+  language: 'es'  // Spanish
+}
+```
+
+<Tip>
+For Indian languages, consider [Sarvam AI](/languages/hindi). For Arabic dialects, consider [Munsit](/languages/arabic). For SEA languages, consider [Valsea](/languages/indonesian).
+</Tip>
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize Latency">
+    ```typescript
+    stt: {
+      provider: 'deepgram',
+      model: 'nova-3',
+      endpointing: 200,
+      utteranceEndMs: 500,
+      interimResults: true
+    }
+    ```
+    Lower values = faster but may cut off speech. Higher values = more complete but slower.
+  </Accordion>
+
+  <Accordion title="Noisy Environments">
+    ```typescript
+    stt: {
+      provider: 'deepgram',
+      model: 'nova-3-phonecall',
+      keywords: ['important', 'terms']
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Numbers & Dates">
+    ```typescript
+    stt: {
+      provider: 'deepgram',
+      model: 'nova-3',
+      numerals: true,
+      punctuate: true
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+DEEPGRAM_API_KEY=...
+```
+
+### Get Your Key
+
+1. Go to [Deepgram Console](https://console.deepgram.com)
+2. Create a project
+3. Generate an API key
+4. Add to your Vora environment or use [BYOK](/advanced/api-keys)
+
+---
+
+## Pricing
+
+| Model | Cost per Minute |
+|-------|----------------|
+| nova-3 | $0.0077 |
+| nova-3-phonecall | $0.0077 |
+| nova-3-meeting | $0.0077 |
+
+<Note>
+Prices are for pay-as-you-go. Volume discounts available.
+</Note>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Poor Accuracy">
+    Add keywords for domain terms, check audio quality, try `nova-3-phonecall` for phone audio, ensure correct language code.
+  </Accordion>
+
+  <Accordion title="High Latency">
+    Lower `utteranceEndMs`, reduce `endpointing` threshold, check network latency, enable interim results.
+  </Accordion>
+
+  <Accordion title="Cutting Off Speech">
+    Increase `utteranceEndMs` (try 1200ms) and `endpointing` (try 500ms).
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare STT Providers" icon="scale-balanced" href="/providers/stt">
+    See all 12 STT options
+  </Card>
+  <Card title="Ears Tab Config" icon="ear-listen" href="/advanced/command-center/ears-tab">
+    Configure STT in Command Center
+  </Card>
+</CardGroup>

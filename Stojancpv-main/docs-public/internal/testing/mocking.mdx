@@ -1,0 +1,817 @@
+---
+title: Mocking Strategies
+description: Comprehensive guide to mocking in the Vora platform
+---
+
+# Mocking Strategies
+
+Effective mocking enables isolated, fast, and reliable tests. This guide covers mocking patterns for databases, external services, and internal dependencies.
+
+---
+
+## Mocking Philosophy
+
+### When to Mock
+
+| Mock | Real |
+|------|------|
+| External APIs (OpenAI, Deepgram) | Simple utilities |
+| Database in unit tests | Database in integration tests |
+| Time-dependent operations | Deterministic calculations |
+| Network requests | In-memory operations |
+| Third-party services | First-party code |
+
+### Mock Quality Principles
+
+1. **Realistic behavior** - Mocks should behave like the real thing
+2. **Minimal mocking** - Only mock what's necessary
+3. **Type safety** - Mocks should respect TypeScript types
+4. **Maintainable** - Easy to update when interfaces change
+
+---
+
+## Database Mocking
+
+### Prisma Mock Setup
+
+```typescript
+// tests/mocks/prisma.ts
+import { PrismaClient } from '@prisma/client';
+import { DeepMockProxy, mockDeep, mockReset } from 'vitest-mock-extended';
+import { beforeEach, vi } from 'vitest';
+
+export type MockPrismaClient = DeepMockProxy<PrismaClient>;
+
+export const prismaMock = mockDeep<PrismaClient>();
+
+vi.mock('@/lib/prisma', () => ({
+  prisma: prismaMock,
+}));
+
+beforeEach(() => {
+  mockReset(prismaMock);
+});
+
+export { prismaMock };
+```
+
+### Basic Usage
+
+```typescript
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { prismaMock } from '../mocks/prisma';
+import { agentService } from '@/services/agent.service';
+
+describe('AgentService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('finds agent by ID', async () => {
+    const mockAgent = {
+      id: 'ag_123',
+      name: 'Test Agent',
+      userId: 'user_123',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    prismaMock.agent.findUnique.mockResolvedValue(mockAgent);
+
+    const result = await agentService.findById('ag_123');
+
+    expect(result).toEqual(mockAgent);
+    expect(prismaMock.agent.findUnique).toHaveBeenCalledWith({
+      where: { id: 'ag_123' },
+    });
+  });
+
+  it('returns null when not found', async () => {
+    prismaMock.agent.findUnique.mockResolvedValue(null);
+
+    const result = await agentService.findById('ag_nonexistent');
+
+    expect(result).toBeNull();
+  });
+});
+```
+
+### Mocking Transactions
+
+```typescript
+describe('Transactional operations', () => {
+  it('creates agent with knowledge base atomically', async () => {
+    const mockAgent = { id: 'ag_123', name: 'Test' };
+    const mockKB = { id: 'kb_456', name: 'Docs' };
+
+    prismaMock.$transaction.mockImplementation(async (callback) => {
+      // Simulate transaction with mock client
+      return callback(prismaMock);
+    });
+
+    prismaMock.agent.create.mockResolvedValue(mockAgent);
+    prismaMock.knowledgeBase.create.mockResolvedValue(mockKB);
+
+    const result = await agentService.createWithKnowledgeBase({
+      name: 'Test',
+      kbName: 'Docs',
+    });
+
+    expect(result.agent).toEqual(mockAgent);
+    expect(result.knowledgeBase).toEqual(mockKB);
+  });
+});
+```
+
+### Mocking Relations
+
+```typescript
+it('returns agent with sessions', async () => {
+  const mockAgentWithSessions = {
+    id: 'ag_123',
+    name: 'Test Agent',
+    sessions: [
+      { id: 'sess_1', status: 'completed' },
+      { id: 'sess_2', status: 'active' },
+    ],
+  };
+
+  prismaMock.agent.findUnique.mockResolvedValue(mockAgentWithSessions);
+
+  const result = await agentService.findWithSessions('ag_123');
+
+  expect(result.sessions).toHaveLength(2);
+});
+```
+
+---
+
+## External Service Mocking
+
+### MSW (Mock Service Worker)
+
+```typescript
+// tests/mocks/handlers.ts
+import { http, HttpResponse } from 'msw';
+
+export const handlers = [
+  // OpenAI Chat Completion
+  http.post('https://api.openai.com/v1/chat/completions', async ({ request }) => {
+    const body = await request.json();
+
+    return HttpResponse.json({
+      id: 'chatcmpl-test',
+      object: 'chat.completion',
+      choices: [{
+        index: 0,
+        message: {
+          role: 'assistant',
+          content: 'Mocked response from OpenAI',
+        },
+        finish_reason: 'stop',
+      }],
+      usage: {
+        prompt_tokens: body.messages.length * 10,
+        completion_tokens: 20,
+        total_tokens: body.messages.length * 10 + 20,
+      },
+    });
+  }),
+
+  // Deepgram STT
+  http.post('https://api.deepgram.com/v1/listen', () => {
+    return HttpResponse.json({
+      results: {
+        channels: [{
+          alternatives: [{
+            transcript: 'Mocked transcription',
+            confidence: 0.98,
+            words: [
+              { word: 'Mocked', start: 0, end: 0.5 },
+              { word: 'transcription', start: 0.5, end: 1.2 },
+            ],
+          }],
+        }],
+      },
+    });
+  }),
+
+  // ElevenLabs TTS
+  http.post('https://api.elevenlabs.io/v1/text-to-speech/:voiceId', () => {
+    // Return mock audio data
+    const audioBuffer = new ArrayBuffer(1024);
+    return HttpResponse.arrayBuffer(audioBuffer, {
+      headers: {
+        'Content-Type': 'audio/mpeg',
+      },
+    });
+  }),
+
+  // Stripe Webhooks
+  http.post('https://api.stripe.com/v1/webhook_endpoints', () => {
+    return HttpResponse.json({
+      id: 'we_123',
+      object: 'webhook_endpoint',
+      url: 'https://example.com/webhook',
+      enabled_events: ['*'],
+    });
+  }),
+];
+```
+
+### MSW Server Setup
+
+```typescript
+// tests/mocks/server.ts
+import { setupServer } from 'msw/node';
+import { handlers } from './handlers';
+
+export const server = setupServer(...handlers);
+
+// tests/setup.ts
+import { beforeAll, afterAll, afterEach } from 'vitest';
+import { server } from './mocks/server';
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' });
+});
+
+afterEach(() => {
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
+});
+```
+
+### Per-Test Handler Overrides
+
+```typescript
+import { http, HttpResponse } from 'msw';
+import { server } from '../mocks/server';
+
+describe('Error handling', () => {
+  it('handles OpenAI rate limits', async () => {
+    // Override for this test only
+    server.use(
+      http.post('https://api.openai.com/v1/chat/completions', () => {
+        return HttpResponse.json(
+          { error: { message: 'Rate limit exceeded' } },
+          { status: 429 }
+        );
+      })
+    );
+
+    const provider = new OpenAIProvider({ apiKey: 'test' });
+
+    await expect(
+      provider.chat({ messages: [{ role: 'user', content: 'Hi' }] })
+    ).rejects.toThrow('Rate limit');
+  });
+
+  it('handles network failures', async () => {
+    server.use(
+      http.post('https://api.openai.com/v1/chat/completions', () => {
+        return HttpResponse.error();
+      })
+    );
+
+    const provider = new OpenAIProvider({ apiKey: 'test' });
+
+    await expect(
+      provider.chat({ messages: [] })
+    ).rejects.toThrow();
+  });
+});
+```
+
+---
+
+## Module Mocking
+
+### Vitest Module Mocking
+
+```typescript
+// Mock entire module
+vi.mock('@/lib/redis', () => ({
+  redis: {
+    get: vi.fn(),
+    set: vi.fn(),
+    del: vi.fn(),
+    incr: vi.fn(),
+    expire: vi.fn(),
+  },
+}));
+
+// Mock with factory
+vi.mock('@/services/email.service', () => ({
+  EmailService: vi.fn().mockImplementation(() => ({
+    send: vi.fn().mockResolvedValue({ messageId: 'msg_123' }),
+    sendBatch: vi.fn().mockResolvedValue({ sent: 5 }),
+  })),
+}));
+```
+
+### Partial Module Mocking
+
+```typescript
+import * as utils from '@/lib/utils';
+
+vi.mock('@/lib/utils', async () => {
+  const actual = await vi.importActual('@/lib/utils');
+  return {
+    ...actual,
+    // Only mock specific functions
+    generateId: vi.fn().mockReturnValue('mock_id_123'),
+    getCurrentTimestamp: vi.fn().mockReturnValue(1704067200000),
+  };
+});
+```
+
+### Spy on Methods
+
+```typescript
+import { agentService } from '@/services/agent.service';
+
+describe('AgentController', () => {
+  it('calls service method', async () => {
+    const createSpy = vi.spyOn(agentService, 'create')
+      .mockResolvedValue(mockAgent);
+
+    await request(app)
+      .post('/api/agents')
+      .send(validInput);
+
+    expect(createSpy).toHaveBeenCalledWith(
+      'user_123',
+      expect.objectContaining({ name: validInput.name })
+    );
+
+    createSpy.mockRestore();
+  });
+});
+```
+
+---
+
+## Time Mocking
+
+### Fake Timers
+
+```typescript
+import { vi, beforeEach, afterEach } from 'vitest';
+
+describe('Rate Limiter', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('expires rate limit after window', async () => {
+    const limiter = new RateLimiter({ window: 60000, max: 10 });
+
+    // Exhaust limit
+    for (let i = 0; i < 10; i++) {
+      await limiter.hit('user_123');
+    }
+
+    // Should be rate limited
+    const result = await limiter.hit('user_123');
+    expect(result.limited).toBe(true);
+
+    // Advance time past window
+    vi.advanceTimersByTime(60001);
+
+    // Should be allowed again
+    const newResult = await limiter.hit('user_123');
+    expect(newResult.limited).toBe(false);
+  });
+
+  it('schedules retry with delay', async () => {
+    const mockFn = vi.fn()
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockResolvedValueOnce('success');
+
+    const promise = retryWithBackoff(mockFn, {
+      initialDelay: 1000,
+      maxRetries: 3,
+    });
+
+    // Fast-forward through retry delays
+    await vi.advanceTimersByTimeAsync(1000);
+
+    const result = await promise;
+    expect(result).toBe('success');
+    expect(mockFn).toHaveBeenCalledTimes(2);
+  });
+});
+```
+
+### Fixed Date
+
+```typescript
+describe('Session expiry', () => {
+  it('marks session as expired after 24 hours', () => {
+    const fixedDate = new Date('2024-01-15T12:00:00Z');
+    vi.setSystemTime(fixedDate);
+
+    const session = createSession();
+
+    // Advance 25 hours
+    vi.advanceTimersByTime(25 * 60 * 60 * 1000);
+
+    expect(session.isExpired()).toBe(true);
+  });
+});
+```
+
+---
+
+## Queue Mocking
+
+### BullMQ Queue Mocking
+
+```typescript
+vi.mock('@/workers/queues', () => ({
+  knowledgeQueue: {
+    add: vi.fn().mockResolvedValue({ id: 'job_123', name: 'index-document' }),
+    getJob: vi.fn(),
+    pause: vi.fn(),
+    resume: vi.fn(),
+  },
+  emailQueue: {
+    add: vi.fn().mockResolvedValue({ id: 'job_456', name: 'send-email' }),
+    addBulk: vi.fn(),
+  },
+}));
+
+import { knowledgeQueue, emailQueue } from '@/workers/queues';
+
+describe('Document upload', () => {
+  it('queues document for indexing', async () => {
+    await documentService.upload(userId, file);
+
+    expect(knowledgeQueue.add).toHaveBeenCalledWith(
+      'index-document',
+      expect.objectContaining({
+        documentId: expect.stringMatching(/^doc_/),
+        userId,
+      }),
+      expect.objectContaining({
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 1000 },
+      })
+    );
+  });
+
+  it('sends notification email on completion', async () => {
+    await documentService.onIndexingComplete('doc_123');
+
+    expect(emailQueue.add).toHaveBeenCalledWith(
+      'send-email',
+      expect.objectContaining({
+        template: 'document-indexed',
+      })
+    );
+  });
+});
+```
+
+### Testing Job Processors
+
+```typescript
+import { processDocument } from '@/workers/processors/document';
+
+describe('Document processor', () => {
+  const mockJob = {
+    id: 'job_123',
+    data: {
+      documentId: 'doc_456',
+      userId: 'user_789',
+    },
+    updateProgress: vi.fn(),
+    log: vi.fn(),
+  };
+
+  it('processes document successfully', async () => {
+    prismaMock.document.findUnique.mockResolvedValue(mockDocument);
+
+    const result = await processDocument(mockJob);
+
+    expect(result).toEqual({ success: true, chunks: 15 });
+    expect(mockJob.updateProgress).toHaveBeenCalledWith(100);
+  });
+
+  it('throws for missing document', async () => {
+    prismaMock.document.findUnique.mockResolvedValue(null);
+
+    await expect(processDocument(mockJob)).rejects.toThrow(
+      'Document not found'
+    );
+  });
+});
+```
+
+---
+
+## Authentication Mocking
+
+### Clerk Auth Mocking
+
+```typescript
+// tests/mocks/clerk.ts
+vi.mock('@clerk/clerk-sdk-node', () => ({
+  clerkClient: {
+    users: {
+      getUser: vi.fn(),
+      updateUser: vi.fn(),
+    },
+  },
+  ClerkExpressRequireAuth: () => (req, res, next) => {
+    req.auth = {
+      userId: 'user_test123',
+      sessionId: 'sess_test456',
+    };
+    next();
+  },
+}));
+
+// Helper for generating test tokens
+export function mockAuthenticatedRequest(userId = 'user_test123') {
+  return {
+    auth: {
+      userId,
+      sessionId: `sess_${Date.now()}`,
+    },
+  };
+}
+```
+
+### Usage in Tests
+
+```typescript
+import { clerkClient } from '@clerk/clerk-sdk-node';
+
+describe('User service', () => {
+  it('fetches user profile', async () => {
+    const mockUser = {
+      id: 'user_123',
+      firstName: 'John',
+      lastName: 'Doe',
+      emailAddresses: [{ emailAddress: 'john@example.com' }],
+    };
+
+    vi.mocked(clerkClient.users.getUser).mockResolvedValue(mockUser);
+
+    const profile = await userService.getProfile('user_123');
+
+    expect(profile.name).toBe('John Doe');
+    expect(profile.email).toBe('john@example.com');
+  });
+});
+```
+
+---
+
+## React Component Mocking
+
+### Mocking Hooks
+
+```typescript
+import { vi } from 'vitest';
+import { useUser, useAuth } from '@clerk/clerk-react';
+
+vi.mock('@clerk/clerk-react', () => ({
+  useUser: vi.fn(),
+  useAuth: vi.fn(),
+  SignedIn: ({ children }) => children,
+  SignedOut: () => null,
+}));
+
+describe('ProfilePage', () => {
+  it('renders user profile', () => {
+    vi.mocked(useUser).mockReturnValue({
+      user: {
+        id: 'user_123',
+        fullName: 'John Doe',
+        imageUrl: 'https://example.com/avatar.jpg',
+      },
+      isLoaded: true,
+      isSignedIn: true,
+    });
+
+    render(<ProfilePage />);
+
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+  });
+});
+```
+
+### Mocking TanStack Query
+
+```typescript
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+}
+
+function renderWithQuery(ui: React.ReactElement) {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>
+  );
+}
+
+// Mock specific query
+vi.mock('@/hooks/useAgents', () => ({
+  useAgents: vi.fn().mockReturnValue({
+    data: [
+      { id: 'ag_1', name: 'Agent 1' },
+      { id: 'ag_2', name: 'Agent 2' },
+    ],
+    isLoading: false,
+    error: null,
+  }),
+}));
+```
+
+---
+
+## Factory Patterns
+
+### Test Data Factories
+
+```typescript
+// tests/factories/index.ts
+import { faker } from '@faker-js/faker';
+
+export function createUser(overrides = {}) {
+  return {
+    id: `user_${faker.string.alphanumeric(12)}`,
+    email: faker.internet.email(),
+    name: faker.person.fullName(),
+    createdAt: faker.date.past(),
+    ...overrides,
+  };
+}
+
+export function createAgent(overrides = {}) {
+  return {
+    id: `ag_${faker.string.alphanumeric(12)}`,
+    userId: `user_${faker.string.alphanumeric(12)}`,
+    name: faker.company.name() + ' Agent',
+    description: faker.lorem.sentence(),
+    systemPrompt: faker.lorem.paragraphs(2),
+    status: 'draft' as const,
+    llmConfig: {
+      provider: 'openai',
+      model: 'gpt-4',
+    },
+    sttConfig: {
+      provider: 'deepgram',
+      language: 'en-US',
+    },
+    ttsConfig: {
+      provider: 'elevenlabs',
+      voiceId: 'rachel',
+    },
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.recent(),
+    ...overrides,
+  };
+}
+
+export function createSession(overrides = {}) {
+  return {
+    id: `sess_${faker.string.alphanumeric(12)}`,
+    agentId: `ag_${faker.string.alphanumeric(12)}`,
+    userId: `user_${faker.string.alphanumeric(12)}`,
+    status: 'pending' as const,
+    startedAt: null,
+    endedAt: null,
+    duration: 0,
+    ...overrides,
+  };
+}
+```
+
+### Sequences and Builders
+
+```typescript
+// Sequence for unique IDs
+let agentCounter = 0;
+
+export function createAgentSequence(overrides = {}) {
+  agentCounter++;
+  return createAgent({
+    id: `ag_seq_${agentCounter}`,
+    name: `Agent ${agentCounter}`,
+    ...overrides,
+  });
+}
+
+// Builder pattern for complex objects
+export class AgentBuilder {
+  private agent: Partial<Agent> = {};
+
+  withName(name: string) {
+    this.agent.name = name;
+    return this;
+  }
+
+  withStatus(status: AgentStatus) {
+    this.agent.status = status;
+    return this;
+  }
+
+  withLLM(provider: string, model: string) {
+    this.agent.llmConfig = { provider, model };
+    return this;
+  }
+
+  build(): Agent {
+    return createAgent(this.agent);
+  }
+}
+
+// Usage
+const agent = new AgentBuilder()
+  .withName('Custom Agent')
+  .withStatus('active')
+  .withLLM('openai', 'gpt-4-turbo')
+  .build();
+```
+
+---
+
+## Best Practices
+
+### Do's
+
+```typescript
+// ✅ Mock at the right level
+vi.mock('@/lib/prisma');  // Mock the import, not Prisma directly
+
+// ✅ Reset mocks between tests
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+// ✅ Type-safe mocks
+const mockFn = vi.fn<[string], Promise<User>>();
+
+// ✅ Verify mock calls
+expect(mockFn).toHaveBeenCalledWith(expect.stringContaining('user'));
+expect(mockFn).toHaveBeenCalledTimes(1);
+```
+
+### Don'ts
+
+```typescript
+// ❌ Don't mock what you're testing
+// If testing AgentService, don't mock AgentService
+
+// ❌ Don't over-mock
+// Mock external deps, not internal logic
+
+// ❌ Don't forget to restore
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+// ❌ Don't use any types
+const mock: any = {};  // Bad
+const mock: MockPrismaClient = prismaMock;  // Good
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Unit Testing" icon="cube" href="/internal/testing/unit">
+    Unit test patterns
+  </Card>
+  <Card title="Integration Testing" icon="layer-group" href="/internal/testing/integration">
+    API testing
+  </Card>
+  <Card title="E2E Testing" icon="browser" href="/internal/testing/e2e">
+    End-to-end testing
+  </Card>
+  <Card title="Testing Overview" icon="flask" href="/internal/testing/overview">
+    Testing philosophy
+  </Card>
+</CardGroup>

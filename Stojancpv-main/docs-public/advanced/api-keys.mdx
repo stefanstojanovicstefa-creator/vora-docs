@@ -1,0 +1,91 @@
+---
+title: API Keys
+description: Manage API keys and bring your own provider credentials
+---
+
+# API Keys
+
+The API Keys page lets you manage your Vora API keys and configure your own provider credentials (BYOK - Bring Your Own Keys).
+
+<Info>
+  API Keys management is available in **Advanced Mode** only.
+</Info>
+
+---
+
+## Vora API Keys
+
+Your Vora API key is used to authenticate API requests.
+
+### Creating a Key
+
+<Steps>
+  <Step title="Go to API Keys">
+    Navigate to **API Keys** in the sidebar (Advanced Mode).
+  </Step>
+  <Step title="Create New Key">
+    Click **Create API Key**, give it a name, and set permissions.
+  </Step>
+  <Step title="Copy the Key">
+    Copy the key immediately - it won't be shown again.
+  </Step>
+</Steps>
+
+### Key Permissions
+
+| Permission | Access |
+|------------|--------|
+| **Full Access** | All API operations |
+| **Read Only** | Get agents, sessions, analytics |
+| **Sessions Only** | Create and manage sessions |
+
+### Key Rotation
+
+Rotate keys regularly for security:
+1. Create a new key
+2. Update your applications to use the new key
+3. Delete the old key
+
+<Warning>
+  Never expose API keys in client-side code. Use server-side API calls or Vora's web widget (which uses a separate embed token).
+</Warning>
+
+---
+
+## Bring Your Own Keys (BYOK)
+
+Use your own provider API keys instead of Vora's shared keys:
+
+| Provider | Key Name |
+|----------|----------|
+| **OpenAI** | `OPENAI_API_KEY` |
+| **Google** | `GOOGLE_API_KEY` |
+| **Anthropic** | `ANTHROPIC_API_KEY` |
+| **Deepgram** | `DEEPGRAM_API_KEY` |
+| **ElevenLabs** | `ELEVENLABS_API_KEY` |
+| **AssemblyAI** | `ASSEMBLYAI_API_KEY` |
+
+### Why Use BYOK?
+
+- **Higher rate limits** - Your own API quotas instead of shared limits
+- **Custom models** - Access fine-tuned or custom models on your account
+- **Data privacy** - Requests go directly through your provider account
+- **Cost control** - Pay providers directly at your negotiated rates
+
+### Setting Up BYOK
+
+<Steps>
+  <Step title="Get your provider key">
+    Sign up with the provider and generate an API key from their dashboard.
+  </Step>
+  <Step title="Add to Vora">
+    Go to **API Keys** → **Provider Keys** and enter your key for the provider.
+  </Step>
+  <Step title="Select in Command Center">
+    In the Command Center, choose "Use my key" when selecting the provider.
+  </Step>
+</Steps>
+
+<Note>
+  Provider keys are encrypted at rest and never logged. You can revoke them at any time.
+</Note>

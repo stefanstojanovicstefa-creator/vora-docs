@@ -1,0 +1,70 @@
+---
+title: Ears Tab
+description: Configure speech-to-text provider, language detection, and voice activity settings
+---
+
+# Ears Tab
+
+The Ears tab controls how your agent listens - the STT provider, language recognition, and voice activity detection settings.
+
+---
+
+## STT Provider
+
+Choose which speech-to-text provider transcribes caller audio.
+
+| Provider | Strength | Languages | Latency |
+|----------|----------|-----------|---------|
+| **Deepgram** | Best overall accuracy | 30+ languages | Very low |
+| **Google Cloud STT** | Wide language coverage | 100+ languages | Low |
+| **AssemblyAI** | Strong English accuracy | 10+ languages | Low |
+| **Soniox** | Real-time streaming | 30+ languages | Very low |
+| **Azure Speech** | Enterprise, custom models | 80+ languages | Low |
+
+<Tip>
+  **Recommended default**: Deepgram for English and major languages. Google Cloud STT for rare languages or maximum language coverage.
+</Tip>
+
+---
+
+## Language
+
+Select the primary language for speech recognition. Options include:
+- **Auto-detect** - The STT provider detects the language automatically
+- **Specific language** - Lock to a single language for better accuracy
+
+<Note>
+  Auto-detection works well for multilingual agents but may add slight latency. For single-language agents, specifying the language improves accuracy and speed.
+</Note>
+
+See the [Language Support](/languages) page for per-language provider availability.
+
+---
+
+## Voice Activity Detection (VAD)
+
+VAD determines when the caller is speaking vs. silent. This affects turn-taking behavior.
+
+| Setting | Description |
+|---------|-------------|
+| **Sensitivity** | How sensitive the detection is to speech (higher = picks up quieter speech) |
+| **Silence timeout** | How long to wait after silence before the agent responds |
+| **Prefix padding** | Audio buffer before detected speech start |
+
+**Recommended settings:**
+- Sensitivity: **Medium** (default)
+- Silence timeout: **800ms** for natural conversations, **400ms** for quick Q&A
+- Prefix padding: **300ms** to avoid cutting off the start of speech
+
+---
+
+## Barge-in
+
+Barge-in allows callers to interrupt the agent mid-response. When enabled:
+- The agent stops speaking when the caller starts talking
+- The new input is processed immediately
+- Creates a more natural, conversational feel
+
+<Warning>
+  Disabling barge-in means the caller must wait for the agent to finish before their input is recognized. Only disable this for specific use cases like automated announcements.
+</Warning>

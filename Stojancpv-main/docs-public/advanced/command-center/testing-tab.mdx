@@ -1,0 +1,76 @@
+---
+title: Testing Tab
+description: Test your agent with the built-in voice simulator
+---
+
+# Testing Tab
+
+The Testing tab provides a built-in voice simulator to test your agent before deploying it live.
+
+---
+
+## Starting a Test Call
+
+<Steps>
+  <Step title="Open the Testing Tab">
+    Navigate to your agent's Command Center and click the **Testing** tab.
+  </Step>
+  <Step title="Allow Microphone Access">
+    Click the microphone button. Your browser will prompt for microphone permission - click Allow.
+  </Step>
+  <Step title="Start Talking">
+    Speak naturally. The agent responds in real-time using your configured STT, LLM, and TTS providers.
+  </Step>
+</Steps>
+
+---
+
+## Real-time Logs
+
+During test calls, view live logs showing:
+
+| Log Entry | What It Shows |
+|-----------|--------------|
+| **STT Transcript** | What the STT heard from you |
+| **LLM Input** | Full prompt sent to the AI model |
+| **LLM Output** | The model's response text |
+| **TTS** | Voice generation status |
+| **Function Calls** | Functions triggered, inputs, and outputs |
+| **Latency** | Per-component timing in milliseconds |
+
+---
+
+## Testing Scenarios
+
+Test these scenarios before deploying:
+
+<Steps>
+  <Step title="Happy path">
+    Ask questions your agent should handle well. Verify responses are accurate and natural.
+  </Step>
+  <Step title="Edge cases">
+    Ask questions outside the agent's knowledge. The agent should respond honestly ("I don't have that information").
+  </Step>
+  <Step title="Function calls">
+    Trigger function calls (e.g., "Book an appointment for tomorrow"). Verify the function executes correctly.
+  </Step>
+  <Step title="Interruption">
+    Test barge-in by interrupting the agent mid-response. It should stop and listen to your new input.
+  </Step>
+  <Step title="Silence handling">
+    Stay silent for a few seconds. The agent should prompt you (e.g., "Are you still there?").
+  </Step>
+</Steps>
+
+---
+
+## Test vs. Production
+
+Test calls use the same providers and configuration as production. The only differences:
+- Test calls are marked as test sessions in analytics
+- Test calls are free (don't count toward usage limits)
+- Test sessions have a 5-minute maximum duration
+
+<Note>
+  Changes to the Command Center take effect immediately in test calls. No need to redeploy to test configuration changes.
+</Note>

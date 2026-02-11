@@ -1,0 +1,377 @@
+---
+title: Python SDK
+description: Official Python SDK for Vora
+---
+
+# Python SDK
+
+The official Vora Python SDK provides a type-safe way to integrate voice AI into your Python applications, with full async/await support.
+
+---
+
+## Features
+
+- **Full type hints** with Pydantic models
+- **Async/await native** with synchronous fallback
+- **Automatic retries** with exponential backoff
+- **Built-in error handling** with typed exceptions
+- **Python 3.9+** support
+
+---
+
+## Quick Links
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="#installation">
+    Get started in seconds
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/developers/quickstarts/python">
+    Build your first agent
+  </Card>
+  <Card title="API Reference" icon="code" href="/sdks/python/reference">
+    Complete SDK reference
+  </Card>
+  <Card title="Examples" icon="github" href="https://github.com/vora-ai/examples-python">
+    Sample applications
+  </Card>
+</CardGroup>
+
+---
+
+## Installation
+
+<Tabs>
+  <Tab title="pip">
+    ```bash
+    pip install vora-sdk
+    ```
+  </Tab>
+  <Tab title="poetry">
+    ```bash
+    poetry add vora-sdk
+    ```
+  </Tab>
+  <Tab title="pipenv">
+    ```bash
+    pipenv install vora-sdk
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Basic Usage
+
+### Initialize the Client
+
+```python
+from vora import VoraClient
+
+# Async client (recommended)
+client = VoraClient(api_key="sk_live_your_api_key")
+
+# Or use environment variable
+import os
+os.environ["VORA_API_KEY"] = "sk_live_your_api_key"
+client = VoraClient()
+```
+
+### Create an Agent
+
+```python
+import asyncio
+from vora import VoraClient
+
+async def main():
+    client = VoraClient()
+
+    agent = await client.agents.create(
+        name="Support Agent",
+        system_prompt="You are a helpful customer support agent.",
+        voice={
+            "provider": "elevenlabs",
+            "voice_id": "EXAVITQu4vr4xnSDxMaL"
+        }
+    )
+
+    print(f"Created agent: {agent.id}")
+
+asyncio.run(main())
+```
+
+### Start a Voice Session
+
+```python
+session = await client.sessions.create(
+    agent_id=agent.id,
+    user_id="user_123",
+    variables={
+        "customer_name": "John"
+    }
+)
+
+# Use session.token and session.room_url for LiveKit connection
+print(f"Token: {session.token}")
+print(f"Room URL: {session.room_url}")
+```
+
+---
+
+## Synchronous Usage
+
+For applications that don't use async/await:
+
+```python
+from vora import VoraClient
+
+client = VoraClient()
+
+# Use sync_ prefix for synchronous methods
+agent = client.agents.sync_create(
+    name="Support Agent",
+    system_prompt="You are a helpful support agent."
+)
+
+session = client.sessions.sync_create(
+    agent_id=agent.id,
+    user_id="user_123"
+)
+
+print(f"Session: {session.id}")
+```
+
+---
+
+## SDK Structure
+
+The SDK is organized into resource namespaces:
+
+| Namespace | Description |
+|-----------|-------------|
+| `client.agents` | Manage voice agents |
+| `client.sessions` | Handle voice sessions |
+| `client.knowledge_bases` | Knowledge base operations |
+| `client.phone_numbers` | Phone number management |
+| `client.widgets` | Web widget configuration |
+| `client.analytics` | Access metrics and reports |
+| `client.webhooks` | Webhook management |
+
+---
+
+## Configuration Options
+
+```python
+from vora import VoraClient
+import httpx
+
+client = VoraClient(
+    # Required
+    api_key="sk_live_your_api_key",
+
+    # Optional
+    base_url="https://api.vora.ai/v1",  # Custom API endpoint
+    timeout=30.0,                        # Request timeout in seconds
+    max_retries=3,                       # Retry count for failures
+    retry_delay=1.0,                     # Base delay between retries
+
+    # Custom HTTP client (for advanced use)
+    http_client=httpx.AsyncClient(
+        limits=httpx.Limits(max_connections=100)
+    )
+)
+```
+
+---
+
+## Type Hints
+
+The SDK includes comprehensive type hints with Pydantic models:
+
+```python
+from vora import VoraClient
+from vora.types import (
+    Agent,
+    Session,
+    KnowledgeBase,
+    VoiceConfig,
+    ModelConfig,
+    FunctionDefinition
+)
+
+client = VoraClient()
+
+# All methods are fully typed
+agent: Agent = await client.agents.create(
+    name="Support",
+    system_prompt="..."
+)
+
+# Autocomplete for all properties
+print(agent.id)      # str
+print(agent.status)  # Literal["draft", "active", "paused", "archived"]
+print(agent.voice)   # Optional[VoiceConfig]
+```
+
+---
+
+## Error Handling
+
+The SDK provides typed exceptions for different error scenarios:
+
+```python
+from vora import VoraClient
+from vora.exceptions import (
+    VoraError,
+    AuthenticationError,
+    RateLimitError,
+    ValidationError,
+    NotFoundError
+)
+
+client = VoraClient()
+
+try:
+    agent = await client.agents.get("invalid_id")
+except AuthenticationError:
+    print("Check your API key")
+except NotFoundError:
+    print("Agent not found")
+except RateLimitError as e:
+    print(f"Retry after {e.retry_after}s")
+except VoraError as e:
+    print(f"Error: {e.code} - {e.message}")
+```
+
+---
+
+## Context Manager
+
+Use the client as a context manager for proper cleanup:
+
+```python
+async with VoraClient() as client:
+    agent = await client.agents.create(
+        name="Support",
+        system_prompt="..."
+    )
+    # Client automatically closed after block
+```
+
+Or manually close:
+
+```python
+client = VoraClient()
+try:
+    # Use client
+    pass
+finally:
+    await client.close()
+```
+
+---
+
+## Framework Integration
+
+### FastAPI
+
+```python
+from fastapi import FastAPI, Depends, HTTPException
+from vora import VoraClient
+
+app = FastAPI()
+
+# Singleton client
+_client: VoraClient | None = None
+
+def get_vora_client() -> VoraClient:
+    global _client
+    if _client is None:
+        _client = VoraClient()
+    return _client
+
+@app.post("/api/session")
+async def create_session(
+    agent_id: str,
+    client: VoraClient = Depends(get_vora_client)
+):
+    try:
+        session = await client.sessions.create(agent_id=agent_id)
+        return {
+            "token": session.token,
+            "room_url": session.room_url
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.on_event("shutdown")
+async def shutdown():
+    if _client:
+        await _client.close()
+```
+
+### Django
+
+```python
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from vora import VoraClient
+import json
+
+client = VoraClient()
+
+@require_POST
+def create_session(request):
+    data = json.loads(request.body)
+    agent_id = data.get("agent_id")
+
+    # Use sync methods in Django
+    session = client.sessions.sync_create(agent_id=agent_id)
+
+    return JsonResponse({
+        "token": session.token,
+        "room_url": session.room_url
+    })
+```
+
+### Flask
+
+```python
+from flask import Flask, request, jsonify
+from vora import VoraClient
+
+app = Flask(__name__)
+client = VoraClient()
+
+@app.route("/api/session", methods=["POST"])
+def create_session():
+    data = request.json
+    agent_id = data.get("agent_id")
+
+    # Use sync methods in Flask
+    session = client.sessions.sync_create(agent_id=agent_id)
+
+    return jsonify({
+        "token": session.token,
+        "room_url": session.room_url
+    })
+```
+
+---
+
+## More Resources
+
+<CardGroup cols={2}>
+  <Card title="Agents API" icon="robot" href="/sdks/python/agents">
+    Create and manage voice agents
+  </Card>
+  <Card title="Sessions API" icon="comments" href="/sdks/python/sessions">
+    Handle voice sessions
+  </Card>
+  <Card title="API Reference" icon="book" href="/sdks/python/reference">
+    Complete method reference
+  </Card>
+  <Card title="Examples" icon="github" href="https://github.com/vora-ai/examples-python">
+    Sample applications
+  </Card>
+</CardGroup>

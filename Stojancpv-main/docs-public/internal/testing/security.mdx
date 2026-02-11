@@ -1,0 +1,606 @@
+---
+title: Security Testing
+description: Security testing patterns and vulnerability prevention
+---
+
+# Security Testing
+
+Security testing ensures the Vora platform protects user data and resists attacks. This guide covers testing patterns for common vulnerabilities and security concerns.
+
+---
+
+## OWASP Top 10 Testing
+
+### Injection Prevention
+
+```typescript
+describe('SQL Injection Prevention', () => {
+  it('sanitizes user input in queries', async () => {
+    const maliciousInput = "'; DROP TABLE agents; --";
+
+    const response = await request(app)
+      .get('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .query({ search: maliciousInput });
+
+    // Should not cause error - query should be parameterized
+    expect(response.status).not.toBe(500);
+
+    // Verify table still exists
+    const agents = await prisma.agent.findMany();
+    expect(agents).toBeDefined();
+  });
+
+  it('handles NoSQL injection attempts', async () => {
+    const maliciousInput = { $gt: '' };
+
+    const response = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        name: maliciousInput,
+      });
+
+    expect(response.status).toBe(400);
+  });
+});
+```
+
+### XSS Prevention
+
+```typescript
+describe('XSS Prevention', () => {
+  it('sanitizes HTML in agent names', async () => {
+    const xssPayload = '<script>alert("xss")</script>Test Agent';
+
+    const response = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        name: xssPayload,
+        systemPrompt: 'Test prompt',
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.name).not.toContain('<script>');
+  });
+
+  it('escapes HTML in system prompts', async () => {
+    const xssPayload = '<img src=x onerror=alert("xss")>';
+
+    const response = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        name: 'Test Agent',
+        systemPrompt: xssPayload,
+      });
+
+    // Prompt should be stored but escaped when rendered
+    expect(response.status).toBe(201);
+  });
+
+  // E2E test for XSS
+  test('renders escaped content safely', async ({ page }) => {
+    // Create agent with XSS payload via API
+    await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        name: '<img src=x onerror=alert("xss")>',
+        systemPrompt: 'Test',
+      });
+
+    // Navigate to dashboard
+    await page.goto('/');
+
+    // Verify no alert is triggered
+    let alertTriggered = false;
+    page.on('dialog', () => {
+      alertTriggered = true;
+    });
+
+    await page.waitForTimeout(1000);
+    expect(alertTriggered).toBe(false);
+  });
+});
+```
+
+### Authentication Bypass
+
+```typescript
+describe('Authentication Bypass Prevention', () => {
+  it('rejects requests without auth header', async () => {
+    const response = await request(app).get('/api/agents');
+
+    expect(response.status).toBe(401);
+  });
+
+  it('rejects requests with invalid token', async () => {
+    const response = await request(app)
+      .get('/api/agents')
+      .set('Authorization', 'Bearer invalid-token');
+
+    expect(response.status).toBe(401);
+  });
+
+  it('rejects requests with expired token', async () => {
+    const expiredToken = generateTestToken('user_123', { expired: true });
+
+    const response = await request(app)
+      .get('/api/agents')
+      .set('Authorization', `Bearer ${expiredToken}`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.error.code).toBe('TOKEN_EXPIRED');
+  });
+
+  it('rejects modified JWT payload', async () => {
+    const validToken = generateTestToken('user_123');
+    // Modify payload without re-signing
+    const parts = validToken.split('.');
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+    payload.role = 'admin';
+    parts[1] = Buffer.from(JSON.stringify(payload)).toString('base64');
+    const tamperedToken = parts.join('.');
+
+    const response = await request(app)
+      .get('/api/agents')
+      .set('Authorization', `Bearer ${tamperedToken}`);
+
+    expect(response.status).toBe(401);
+  });
+});
+```
+
+### Authorization Testing
+
+```typescript
+describe('Authorization', () => {
+  it('prevents access to other users resources', async () => {
+    // Create agent as user_1
+    const user1Token = generateTestToken('user_1');
+    const createRes = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send(validAgentInput);
+
+    const agentId = createRes.body.id;
+
+    // Try to access as user_2
+    const user2Token = generateTestToken('user_2');
+    const accessRes = await request(app)
+      .get(`/api/agents/${agentId}`)
+      .set('Authorization', `Bearer ${user2Token}`);
+
+    expect(accessRes.status).toBe(403);
+  });
+
+  it('prevents modification of other users resources', async () => {
+    const user1Token = generateTestToken('user_1');
+    const createRes = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send(validAgentInput);
+
+    const agentId = createRes.body.id;
+
+    const user2Token = generateTestToken('user_2');
+    const updateRes = await request(app)
+      .patch(`/api/agents/${agentId}`)
+      .set('Authorization', `Bearer ${user2Token}`)
+      .send({ name: 'Hacked' });
+
+    expect(updateRes.status).toBe(403);
+  });
+
+  it('prevents deletion of other users resources', async () => {
+    const user1Token = generateTestToken('user_1');
+    const createRes = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send(validAgentInput);
+
+    const agentId = createRes.body.id;
+
+    const user2Token = generateTestToken('user_2');
+    const deleteRes = await request(app)
+      .delete(`/api/agents/${agentId}`)
+      .set('Authorization', `Bearer ${user2Token}`);
+
+    expect(deleteRes.status).toBe(403);
+
+    // Verify agent still exists
+    const agent = await prisma.agent.findUnique({ where: { id: agentId } });
+    expect(agent).not.toBeNull();
+  });
+});
+```
+
+---
+
+## Rate Limiting Tests
+
+```typescript
+describe('Rate Limiting', () => {
+  it('limits requests per minute', async () => {
+    const requests = Array.from({ length: 110 }, () =>
+      request(app)
+        .get('/api/agents')
+        .set('Authorization', `Bearer ${authToken}`)
+    );
+
+    const responses = await Promise.all(requests);
+    const tooManyRequests = responses.filter((r) => r.status === 429);
+
+    // Should have some 429 responses after limit exceeded
+    expect(tooManyRequests.length).toBeGreaterThan(0);
+  });
+
+  it('returns Retry-After header', async () => {
+    // Exhaust rate limit
+    for (let i = 0; i < 100; i++) {
+      await request(app)
+        .get('/api/agents')
+        .set('Authorization', `Bearer ${authToken}`);
+    }
+
+    const response = await request(app)
+      .get('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`);
+
+    expect(response.status).toBe(429);
+    expect(response.headers['retry-after']).toBeDefined();
+  });
+
+  it('applies stricter limits to auth endpoints', async () => {
+    const requests = Array.from({ length: 15 }, () =>
+      request(app)
+        .post('/api/auth/login')
+        .send({ email: 'test@example.com', password: 'wrong' })
+    );
+
+    const responses = await Promise.all(requests);
+    const blocked = responses.filter((r) => r.status === 429);
+
+    expect(blocked.length).toBeGreaterThan(0);
+  });
+});
+```
+
+---
+
+## Input Validation Tests
+
+```typescript
+describe('Input Validation', () => {
+  describe('Agent Creation', () => {
+    it('rejects missing required fields', async () => {
+      const response = await request(app)
+        .post('/api/agents')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.details).toContainEqual(
+        expect.objectContaining({ path: ['name'] })
+      );
+    });
+
+    it('rejects oversized system prompt', async () => {
+      const response = await request(app)
+        .post('/api/agents')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Test Agent',
+          systemPrompt: 'x'.repeat(100001), // > 100k chars
+        });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('rejects invalid provider names', async () => {
+      const response = await request(app)
+        .post('/api/agents')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Test Agent',
+          systemPrompt: 'Test',
+          llm: { provider: 'invalid-provider', model: 'gpt-4' },
+        });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('rejects prototype pollution attempts', async () => {
+      const response = await request(app)
+        .post('/api/agents')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Test',
+          '__proto__': { admin: true },
+          'constructor': { prototype: { admin: true } },
+        });
+
+      expect(response.status).toBe(400);
+    });
+  });
+});
+```
+
+---
+
+## CSRF Protection Tests
+
+```typescript
+describe('CSRF Protection', () => {
+  it('requires CSRF token for state-changing operations', async () => {
+    // Browser-based request without CSRF token
+    const response = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('Origin', 'https://evil-site.com')
+      .send(validAgentInput);
+
+    expect(response.status).toBe(403);
+  });
+
+  it('accepts requests with valid CSRF token', async () => {
+    // Get CSRF token
+    const tokenRes = await request(app)
+      .get('/api/csrf-token')
+      .set('Authorization', `Bearer ${authToken}`);
+
+    const csrfToken = tokenRes.body.token;
+
+    const response = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('X-CSRF-Token', csrfToken)
+      .send(validAgentInput);
+
+    expect(response.status).toBe(201);
+  });
+
+  it('validates Origin header', async () => {
+    const response = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('Origin', 'https://malicious-site.com')
+      .send(validAgentInput);
+
+    expect(response.status).toBe(403);
+  });
+});
+```
+
+---
+
+## Sensitive Data Protection
+
+```typescript
+describe('Sensitive Data Protection', () => {
+  it('does not expose API keys in responses', async () => {
+    const response = await request(app)
+      .get('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`);
+
+    const responseText = JSON.stringify(response.body);
+
+    expect(responseText).not.toContain('sk_');
+    expect(responseText).not.toContain('api_key');
+    expect(responseText).not.toContain('secret');
+  });
+
+  it('masks sensitive data in logs', async () => {
+    const logSpy = vi.spyOn(logger, 'info');
+
+    await request(app)
+      .post('/api/integrations')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        name: 'Test Integration',
+        apiKey: 'sk_secret_key_12345',
+      });
+
+    const logCalls = logSpy.mock.calls.map((call) => JSON.stringify(call));
+    const logsContainSecret = logCalls.some((log) =>
+      log.includes('sk_secret_key_12345')
+    );
+
+    expect(logsContainSecret).toBe(false);
+  });
+
+  it('does not include sensitive headers in error responses', async () => {
+    const response = await request(app)
+      .get('/api/nonexistent')
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('X-Secret-Header', 'secret-value');
+
+    expect(response.body).not.toHaveProperty('headers');
+    expect(JSON.stringify(response.body)).not.toContain('secret-value');
+  });
+});
+```
+
+---
+
+## File Upload Security
+
+```typescript
+describe('File Upload Security', () => {
+  it('rejects files exceeding size limit', async () => {
+    const largeFile = Buffer.alloc(60 * 1024 * 1024); // 60MB
+
+    const response = await request(app)
+      .post('/api/knowledge-base/upload')
+      .set('Authorization', `Bearer ${authToken}`)
+      .attach('file', largeFile, 'large.pdf');
+
+    expect(response.status).toBe(413);
+  });
+
+  it('rejects disallowed file types', async () => {
+    const exeFile = Buffer.from('MZ...'); // EXE magic bytes
+
+    const response = await request(app)
+      .post('/api/knowledge-base/upload')
+      .set('Authorization', `Bearer ${authToken}`)
+      .attach('file', exeFile, 'malware.exe');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe('INVALID_FILE_TYPE');
+  });
+
+  it('validates file content matches extension', async () => {
+    // PDF extension but actually a script
+    const scriptContent = Buffer.from('<?php system($_GET["cmd"]); ?>');
+
+    const response = await request(app)
+      .post('/api/knowledge-base/upload')
+      .set('Authorization', `Bearer ${authToken}`)
+      .attach('file', scriptContent, 'document.pdf');
+
+    expect(response.status).toBe(400);
+  });
+
+  it('sanitizes uploaded filenames', async () => {
+    const validFile = Buffer.from('%PDF-1.4...');
+
+    const response = await request(app)
+      .post('/api/knowledge-base/upload')
+      .set('Authorization', `Bearer ${authToken}`)
+      .attach('file', validFile, '../../../etc/passwd.pdf');
+
+    expect(response.status).toBe(201);
+    expect(response.body.fileName).not.toContain('..');
+    expect(response.body.fileName).not.toContain('/');
+  });
+});
+```
+
+---
+
+## API Key Security
+
+```typescript
+describe('API Key Security', () => {
+  it('hashes API keys before storage', async () => {
+    const response = await request(app)
+      .post('/api/api-keys')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({ name: 'Test Key' });
+
+    const keyId = response.body.id;
+    const rawKey = response.body.key; // Only shown once
+
+    // Check database - should be hashed
+    const storedKey = await prisma.apiKey.findUnique({
+      where: { id: keyId },
+    });
+
+    expect(storedKey?.keyHash).toBeDefined();
+    expect(storedKey?.keyHash).not.toBe(rawKey);
+  });
+
+  it('validates API key on each request', async () => {
+    // Create API key
+    const createRes = await request(app)
+      .post('/api/api-keys')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({ name: 'Test Key' });
+
+    const apiKey = createRes.body.key;
+
+    // Use API key
+    const response = await request(app)
+      .get('/api/agents')
+      .set('X-API-Key', apiKey);
+
+    expect(response.status).toBe(200);
+  });
+
+  it('revokes API key access immediately', async () => {
+    // Create and revoke key
+    const createRes = await request(app)
+      .post('/api/api-keys')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({ name: 'Test Key' });
+
+    const apiKey = createRes.body.key;
+    const keyId = createRes.body.id;
+
+    await request(app)
+      .delete(`/api/api-keys/${keyId}`)
+      .set('Authorization', `Bearer ${authToken}`);
+
+    // Try to use revoked key
+    const response = await request(app)
+      .get('/api/agents')
+      .set('X-API-Key', apiKey);
+
+    expect(response.status).toBe(401);
+  });
+});
+```
+
+---
+
+## Security Headers
+
+```typescript
+describe('Security Headers', () => {
+  it('sets Content-Security-Policy header', async () => {
+    const response = await request(app).get('/');
+
+    expect(response.headers['content-security-policy']).toBeDefined();
+  });
+
+  it('sets X-Frame-Options header', async () => {
+    const response = await request(app).get('/');
+
+    expect(response.headers['x-frame-options']).toBe('DENY');
+  });
+
+  it('sets X-Content-Type-Options header', async () => {
+    const response = await request(app).get('/');
+
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+  });
+
+  it('sets Strict-Transport-Security header', async () => {
+    const response = await request(app).get('/');
+
+    expect(response.headers['strict-transport-security']).toContain(
+      'max-age='
+    );
+  });
+
+  it('does not expose server information', async () => {
+    const response = await request(app).get('/');
+
+    expect(response.headers['x-powered-by']).toBeUndefined();
+    expect(response.headers['server']).toBeUndefined();
+  });
+});
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Testing Overview" icon="flask" href="/internal/testing/overview">
+    Testing philosophy
+  </Card>
+  <Card title="Integration Testing" icon="layer-group" href="/internal/testing/integration">
+    API testing patterns
+  </Card>
+  <Card title="Deployment Security" icon="shield" href="/internal/deployment/production">
+    Production security
+  </Card>
+  <Card title="Runbooks" icon="book" href="/internal/runbooks/incident-response">
+    Incident response
+  </Card>
+</CardGroup>

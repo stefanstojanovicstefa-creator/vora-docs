@@ -1,0 +1,417 @@
+---
+title: Usage Details
+description: Understand and monitor your Vora usage
+---
+
+# Usage Details
+
+Track your voice minutes, understand usage patterns, and optimize costs with detailed usage analytics.
+
+---
+
+## Usage Dashboard
+
+Access detailed usage at **Settings** → **Billing** → **Usage**.
+
+### Current Period Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  January 2024 Usage                                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ████████████████████░░░░░░░  69% of 500 minutes           │
+│                                                             │
+│  Used:       347 minutes                                    │
+│  Remaining:  153 minutes                                    │
+│  Projected:  485 minutes (within plan)                      │
+│                                                             │
+│  Daily Average: 17.4 minutes                                │
+│  Peak Day: Jan 15 (42 minutes)                              │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Usage Breakdown
+
+### By Category
+
+| Category | Minutes | Sessions | Avg Duration |
+|----------|---------|----------|--------------|
+| **Inbound Calls** | 198 | 412 | 0:29 |
+| **Outbound Calls** | 87 | 156 | 0:33 |
+| **Web Widget** | 45 | 234 | 0:12 |
+| **API Sessions** | 17 | 89 | 0:11 |
+| **Total** | 347 | 891 | 0:23 |
+
+### By Agent
+
+| Agent | Minutes | % of Total | Sessions |
+|-------|---------|------------|----------|
+| Customer Support | 187 | 54% | 423 |
+| Sales Assistant | 98 | 28% | 267 |
+| Appointment Booking | 45 | 13% | 156 |
+| Product FAQ | 17 | 5% | 45 |
+
+### By Phone Number
+
+| Number | Minutes | Sessions | Type |
+|--------|---------|----------|------|
+| +1 (800) 555-0123 | 156 | 312 | Toll-Free |
+| +1 (415) 555-0456 | 98 | 234 | Local |
+| +1 (212) 555-0789 | 45 | 89 | Local |
+
+---
+
+## Usage Trends
+
+### Daily Usage
+
+```
+Minutes/Day (January 2024)
+
+50 │                    ▄
+40 │          ▄   ▄▄   ██▄
+30 │    ▄▄   ██▄ ███  ████▄
+20 │▄▄ ███▄ ████████ ██████▄
+10 │██████████████████████████
+ 0 └──────────────────────────────
+    1  5  10  15  20  25  30
+```
+
+### Weekly Pattern
+
+| Day | Avg Minutes | Sessions |
+|-----|-------------|----------|
+| Monday | 23 | 52 |
+| Tuesday | 28 | 61 |
+| Wednesday | 31 | 68 |
+| Thursday | 27 | 59 |
+| Friday | 22 | 48 |
+| Saturday | 8 | 18 |
+| Sunday | 6 | 14 |
+
+### Hourly Distribution
+
+| Hour | % of Calls |
+|------|------------|
+| 9-10 AM | 12% |
+| 10-11 AM | 15% |
+| 11-12 PM | 14% |
+| 12-1 PM | 8% |
+| 1-2 PM | 11% |
+| 2-3 PM | 14% |
+| 3-4 PM | 13% |
+| 4-5 PM | 10% |
+| Other | 3% |
+
+---
+
+## Session Details
+
+### Recent Sessions
+
+| Time | Agent | Duration | Type | Outcome |
+|------|-------|----------|------|---------|
+| 10:34 AM | Support | 2:45 | Inbound | Resolved |
+| 10:28 AM | Sales | 4:12 | Outbound | Qualified |
+| 10:15 AM | Booking | 1:23 | Web | Booked |
+| 10:02 AM | Support | 3:56 | Inbound | Transferred |
+
+### Session Metrics
+
+| Metric | Value | Trend |
+|--------|-------|-------|
+| Avg session duration | 2:23 | ↓ 8% |
+| Sessions per day | 45 | ↑ 12% |
+| Peak concurrent | 8 | ↑ 2 |
+| Completion rate | 87% | ↑ 3% |
+
+---
+
+## Cost Analysis
+
+### Current Period Costs
+
+| Item | Quantity | Rate | Cost |
+|------|----------|------|------|
+| Included minutes | 347 of 500 | — | $0.00 |
+| Overage minutes | 0 | $0.12 | $0.00 |
+| Phone numbers | 3 | $1.33 avg | $4.00 |
+| **Subtotal** | | | **$4.00** |
+
+### Projected End-of-Period
+
+```
+Based on current usage trends:
+
+Projected minutes: 485
+Included minutes:  500
+─────────────────────────
+Overage:           0 minutes
+Overage cost:      $0.00
+
+Total projected:   $103.00 (base + numbers)
+```
+
+### Historical Costs
+
+| Month | Minutes | Overage | Total Cost |
+|-------|---------|---------|------------|
+| January | 485 | $0 | $103 |
+| December | 523 | $2.76 | $105.76 |
+| November | 412 | $0 | $103 |
+| October | 498 | $0 | $103 |
+| September | 567 | $8.04 | $111.04 |
+
+---
+
+## Usage Alerts
+
+### Configure Alerts
+
+Set up notifications to stay informed:
+
+```javascript
+{
+  "usageAlerts": {
+    "thresholds": [
+      { "percent": 50, "notify": true },
+      { "percent": 80, "notify": true },
+      { "percent": 100, "notify": true }
+    ],
+    "budgetLimit": {
+      "amount": 150,
+      "currency": "USD",
+      "notify": true
+    },
+    "channels": {
+      "email": ["billing@company.com"],
+      "slack": "#billing-alerts"
+    }
+  }
+}
+```
+
+### Alert Types
+
+| Alert | Trigger | Action |
+|-------|---------|--------|
+| **50% Used** | Half minutes consumed | Informational |
+| **80% Used** | Approaching limit | Review usage |
+| **100% Used** | Entering overage | Consider upgrade |
+| **Budget Limit** | Cost threshold reached | Hard stop optional |
+
+### Hard Limits (Optional)
+
+Prevent overage charges entirely:
+
+```javascript
+{
+  "hardLimits": {
+    "enabled": true,
+    "action": "pause_new_sessions",
+    "threshold": "included_minutes",  // or specific number
+    "notify": true,
+    "allowExceptions": ["agent_xyz"]  // Emergency agent
+  }
+}
+```
+
+---
+
+## Usage API
+
+### Get Current Usage
+
+```javascript
+const usage = await vora.billing.usage.get({
+  period: 'current'
+});
+
+console.log(usage);
+// {
+//   period: { start: '2024-01-01', end: '2024-01-31' },
+//   minutes: {
+//     used: 347,
+//     included: 500,
+//     remaining: 153,
+//     projected: 485
+//   },
+//   sessions: {
+//     total: 891,
+//     inbound: 412,
+//     outbound: 156,
+//     web: 234,
+//     api: 89
+//   },
+//   cost: {
+//     base: 99,
+//     overage: 0,
+//     addons: 4,
+//     projected: 103
+//   }
+// }
+```
+
+### Get Historical Usage
+
+```javascript
+const history = await vora.billing.usage.history({
+  periods: 6,  // Last 6 months
+  granularity: 'month'
+});
+
+for (const period of history) {
+  console.log(`${period.name}: ${period.minutes} minutes, $${period.cost}`);
+}
+```
+
+### Get Usage by Agent
+
+```javascript
+const agentUsage = await vora.billing.usage.byAgent({
+  period: 'current'
+});
+
+for (const agent of agentUsage) {
+  console.log(`${agent.name}: ${agent.minutes} minutes (${agent.percent}%)`);
+}
+```
+
+### Export Usage Data
+
+```javascript
+const csv = await vora.billing.usage.export({
+  period: 'current',
+  format: 'csv',
+  include: ['sessions', 'agents', 'daily']
+});
+
+fs.writeFileSync('usage-report.csv', csv);
+```
+
+---
+
+## Optimization Recommendations
+
+### Based on Your Usage
+
+<AccordionGroup>
+  <Accordion title="Peak hours optimization">
+    **Observation**: 65% of calls occur 10 AM - 3 PM
+
+    **Recommendation**: Consider adding agents or adjusting staffing for peak hours. This could improve response times and customer satisfaction.
+  </Accordion>
+
+  <Accordion title="Session duration analysis">
+    **Observation**: Average session is 2:23, but Support averages 3:45
+
+    **Recommendation**: Review Support agent prompts for efficiency. Consider adding more FAQs to knowledge base to reduce lookup time.
+  </Accordion>
+
+  <Accordion title="Web widget underutilized">
+    **Observation**: Only 13% of sessions from web widget
+
+    **Recommendation**: Promote self-service options. Web sessions are often shorter and more efficient than phone calls.
+  </Accordion>
+</AccordionGroup>
+
+### Cost Saving Tips
+
+| Tip | Potential Savings |
+|-----|-------------------|
+| Reduce avg session by 30 seconds | ~15% on minutes |
+| Shift 20% of calls to web | ~10% (shorter sessions) |
+| Enable knowledge base caching | Faster responses |
+| Use efficient LLM for simple queries | ~5% on compute |
+
+---
+
+## Usage Reports
+
+### Scheduled Reports
+
+Configure automatic reports:
+
+1. Go to **Settings** → **Reports**
+2. Click **Create Report**
+3. Select usage metrics
+4. Choose frequency (daily, weekly, monthly)
+5. Add recipients
+
+### Report Types
+
+| Report | Contents | Frequency |
+|--------|----------|-----------|
+| **Daily Summary** | Sessions, minutes, peak times | Daily |
+| **Weekly Digest** | Trends, comparisons, alerts | Weekly |
+| **Monthly Invoice** | Full billing breakdown | Monthly |
+| **Agent Performance** | Per-agent metrics | Weekly |
+
+### Custom Reports
+
+Build custom reports with specific metrics:
+
+```javascript
+const report = await vora.reports.create({
+  name: 'Weekly Agent Performance',
+  metrics: [
+    'sessions_count',
+    'avg_duration',
+    'resolution_rate',
+    'transfer_rate'
+  ],
+  groupBy: 'agent',
+  period: 'last_7_days',
+  schedule: {
+    frequency: 'weekly',
+    day: 'monday',
+    time: '09:00'
+  },
+  recipients: ['team@company.com']
+});
+```
+
+---
+
+## FAQs
+
+<AccordionGroup>
+  <Accordion title="How are minutes calculated?">
+    Minutes are the total voice session duration, rounded to the nearest second. Only voice (audio) sessions count—text chats and API calls don't use minutes.
+  </Accordion>
+
+  <Accordion title="Why is my projected usage higher than expected?">
+    Projections are based on current daily averages extrapolated to end of period. Weekends and holidays may not be factored in, leading to higher projections.
+  </Accordion>
+
+  <Accordion title="Can I see individual session details?">
+    Yes, go to **Sessions** to see every session with full transcripts, recordings, and metadata.
+  </Accordion>
+
+  <Accordion title="How can I reduce my usage?">
+    Focus on: shorter agent responses, efficient prompts, knowledge base coverage, and routing simple queries to self-service.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Billing Overview" icon="credit-card" href="/platform/billing">
+    Payment and invoices
+  </Card>
+  <Card title="Plans" icon="tags" href="/platform/billing/plans">
+    Upgrade for more minutes
+  </Card>
+  <Card title="Analytics" icon="chart-line" href="/platform/analytics">
+    Session analytics
+  </Card>
+  <Card title="Optimization" icon="bolt" href="/platform/agents/configuration">
+    Optimize agents
+  </Card>
+</CardGroup>

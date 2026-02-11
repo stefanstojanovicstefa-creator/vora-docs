@@ -1,0 +1,67 @@
+---
+title: Tamil
+description: Tamil voice AI support - providers, configuration, and best practices
+---
+
+# Tamil
+
+<Tabs>
+  <Tab title="Simple">
+    Vora fully supports **Tamil** for voice AI agents. ~80M speakers in India, Sri Lanka, and Singapore.
+
+    ### Setting Up a Tamil Agent
+
+    <Steps>
+      <Step title="Create your agent">
+        Use any creation method (Interview, URL Import, etc.)
+      </Step>
+      <Step title="Set language to Tamil">
+        In voice settings, select **Tamil** from the language dropdown.
+      </Step>
+      <Step title="Choose a voice">
+        Select from available Tamil voices in the voice library.
+      </Step>
+      <Step title="Test and deploy">
+        Test with the simulator, then deploy as usual.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For best results with Tamil, we recommend Sarvam AI voices for the most natural speech.
+    </Tip>
+  </Tab>
+  <Tab title="Advanced">
+    ## Provider Matrix
+
+    | Detail | Value |
+    |--------|-------|
+    | **Code** | ta-IN |
+    | **Region** | India / Sri Lanka / Singapore |
+    | **Speakers** | ~80M |
+    | **Best ASR** | Sarvam AI |
+    | **Best TTS** | Sarvam AI |
+    | **Best LLM** | Sarvam 2B |
+
+    ### Available Providers
+
+    | Type | Providers |
+    |------|-----------|
+    | **ASR** | Sarvam AI (Best), Valsea (SEA), Google, Azure, AWS, Deepgram, Soniox, Speechmatics |
+    | **TTS** | Sarvam AI (Best), Google, Azure, Murf AI, Speechify |
+    | **LLM** | Sarvam 2B (Best), GPT-4o, Gemini, Claude |
+
+    ### Recommended Stack
+
+    For the best Tamil voice experience:
+    - **STT**: Sarvam AI (best accuracy for Tamil)
+    - **LLM**: Sarvam 2B (best Tamil understanding)
+    - **TTS**: Sarvam AI (most natural Tamil speech)
+
+    ### Configuration
+
+    In the Command Center:
+    1. **Ears Tab** → Set STT provider to Sarvam AI, language to `ta-IN`
+    2. **Brain Tab** → Set LLM to Sarvam 2B
+    3. **Voice Tab** → Set TTS to Sarvam AI, select a Tamil voice
+  </Tab>
+</Tabs>

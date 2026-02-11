@@ -1,0 +1,574 @@
+---
+title: Database Migrations
+description: Guide to creating and deploying database migrations
+---
+
+# Database Migrations
+
+This guide covers creating, testing, and deploying database schema changes using Prisma migrations.
+
+---
+
+## Migration Workflow
+
+### Development Flow
+
+```mermaid
+flowchart LR
+    A[Edit Schema] --> B[Generate Migration]
+    B --> C[Test Locally]
+    C --> D[Commit]
+    D --> E[Deploy to Staging]
+    E --> F[Verify]
+    F --> G[Deploy to Production]
+```
+
+### Creating a Migration
+
+```bash
+# 1. Edit prisma/schema.prisma
+# Add your schema changes
+
+# 2. Generate migration
+npx prisma migrate dev --name add_user_preferences
+
+# This will:
+# - Generate SQL migration file
+# - Apply to local database
+# - Regenerate Prisma Client
+```
+
+### Migration File Structure
+
+```
+prisma/
+├── schema.prisma
+└── migrations/
+    ├── 20240115120000_initial/
+    │   └── migration.sql
+    ├── 20240116090000_add_agents/
+    │   └── migration.sql
+    └── 20240117150000_add_user_preferences/
+        └── migration.sql
+```
+
+---
+
+## Schema Changes
+
+### Adding a Table
+
+```prisma
+// schema.prisma
+
+model UserPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  theme     String   @default("system")
+  language  String   @default("en")
+  timezone  String   @default("UTC")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId])
+  @@index([userId])
+}
+```
+
+```bash
+# Generate migration
+npx prisma migrate dev --name add_user_preferences
+```
+
+Generated SQL:
+```sql
+-- CreateTable
+CREATE TABLE "UserPreference" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "theme" TEXT NOT NULL DEFAULT 'system',
+    "language" TEXT NOT NULL DEFAULT 'en',
+    "timezone" TEXT NOT NULL DEFAULT 'UTC',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "UserPreference_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserPreference_userId_key" ON "UserPreference"("userId");
+
+-- CreateIndex
+CREATE INDEX "UserPreference_userId_idx" ON "UserPreference"("userId");
+
+-- AddForeignKey
+ALTER TABLE "UserPreference" ADD CONSTRAINT "UserPreference_userId_fkey"
+  FOREIGN KEY ("userId") REFERENCES "User"("id")
+  ON DELETE RESTRICT ON UPDATE CASCADE;
+```
+
+### Adding a Column
+
+```prisma
+model Agent {
+  // ... existing fields
+  maxSessionDuration Int? @default(3600) // New field
+}
+```
+
+```bash
+npx prisma migrate dev --name add_agent_max_duration
+```
+
+### Adding an Index
+
+```prisma
+model Session {
+  // ... existing fields
+
+  @@index([agentId, status]) // Composite index
+  @@index([createdAt])       // Single column index
+}
+```
+
+### Renaming a Column
+
+Prisma doesn't automatically detect renames. Use `@map`:
+
+```prisma
+model Agent {
+  systemPrompt String @map("system_prompt") // Maps to existing column
+}
+```
+
+Or create a custom migration:
+
+```sql
+-- migrations/20240118_rename_column/migration.sql
+ALTER TABLE "Agent" RENAME COLUMN "prompt" TO "system_prompt";
+```
+
+---
+
+## Safe Migration Patterns
+
+### Non-Breaking Changes (Safe)
+
+These can be deployed without coordination:
+
+| Change | Safety | Notes |
+|--------|--------|-------|
+| Add nullable column | Safe | No data required |
+| Add column with default | Safe | Existing rows get default |
+| Add new table | Safe | No existing data affected |
+| Add index | Safe | May lock table briefly |
+| Remove unused column | Safe* | Verify code doesn't use it |
+
+### Breaking Changes (Caution)
+
+These require careful planning:
+
+| Change | Risk | Mitigation |
+|--------|------|------------|
+| Remove column | High | Deploy code first, then migrate |
+| Rename column | High | Use `@map` or multi-step migration |
+| Change column type | High | Add new column, migrate data, remove old |
+| Add NOT NULL | Medium | Backfill data first |
+| Add unique constraint | Medium | Verify no duplicates |
+
+### Multi-Step Migration Pattern
+
+For breaking changes, use multiple deployments:
+
+```
+Step 1: Add new column (nullable)
+  - Deploy migration
+  - No code changes
+
+Step 2: Dual-write
+  - Deploy code that writes to both columns
+  - Backfill existing data
+
+Step 3: Read from new column
+  - Deploy code that reads from new column
+  - Keep writing to both
+
+Step 4: Remove old column
+  - Deploy migration removing old column
+  - Update code to use only new column
+```
+
+---
+
+## Testing Migrations
+
+### Local Testing
+
+```bash
+# Reset and apply all migrations
+npx prisma migrate reset
+
+# Apply pending migrations
+npx prisma migrate dev
+
+# Check migration status
+npx prisma migrate status
+```
+
+### Testing on Fresh Database
+
+```bash
+# Create test database
+docker run -d \
+  --name postgres-test \
+  -e POSTGRES_PASSWORD=test \
+  -p 5433:5432 \
+  postgres:15
+
+# Apply migrations
+DATABASE_URL="postgresql://postgres:test@localhost:5433/test" \
+  npx prisma migrate deploy
+
+# Verify schema
+DATABASE_URL="postgresql://postgres:test@localhost:5433/test" \
+  npx prisma db pull --print
+```
+
+### Testing Rollback
+
+```bash
+# Create migration
+npx prisma migrate dev --name test_migration
+
+# Verify it works
+npx prisma migrate status
+
+# If issues, rollback manually
+# See Rollback section below
+```
+
+---
+
+## Deployment
+
+### Staging Deployment
+
+```bash
+# 1. Check pending migrations
+DATABASE_URL=$STAGING_DATABASE_URL npx prisma migrate status
+
+# 2. Deploy migrations
+DATABASE_URL=$STAGING_DATABASE_URL npx prisma migrate deploy
+
+# 3. Verify
+DATABASE_URL=$STAGING_DATABASE_URL npx prisma db pull --print
+```
+
+### Production Deployment
+
+```bash
+# 1. Take backup first
+pg_dump $PRODUCTION_DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# 2. Check pending migrations
+DATABASE_URL=$PRODUCTION_DATABASE_URL npx prisma migrate status
+
+# 3. Deploy during low-traffic period
+DATABASE_URL=$PRODUCTION_DATABASE_URL npx prisma migrate deploy
+
+# 4. Verify
+DATABASE_URL=$PRODUCTION_DATABASE_URL npx prisma db pull --print
+
+# 5. Monitor for issues
+# Check application logs
+# Monitor error rates
+```
+
+### CI/CD Integration
+
+```yaml
+# .github/workflows/migrate.yml
+- name: Run Migrations
+  run: npx prisma migrate deploy
+  env:
+    DATABASE_URL: ${{ secrets.DATABASE_URL }}
+```
+
+---
+
+## Rollback Strategies
+
+### Rollback by Reverting Code
+
+If migration is already applied:
+
+1. Revert the code change
+2. Deploy reverted code
+3. Create a new "undo" migration
+
+```bash
+# Create undo migration
+npx prisma migrate dev --name undo_add_preferences
+
+# In migration.sql, write reverse operations
+DROP TABLE "UserPreference";
+```
+
+### Manual Rollback
+
+For emergency rollback:
+
+```sql
+-- Check current migration state
+SELECT * FROM "_prisma_migrations" ORDER BY started_at DESC;
+
+-- Mark migration as rolled back
+UPDATE "_prisma_migrations"
+SET rolled_back_at = NOW()
+WHERE migration_name = '20240117150000_add_user_preferences';
+
+-- Manually reverse changes
+DROP TABLE "UserPreference";
+```
+
+### Prisma Migrate Resolve
+
+For fixing migration state:
+
+```bash
+# Mark migration as applied (skip execution)
+npx prisma migrate resolve --applied 20240117150000_add_user_preferences
+
+# Mark migration as rolled back
+npx prisma migrate resolve --rolled-back 20240117150000_add_user_preferences
+```
+
+---
+
+## Data Migrations
+
+### Backfilling Data
+
+For adding data alongside schema changes:
+
+```typescript
+// scripts/backfill-preferences.ts
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Get users without preferences
+  const users = await prisma.user.findMany({
+    where: {
+      preferences: null,
+    },
+  });
+
+  console.log(`Backfilling ${users.length} users`);
+
+  // Create preferences in batches
+  const batchSize = 100;
+  for (let i = 0; i < users.length; i += batchSize) {
+    const batch = users.slice(i, i + batchSize);
+
+    await prisma.userPreference.createMany({
+      data: batch.map((user) => ({
+        userId: user.id,
+        theme: 'system',
+        language: 'en',
+        timezone: 'UTC',
+      })),
+      skipDuplicates: true,
+    });
+
+    console.log(`Processed ${Math.min(i + batchSize, users.length)}/${users.length}`);
+  }
+
+  console.log('Backfill complete');
+}
+
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
+```
+
+```bash
+# Run backfill
+DATABASE_URL=$STAGING_DATABASE_URL npx ts-node scripts/backfill-preferences.ts
+```
+
+### Data Transformation
+
+```typescript
+// Transform existing data during migration
+async function transformAgentConfigs() {
+  const agents = await prisma.agent.findMany({
+    where: {
+      config: { not: null },
+      newConfig: null,
+    },
+  });
+
+  for (const agent of agents) {
+    const oldConfig = agent.config as OldConfigType;
+
+    // Transform to new format
+    const newConfig = {
+      llm: {
+        provider: oldConfig.llmProvider,
+        model: oldConfig.llmModel,
+      },
+      voice: {
+        sttProvider: oldConfig.sttProvider,
+        ttsProvider: oldConfig.ttsProvider,
+      },
+    };
+
+    await prisma.agent.update({
+      where: { id: agent.id },
+      data: { newConfig },
+    });
+  }
+}
+```
+
+---
+
+## Performance Considerations
+
+### Large Table Migrations
+
+For tables with millions of rows:
+
+```sql
+-- Use concurrent index creation
+CREATE INDEX CONCURRENTLY idx_session_agent_id ON "Session" ("agentId");
+
+-- Add column without default (faster)
+ALTER TABLE "Agent" ADD COLUMN "metadata" JSONB;
+
+-- Backfill in batches separately
+UPDATE "Agent" SET "metadata" = '{}' WHERE id IN (
+  SELECT id FROM "Agent" WHERE "metadata" IS NULL LIMIT 10000
+);
+```
+
+### Lock Timeouts
+
+```sql
+-- Set lock timeout to avoid blocking
+SET lock_timeout = '10s';
+
+-- Run migration
+ALTER TABLE "Agent" ADD COLUMN "status" TEXT;
+
+-- Reset
+RESET lock_timeout;
+```
+
+### Monitoring Migration Progress
+
+```sql
+-- Check lock status
+SELECT * FROM pg_locks WHERE relation = 'Agent'::regclass;
+
+-- Check running queries
+SELECT pid, query, state, query_start
+FROM pg_stat_activity
+WHERE state != 'idle'
+ORDER BY query_start;
+
+-- Kill long-running migration if needed
+SELECT pg_terminate_backend(pid);
+```
+
+---
+
+## Troubleshooting
+
+### Migration Failed
+
+```bash
+# Check status
+npx prisma migrate status
+
+# View failed migration details
+SELECT * FROM "_prisma_migrations"
+WHERE finished_at IS NULL;
+
+# Fix and retry
+# 1. Fix the issue
+# 2. Mark as rolled back
+npx prisma migrate resolve --rolled-back <migration_name>
+# 3. Regenerate migration
+npx prisma migrate dev --name fixed_migration
+```
+
+### Schema Drift
+
+```bash
+# Check for drift
+npx prisma migrate diff \
+  --from-schema-datasource prisma/schema.prisma \
+  --to-schema-datamodel prisma/schema.prisma
+
+# Reset to match schema (DEVELOPMENT ONLY)
+npx prisma db push --force-reset
+```
+
+### Conflicting Migrations
+
+When multiple developers create migrations:
+
+```bash
+# Pull latest
+git pull origin develop
+
+# Check for conflicts
+npx prisma migrate status
+
+# If conflicts, reset and regenerate
+npx prisma migrate reset
+npx prisma migrate dev --name merged_changes
+```
+
+---
+
+## Best Practices
+
+### Do's
+
+- Always test migrations on staging first
+- Take backups before production migrations
+- Use feature flags for related code changes
+- Write idempotent migrations when possible
+- Document complex migrations
+
+### Don'ts
+
+- Don't modify existing migration files
+- Don't delete migrations that have been deployed
+- Don't run migrations during peak traffic
+- Don't combine data migrations with schema migrations
+- Don't assume rollback is automatic
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Deployment Overview" icon="globe" href="/internal/deployment/overview">
+    Architecture overview
+  </Card>
+  <Card title="Rollback" icon="rotate-left" href="/internal/deployment/rollback">
+    Rollback procedures
+  </Card>
+  <Card title="Production Deployment" icon="rocket" href="/internal/deployment/production">
+    Production releases
+  </Card>
+  <Card title="Runbooks: Database" icon="database" href="/internal/runbooks/database">
+    Database troubleshooting
+  </Card>
+</CardGroup>

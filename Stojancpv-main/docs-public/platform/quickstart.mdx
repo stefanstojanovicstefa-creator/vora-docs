@@ -1,0 +1,263 @@
+---
+title: Quickstart
+description: Create your first voice AI agent in under 5 minutes
+---
+
+# Quickstart
+
+<Tabs>
+  <Tab title="Simple">
+    Get your first Vora voice agent up and running in 3 easy steps. No coding required.
+
+    ## Before You Start
+
+    You'll need:
+    - A Vora account ([sign up free](https://app.voicevora.com/signup))
+    - A microphone for testing
+    - About 5 minutes
+
+    ---
+
+    ## Step 1: Create Your Agent
+
+    <Steps>
+      <Step title="Go to Agents">
+        From the dashboard, click **Agents** in the sidebar, then click **Create Agent**.
+      </Step>
+      <Step title="Choose Interview Method">
+        Select **Interview** as your creation method. Vora will ask you questions about your agent and build it for you.
+
+        <Tip>
+          Just speak naturally - the AI understands conversational responses. Describe what your agent should do, your business, and the tone you want.
+        </Tip>
+      </Step>
+      <Step title="Pick a Voice and Language">
+        Choose a voice from the library (click play to preview) and select your agent's language. Vora supports 100+ languages.
+      </Step>
+    </Steps>
+
+    ---
+
+    ## Step 2: Test Your Agent
+
+    <Steps>
+      <Step title="Open the Simulator">
+        Click the **Test** button in the top right corner to open the voice simulator.
+      </Step>
+      <Step title="Have a Conversation">
+        Click the microphone icon and start talking. Try a few scenarios:
+        - Ask about your business
+        - Request an appointment
+        - Say "Can I speak to a human?"
+      </Step>
+    </Steps>
+
+    <Warning>
+      Make sure to allow microphone access when your browser prompts you.
+    </Warning>
+
+    ---
+
+    ## Step 3: Deploy
+
+    <Steps>
+      <Step title="Click Deploy">
+        Click the **Deploy** button on your agent page.
+      </Step>
+      <Step title="Choose a Channel">
+        - **Phone Number** - Get a number so people can call your agent
+        - **Web Widget** - Add a voice button to your website
+      </Step>
+      <Step title="Go Live">
+        Click **Activate** and your agent is live.
+      </Step>
+    </Steps>
+
+    ---
+
+    ## What's Next?
+
+    <CardGroup cols={2}>
+      <Card title="Add Knowledge" icon="database" href="/platform/knowledge-base">
+        Upload documents so your agent answers more questions
+      </Card>
+      <Card title="Connect Integrations" icon="plug" href="/platform/integrations">
+        Link to HubSpot, Google Calendar, and more
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="Advanced">
+    Get your first Vora voice agent up and running with full control over providers and configuration.
+
+    ## Before You Start
+
+    You'll need:
+    - A Vora account ([sign up free](https://app.voicevora.com/signup))
+    - A microphone for testing
+    - About 5 minutes
+    - (Optional) Your own provider API keys for custom configuration
+
+    <Info>
+      Make sure you're in **Advanced Mode** by clicking the toggle in the sidebar. This unlocks the Command Center and provider settings.
+    </Info>
+
+    ---
+
+    ## Step 1: Create Your Agent
+
+    Choose your creation method:
+
+    <AccordionGroup>
+      <Accordion title="Interview Method (Recommended)">
+        The fastest way to get started. Vora interviews you and generates the agent configuration.
+
+        1. Click **Create Agent** → **Interview**
+        2. Answer questions about your use case, business, and desired tone
+        3. Vora generates a system prompt, selects providers, and configures the agent
+      </Accordion>
+      <Accordion title="URL Import">
+        Import your business context from a website URL.
+
+        1. Click **Create Agent** → **URL Import**
+        2. Enter your website URL
+        3. Vora crawls the site and builds an agent based on the content
+      </Accordion>
+      <Accordion title="Prompt Mode (Advanced)">
+        Write the system prompt directly for full control.
+
+        1. Click **Create Agent** → **Prompt Mode**
+        2. Write your system prompt with instructions, personality, and rules
+        3. Configure providers manually in the Command Center
+      </Accordion>
+      <Accordion title="Command Center (Advanced)">
+        Full 9-tab agent builder for granular control over every setting.
+
+        1. Click **Create Agent** → **Command Center**
+        2. Configure each tab: Brain, Voice, Ears, Functions, Knowledge, Advanced, Deploy, Analytics, Testing
+        3. See the [Command Center docs](/advanced/command-center) for details on each tab
+      </Accordion>
+    </AccordionGroup>
+
+    ---
+
+    ## Step 2: Configure Providers
+
+    In the Command Center, configure your voice pipeline:
+
+    | Component | Default Provider | Alternatives |
+    |-----------|-----------------|--------------|
+    | **STT** (Speech-to-Text) | Deepgram | Google, AssemblyAI, Soniox, Azure |
+    | **LLM** (AI Model) | Gemini Flash | GPT-4o, Claude, Groq, Mistral |
+    | **TTS** (Text-to-Speech) | ElevenLabs | Cartesia, Google, Azure, PlayHT |
+
+    <Tip>
+      Using Vora's default providers? No API keys needed - Vora handles the provider connections. Bring your own keys for custom providers via **Settings → API Keys**.
+    </Tip>
+
+    ---
+
+    ## Step 3: Test Your Agent
+
+    <Steps>
+      <Step title="Open the Simulator">
+        Click the **Test** button in the top right corner. The simulator opens in a side panel.
+      </Step>
+      <Step title="Start a Conversation">
+        Click the microphone icon and start talking. The agent responds in real-time.
+      </Step>
+      <Step title="Check the Logs">
+        In the simulator, view real-time logs to see:
+        - STT transcription output
+        - LLM token usage and latency
+        - TTS generation time
+        - Function calls executed
+      </Step>
+    </Steps>
+
+    <Warning>
+      Make sure to allow microphone access when your browser prompts you.
+    </Warning>
+
+    ---
+
+    ## Step 4: Deploy Your Agent
+
+    <Steps>
+      <Step title="Click Deploy">
+        Click the **Deploy** button at the top of the agent page.
+      </Step>
+      <Step title="Choose Deployment Channel">
+        - **Phone Number** - Provision a number or connect your SIP trunk
+        - **Web Widget** - Get an embed script for your website
+        - **API** - Create sessions programmatically via the REST API
+      </Step>
+      <Step title="Configure Webhooks (Optional)">
+        Set up webhook URLs to receive session events:
+        ```json
+        {
+          "url": "https://your-server.com/webhook",
+          "events": ["session.started", "session.ended", "function.called"]
+        }
+        ```
+      </Step>
+      <Step title="Go Live">
+        Click **Activate** and your agent starts accepting calls.
+      </Step>
+    </Steps>
+
+    ---
+
+    ## Step 5: Monitor and Improve
+
+    <Steps>
+      <Step title="View Analytics">
+        Go to **Analytics** to see call volume, duration, success rate, and cost per call.
+      </Step>
+      <Step title="Review Sessions">
+        Go to **Sessions** to read transcripts, listen to recordings, and review function calls.
+      </Step>
+      <Step title="Check Monitoring">
+        Go to **Monitoring** (Advanced Mode) to see real-time system health, provider latency, and error rates.
+      </Step>
+      <Step title="Iterate">
+        Based on session data:
+        - Refine the system prompt
+        - Add documents to the Knowledge Base
+        - Create custom functions for common requests
+        - Adjust provider settings for better latency or quality
+      </Step>
+    </Steps>
+
+    ---
+
+    ## What's Next?
+
+    <CardGroup cols={2}>
+      <Card title="Command Center" icon="sliders" href="/advanced/command-center">
+        Master the 9-tab agent builder
+      </Card>
+      <Card title="Custom Functions" icon="code" href="/advanced/custom-functions">
+        Build custom actions for your agent
+      </Card>
+      <Card title="API Reference" icon="terminal" href="/api">
+        Integrate Vora programmatically
+      </Card>
+      <Card title="Provider Guide" icon="server" href="/providers">
+        Compare and configure providers
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
+
+---
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Troubleshooting" icon="wrench" href="/platform/support/troubleshooting">
+    Common issues and solutions
+  </Card>
+  <Card title="Contact Support" icon="headset" href="/platform/support">
+    Get help from our team
+  </Card>
+</CardGroup>

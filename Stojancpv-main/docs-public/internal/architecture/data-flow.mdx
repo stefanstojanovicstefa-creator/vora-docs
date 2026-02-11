@@ -1,0 +1,565 @@
+---
+title: Data Flow Documentation
+description: Request/response flows through the Vora platform
+---
+
+# Data Flow Documentation
+
+This document describes how data flows through the Vora platform for different operations.
+
+---
+
+## API Request Flow
+
+### Standard API Request
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant LB as Load Balancer
+    participant API as Express Server
+    participant Auth as Clerk Auth
+    participant Service as Service Layer
+    participant DB as PostgreSQL
+    participant Cache as Redis
+
+    Client->>LB: HTTP Request
+    LB->>API: Forward Request
+    API->>Auth: Validate JWT
+    Auth-->>API: User Context
+    API->>API: Validate with Zod
+    API->>Service: Call Service
+    Service->>Cache: Check Cache
+    alt Cache Hit
+        Cache-->>Service: Cached Data
+    else Cache Miss
+        Service->>DB: Query Database
+        DB-->>Service: Data
+        Service->>Cache: Store in Cache
+    end
+    Service-->>API: Response Data
+    API-->>Client: HTTP Response
+```
+
+### Request Processing Steps
+
+| Step | Component | Action |
+|------|-----------|--------|
+| 1 | Load Balancer | Route to healthy backend |
+| 2 | Express | Parse request |
+| 3 | Clerk Middleware | Validate JWT token |
+| 4 | Auth Middleware | Extract user context |
+| 5 | Validation | Zod schema validation |
+| 6 | Service Layer | Business logic |
+| 7 | Cache Check | Redis lookup |
+| 8 | Database | Prisma query |
+| 9 | Response | Format and return |
+
+---
+
+## Agent Creation Flow
+
+```mermaid
+flowchart TB
+    subgraph Client["Client"]
+        Form[Agent Form]
+        Preview[Preview]
+    end
+
+    subgraph API["API Layer"]
+        Route[POST /agents]
+        Validation[Zod Validation]
+        Service[Agent Service]
+    end
+
+    subgraph Database["Data Layer"]
+        Agents[(Agents Table)]
+        KB[(Knowledge Base)]
+        Functions[(Functions)]
+    end
+
+    subgraph Async["Async Processing"]
+        Queue[BullMQ]
+        Worker[Worker]
+    end
+
+    Form --> Route
+    Route --> Validation
+    Validation --> Service
+    Service --> Agents
+    Service --> KB
+    Service --> Functions
+    Service --> Queue
+    Queue --> Worker
+    Worker --> KB
+```
+
+### Data Transformation
+
+```typescript
+// Input (Client)
+{
+  name: "Sales Agent",
+  description: "Handles sales inquiries",
+  systemPrompt: "You are a helpful sales representative...",
+  llm: { provider: "openai", model: "gpt-4" },
+  stt: { provider: "deepgram", language: "en-US" },
+  tts: { provider: "elevenlabs", voiceId: "rachel" }
+}
+
+// Validated (After Zod)
+{
+  name: "Sales Agent",           // Trimmed, length validated
+  description: "Handles...",      // Optional, validated
+  systemPrompt: "You are...",    // Min/max length checked
+  llm: { provider: "openai", model: "gpt-4", temperature: 0.7 },
+  stt: { provider: "deepgram", language: "en-US", punctuate: true },
+  tts: { provider: "elevenlabs", voiceId: "rachel", speed: 1.0 }
+}
+
+// Stored (Database)
+{
+  id: "ag_123abc",
+  userId: "user_456",
+  name: "Sales Agent",
+  description: "Handles sales inquiries",
+  systemPrompt: "You are...",
+  llmConfig: {...},              // JSONB
+  sttConfig: {...},              // JSONB
+  ttsConfig: {...},              // JSONB
+  status: "draft",
+  createdAt: "2024-01-15T...",
+  updatedAt: "2024-01-15T..."
+}
+```
+
+---
+
+## Voice Session Flow
+
+### Session Initialization
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant LiveKit
+    participant AgentService
+    participant Redis
+
+    Client->>API: POST /sessions
+    API->>API: Load Agent Config
+    API->>LiveKit: Create Room
+    LiveKit-->>API: Room Name
+    API->>AgentService: Dispatch Agent
+    AgentService->>LiveKit: Agent Joins Room
+    API->>Redis: Store Session State
+    API->>LiveKit: Generate Token
+    LiveKit-->>API: JWT Token
+    API-->>Client: { token, roomName, sessionId }
+    Client->>LiveKit: Connect (WebRTC)
+```
+
+### Voice Turn Processing
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Agent
+    participant STT
+    participant LLM
+    participant TTS
+    participant Redis
+
+    User->>Agent: Audio Stream
+    Agent->>STT: Audio Chunks
+    loop Until Speech Ends
+        STT-->>Agent: Partial Transcript
+    end
+    STT-->>Agent: Final Transcript
+    Agent->>Redis: Store Turn (User)
+    Agent->>LLM: Messages + User Input
+    loop Streaming Response
+        LLM-->>Agent: Token
+        Agent->>TTS: Accumulated Text
+        TTS-->>Agent: Audio Chunk
+        Agent-->>User: Audio Stream
+    end
+    Agent->>Redis: Store Turn (Agent)
+```
+
+### Session State
+
+```typescript
+// Redis Session State
+{
+  sessionId: "sess_abc123",
+  roomName: "room_xyz",
+  agentId: "ag_456",
+  userId: "user_789",
+  status: "active",
+  startedAt: 1705123456789,
+  turns: [
+    { role: "user", content: "Hello", timestamp: 1705123460000 },
+    { role: "agent", content: "Hi there!", timestamp: 1705123462000 }
+  ],
+  context: {
+    // Accumulated conversation context
+  },
+  metrics: {
+    turnCount: 2,
+    totalDuration: 6000,
+    avgLatency: 450
+  }
+}
+```
+
+---
+
+## Knowledge Base Ingestion
+
+### Document Upload Flow
+
+```mermaid
+flowchart TB
+    subgraph Upload["Upload Phase"]
+        Client[Client Upload]
+        API[API Endpoint]
+        S3[Object Storage]
+    end
+
+    subgraph Queue["Queue Phase"]
+        Job[Create Job]
+        BullMQ[BullMQ]
+    end
+
+    subgraph Process["Processing Phase"]
+        Worker[Worker]
+        Extract[Text Extraction]
+        Chunk[Chunking]
+        Embed[Embedding]
+    end
+
+    subgraph Store["Storage Phase"]
+        Vectors[(Vector DB)]
+        Metadata[(PostgreSQL)]
+    end
+
+    Client --> API
+    API --> S3
+    API --> Job
+    Job --> BullMQ
+    BullMQ --> Worker
+    Worker --> Extract
+    Extract --> Chunk
+    Chunk --> Embed
+    Embed --> Vectors
+    Embed --> Metadata
+```
+
+### Document Processing Pipeline
+
+```typescript
+// Step 1: Upload
+{
+  documentId: "doc_123",
+  fileName: "product-manual.pdf",
+  fileSize: 1024000,
+  mimeType: "application/pdf",
+  storageUrl: "s3://bucket/docs/doc_123.pdf"
+}
+
+// Step 2: Text Extraction
+{
+  documentId: "doc_123",
+  rawText: "Chapter 1: Introduction\n\nThis manual describes...",
+  pageCount: 50,
+  wordCount: 25000
+}
+
+// Step 3: Chunking
+[
+  { id: "chunk_1", text: "Chapter 1: Introduction\n\nThis manual...", tokens: 256 },
+  { id: "chunk_2", text: "describes the product features...", tokens: 256 },
+  // ... more chunks
+]
+
+// Step 4: Embedding
+[
+  { chunkId: "chunk_1", embedding: [0.123, -0.456, ...], dimension: 1536 },
+  { chunkId: "chunk_2", embedding: [0.789, -0.012, ...], dimension: 1536 },
+  // ... more embeddings
+]
+
+// Step 5: Storage
+// PostgreSQL
+{
+  id: "doc_123",
+  knowledgeBaseId: "kb_456",
+  fileName: "product-manual.pdf",
+  chunkCount: 98,
+  status: "indexed",
+  indexedAt: "2024-01-15T..."
+}
+
+// Vector DB
+{
+  id: "chunk_1",
+  documentId: "doc_123",
+  vector: [0.123, -0.456, ...],
+  metadata: { pageNumber: 1, section: "Introduction" }
+}
+```
+
+---
+
+## RAG Query Flow
+
+```mermaid
+sequenceDiagram
+    participant Agent
+    participant RAG as RAG Service
+    participant Vector as Vector DB
+    participant LLM
+
+    Agent->>RAG: Query: "How do I reset the device?"
+    RAG->>RAG: Generate Query Embedding
+    RAG->>Vector: Similarity Search
+    Vector-->>RAG: Top K Chunks
+    RAG->>RAG: Format Context
+    RAG->>LLM: Query + Context
+    LLM-->>RAG: Response
+    RAG-->>Agent: Answer with Sources
+```
+
+### Query Processing
+
+```typescript
+// Input Query
+"How do I factory reset the device?"
+
+// Query Embedding
+[0.234, -0.567, 0.891, ...]  // 1536 dimensions
+
+// Similarity Search Results
+[
+  { chunkId: "chunk_45", score: 0.92, text: "To perform a factory reset..." },
+  { chunkId: "chunk_12", score: 0.87, text: "Warning: Factory reset will..." },
+  { chunkId: "chunk_78", score: 0.81, text: "Reset options include..." }
+]
+
+// Formatted Context
+`Based on the following documentation:
+
+[1] To perform a factory reset, hold the power button for 10 seconds...
+[2] Warning: Factory reset will erase all user data and settings...
+[3] Reset options include soft reset, hard reset, and factory reset...
+
+Answer the user's question: How do I factory reset the device?`
+
+// LLM Response
+{
+  answer: "To factory reset your device, hold the power button for 10 seconds...",
+  sources: ["chunk_45", "chunk_12"],
+  confidence: 0.95
+}
+```
+
+---
+
+## Webhook Delivery Flow
+
+```mermaid
+flowchart TB
+    subgraph Trigger["Trigger Phase"]
+        Event[Event Occurs]
+        EventBus[Event Bus]
+    end
+
+    subgraph Queue["Queue Phase"]
+        Job[Webhook Job]
+        BullMQ[BullMQ]
+        Retry[Retry Logic]
+    end
+
+    subgraph Delivery["Delivery Phase"]
+        Worker[Webhook Worker]
+        HTTP[HTTP Client]
+        Target[Customer Endpoint]
+    end
+
+    subgraph Logging["Logging Phase"]
+        Log[(Delivery Log)]
+        Metrics[Metrics]
+    end
+
+    Event --> EventBus
+    EventBus --> Job
+    Job --> BullMQ
+    BullMQ --> Worker
+    Worker --> HTTP
+    HTTP --> Target
+    HTTP --> Retry
+    Retry --> BullMQ
+    HTTP --> Log
+    HTTP --> Metrics
+```
+
+### Webhook Payload
+
+```typescript
+// Event: session.completed
+{
+  id: "evt_123abc",
+  type: "session.completed",
+  timestamp: "2024-01-15T10:30:00Z",
+  data: {
+    sessionId: "sess_456",
+    agentId: "ag_789",
+    duration: 180,
+    turnCount: 12,
+    transcript: [
+      { role: "user", content: "Hello" },
+      { role: "agent", content: "Hi, how can I help?" },
+      // ...
+    ],
+    metrics: {
+      avgLatency: 420,
+      totalTokens: 1500
+    }
+  }
+}
+
+// Delivery Attempt
+{
+  webhookId: "wh_abc",
+  endpoint: "https://customer.com/webhooks/vora",
+  attempt: 1,
+  status: 200,
+  responseTime: 150,
+  timestamp: "2024-01-15T10:30:01Z"
+}
+
+// Failed Delivery (Retry)
+{
+  webhookId: "wh_abc",
+  endpoint: "https://customer.com/webhooks/vora",
+  attempt: 2,
+  status: 500,
+  error: "Internal Server Error",
+  nextRetry: "2024-01-15T10:31:01Z",  // Exponential backoff
+  timestamp: "2024-01-15T10:30:31Z"
+}
+```
+
+---
+
+## Analytics Data Flow
+
+```mermaid
+flowchart TB
+    subgraph Sources["Data Sources"]
+        API[API Requests]
+        Sessions[Voice Sessions]
+        Webhooks[Webhook Delivery]
+    end
+
+    subgraph Collection["Collection"]
+        Events[Event Stream]
+        Redis[Redis Buffer]
+    end
+
+    subgraph Processing["Processing"]
+        Aggregator[Aggregator Worker]
+        Calculator[Metrics Calculator]
+    end
+
+    subgraph Storage["Storage"]
+        Timeseries[(TimeSeries Data)]
+        Analytics[(Analytics DB)]
+        Prometheus[(Prometheus)]
+    end
+
+    subgraph Query["Query Layer"]
+        Dashboard[Dashboard API]
+        Grafana[Grafana]
+        Export[Export API]
+    end
+
+    API --> Events
+    Sessions --> Events
+    Webhooks --> Events
+    Events --> Redis
+    Redis --> Aggregator
+    Aggregator --> Calculator
+    Calculator --> Timeseries
+    Calculator --> Analytics
+    Calculator --> Prometheus
+    Timeseries --> Dashboard
+    Prometheus --> Grafana
+    Analytics --> Export
+```
+
+---
+
+## Data Retention
+
+### Retention Policies
+
+| Data Type | Retention | Storage |
+|-----------|-----------|---------|
+| Agents | Indefinite | PostgreSQL |
+| Sessions | 90 days | PostgreSQL |
+| Transcripts | 30 days | PostgreSQL |
+| Audio Recordings | 7 days | S3 |
+| Metrics (detailed) | 30 days | TimeSeries |
+| Metrics (aggregated) | 1 year | Analytics |
+| Logs | 14 days | Loki |
+
+### Cleanup Jobs
+
+```typescript
+// Scheduled cleanup job
+const cleanupJob = new CronJob('0 2 * * *', async () => {
+  // Delete old sessions
+  await prisma.session.deleteMany({
+    where: {
+      createdAt: { lt: subDays(new Date(), 90) }
+    }
+  });
+
+  // Delete old transcripts
+  await prisma.transcript.deleteMany({
+    where: {
+      createdAt: { lt: subDays(new Date(), 30) }
+    }
+  });
+
+  // Delete old audio files
+  await s3.deleteObjects({
+    Bucket: 'vora-audio',
+    Delete: {
+      Objects: await getOldAudioFiles(7)
+    }
+  });
+});
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="System Overview" icon="layer-group" href="/internal/architecture/overview">
+    5-layer architecture
+  </Card>
+  <Card title="Voice Pipeline" icon="microphone" href="/internal/architecture/voice-pipeline">
+    Voice processing details
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    API endpoints
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/developers/webhooks">
+    Webhook events
+  </Card>
+</CardGroup>

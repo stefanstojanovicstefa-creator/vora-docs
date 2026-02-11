@@ -1,0 +1,67 @@
+---
+title: Tagalog (Filipino)
+description: Tagalog voice AI support - providers, configuration, and best practices
+---
+
+# Tagalog (Filipino)
+
+<Tabs>
+  <Tab title="Simple">
+    Vora fully supports **Tagalog (Filipino)** for voice AI agents. ~85M speakers in the Philippines.
+
+    ### Setting Up a Tagalog Agent
+
+    <Steps>
+      <Step title="Create your agent">
+        Use any creation method (Interview, URL Import, etc.)
+      </Step>
+      <Step title="Set language to Tagalog">
+        In voice settings, select **Tagalog (Filipino)** from the language dropdown.
+      </Step>
+      <Step title="Choose a voice">
+        Select from available Tagalog voices in the voice library.
+      </Step>
+      <Step title="Test and deploy">
+        Test with the simulator, then deploy as usual.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For best results with Tagalog, we recommend Murf AI voices for the most natural speech.
+    </Tip>
+  </Tab>
+  <Tab title="Advanced">
+    ## Provider Matrix
+
+    | Detail | Value |
+    |--------|-------|
+    | **Code** | tl-PH |
+    | **Region** | Philippines |
+    | **Speakers** | ~85M |
+    | **Best ASR** | Deepgram |
+    | **Best TTS** | Murf AI |
+    | **Best LLM** | Gemini |
+
+    ### Available Providers
+
+    | Type | Providers |
+    |------|-----------|
+    | **ASR** | Google, Azure, AWS, Deepgram, Soniox, AssemblyAI, ElevenLabs |
+    | **TTS** | Google, Azure, ElevenLabs, Murf AI, Speechify |
+    | **LLM** | Gemini (Best), GPT-4o, Claude, Qwen |
+
+    ### Recommended Stack
+
+    For the best Tagalog voice experience:
+    - **STT**: Deepgram (best accuracy for Tagalog)
+    - **LLM**: Gemini (best Tagalog understanding)
+    - **TTS**: Murf AI (most natural Tagalog speech)
+
+    ### Configuration
+
+    In the Command Center:
+    1. **Ears Tab** → Set STT provider to Deepgram, language to `tl-PH`
+    2. **Brain Tab** → Set LLM to Gemini
+    3. **Voice Tab** → Set TTS to Murf AI, select a Tagalog voice
+  </Tab>
+</Tabs>

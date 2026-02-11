@@ -1,0 +1,263 @@
+---
+title: Brzi start
+description: Napravite svog prvog glasovnog AI agenta za manje od 5 minuta
+---
+
+# Brzi start
+
+<Tabs>
+  <Tab title="Jednostavno">
+    Pokrenite svog prvog Vora glasovnog agenta u 3 laka koraka. Bez kodiranja.
+
+    ## Pre nego sto pocnete
+
+    Bice vam potrebno:
+    - Vora nalog ([registrujte se besplatno](https://app.voicevora.com/signup))
+    - Mikrofon za testiranje
+    - Oko 5 minuta
+
+    ---
+
+    ## Korak 1: Napravite agenta
+
+    <Steps>
+      <Step title="Idite na Agente">
+        Sa kontrolne table, kliknite **Agenti** u bocnoj traci, zatim kliknite **Napravi agenta**.
+      </Step>
+      <Step title="Izaberite metod Intervjua">
+        Izaberite **Intervju** kao metod kreiranja. Vora ce vam postavljati pitanja o vasem agentu i napraviti ga za vas.
+
+        <Tip>
+          Govorite prirodno - AI razume konverzacione odgovore. Opisite sta vas agent treba da radi, vase poslovanje i ton koji zelite.
+        </Tip>
+      </Step>
+      <Step title="Izaberite glas i jezik">
+        Izaberite glas iz biblioteke (kliknite play za preslisavanje) i izaberite jezik vaseg agenta. Vora podrzava 100+ jezika.
+      </Step>
+    </Steps>
+
+    ---
+
+    ## Korak 2: Testirajte agenta
+
+    <Steps>
+      <Step title="Otvorite simulator">
+        Kliknite dugme **Test** u gornjem desnom uglu da otvorite glasovni simulator.
+      </Step>
+      <Step title="Vodite razgovor">
+        Kliknite ikonu mikrofona i pocnite da govorite. Probajte nekoliko scenarija:
+        - Pitajte o svom poslovanju
+        - Zatrazite termin
+        - Recite "Mogu li da razgovaram sa osobom?"
+      </Step>
+    </Steps>
+
+    <Warning>
+      Obavezno dozvolite pristup mikrofonu kada vas pretrazivac to zatrazi.
+    </Warning>
+
+    ---
+
+    ## Korak 3: Pokrenite
+
+    <Steps>
+      <Step title="Kliknite Pokreni">
+        Kliknite dugme **Pokreni** na stranici vaseg agenta.
+      </Step>
+      <Step title="Izaberite kanal">
+        - **Telefonski broj** - Dobijte broj kako bi ljudi mogli da zovu vaseg agenta
+        - **Veb vidzet** - Dodajte glasovno dugme na vasu veb stranicu
+      </Step>
+      <Step title="Aktivirajte">
+        Kliknite **Aktiviraj** i vas agent je aktivan.
+      </Step>
+    </Steps>
+
+    ---
+
+    ## Sta je sledece?
+
+    <CardGroup cols={2}>
+      <Card title="Dodajte znanje" icon="database" href="/platform/knowledge-base">
+        Otpremite dokumente da agent odgovara na vise pitanja
+      </Card>
+      <Card title="Povezite integracije" icon="plug" href="/platform/integrations">
+        Povezite HubSpot, Google kalendar i jos mnogo toga
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="Napredno">
+    Pokrenite svog prvog Vora glasovnog agenta sa punom kontrolom nad provajderima i konfiguracijom.
+
+    ## Pre nego sto pocnete
+
+    Bice vam potrebno:
+    - Vora nalog ([registrujte se besplatno](https://app.voicevora.com/signup))
+    - Mikrofon za testiranje
+    - Oko 5 minuta
+    - (Opciono) Sopstveni API kljucevi provajdera za prilagodjenu konfiguraciju
+
+    <Info>
+      Proverite da ste u **Naprednom rezimu** klikom na prekidac u bocnoj traci. Ovo otkljucava Komandni centar i podesavanja provajdera.
+    </Info>
+
+    ---
+
+    ## Korak 1: Napravite agenta
+
+    Izaberite metod kreiranja:
+
+    <AccordionGroup>
+      <Accordion title="Metod intervjua (preporucen)">
+        Najbrzi nacin da pocnete. Vora vas intervjuise i generise konfiguraciju agenta.
+
+        1. Kliknite **Napravi agenta** -> **Intervju**
+        2. Odgovorite na pitanja o vasem slucaju koriscenja, poslovanju i zeljenom tonu
+        3. Vora generise sistemski prompt, bira provajdere i konfigurise agenta
+      </Accordion>
+      <Accordion title="URL uvoz">
+        Uvezite poslovni kontekst sa URL-a vase veb stranice.
+
+        1. Kliknite **Napravi agenta** -> **URL uvoz**
+        2. Unesite URL vase veb stranice
+        3. Vora pretrazuje sajt i pravi agenta na osnovu sadrzaja
+      </Accordion>
+      <Accordion title="Promptni rezim (napredno)">
+        Napisite sistemski prompt direktno za potpunu kontrolu.
+
+        1. Kliknite **Napravi agenta** -> **Promptni rezim**
+        2. Napisite sistemski prompt sa instrukcijama, licnoscu i pravilima
+        3. Konfigurisite provajdere rucno u Komandnom centru
+      </Accordion>
+      <Accordion title="Komandni centar (napredno)">
+        Potpuni alatka za kreiranje agenata sa 9 tabova za detaljnu kontrolu svakog podesavanja.
+
+        1. Kliknite **Napravi agenta** -> **Komandni centar**
+        2. Konfigurisite svaki tab: Mozak, Glas, Usi, Funkcije, Znanje, Napredno, Pokretanje, Analitika, Testiranje
+        3. Pogledajte [dokumentaciju Komandnog centra](/advanced/command-center) za detalje o svakom tabu
+      </Accordion>
+    </AccordionGroup>
+
+    ---
+
+    ## Korak 2: Konfigurisite provajdere
+
+    U Komandnom centru, konfigurisite vas glasovni pipeline:
+
+    | Komponenta | Podrazumevani provajder | Alternative |
+    |------------|------------------------|-------------|
+    | **STT** (Govor-u-tekst) | Deepgram | Google, AssemblyAI, Soniox, Azure |
+    | **LLM** (AI model) | Gemini Flash | GPT-4o, Claude, Groq, Mistral |
+    | **TTS** (Tekst-u-govor) | ElevenLabs | Cartesia, Google, Azure, PlayHT |
+
+    <Tip>
+      Koristite Vorine podrazumevane provajdere? Nisu potrebni API kljucevi - Vora upravlja konekcijama provajdera. Dovedite sopstvene kljuceve za prilagodjene provajdere putem **Podesavanja -> API kljucevi**.
+    </Tip>
+
+    ---
+
+    ## Korak 3: Testirajte agenta
+
+    <Steps>
+      <Step title="Otvorite simulator">
+        Kliknite dugme **Test** u gornjem desnom uglu. Simulator se otvara u bocnom panelu.
+      </Step>
+      <Step title="Pokrenite razgovor">
+        Kliknite ikonu mikrofona i pocnite da govorite. Agent odgovara u realnom vremenu.
+      </Step>
+      <Step title="Proverite logove">
+        U simulatoru, pogledajte logove u realnom vremenu da vidite:
+        - STT izlaz transkripcije
+        - LLM koriscenje tokena i latenciju
+        - TTS vreme generisanja
+        - Izvrsene pozive funkcija
+      </Step>
+    </Steps>
+
+    <Warning>
+      Obavezno dozvolite pristup mikrofonu kada vas pretrazivac to zatrazi.
+    </Warning>
+
+    ---
+
+    ## Korak 4: Pokrenite agenta
+
+    <Steps>
+      <Step title="Kliknite Pokreni">
+        Kliknite dugme **Pokreni** na vrhu stranice agenta.
+      </Step>
+      <Step title="Izaberite kanal pokretanja">
+        - **Telefonski broj** - Provisionsite broj ili povezite vasu SIP magistralu
+        - **Veb vidzet** - Dobijte skriptu za ugradjivanje na vasu veb stranicu
+        - **API** - Programski kreirajte sesije putem REST API-ja
+      </Step>
+      <Step title="Konfigurisite webhookove (opciono)">
+        Podesite webhook URL-ove za primanje dogadjaja sesija:
+        ```json
+        {
+          "url": "https://vas-server.com/webhook",
+          "events": ["session.started", "session.ended", "function.called"]
+        }
+        ```
+      </Step>
+      <Step title="Aktivirajte">
+        Kliknite **Aktiviraj** i vas agent pocinje da prima pozive.
+      </Step>
+    </Steps>
+
+    ---
+
+    ## Korak 5: Pratite i poboljsavajte
+
+    <Steps>
+      <Step title="Pregledajte analitiku">
+        Idite na **Analitiku** da vidite obim poziva, trajanje, stopu uspeha i cenu po pozivu.
+      </Step>
+      <Step title="Pregledajte sesije">
+        Idite na **Sesije** da citate transkripte, slusate snimke i pregledate pozive funkcija.
+      </Step>
+      <Step title="Proverite monitoring">
+        Idite na **Monitoring** (Napredni rezim) da vidite zdravlje sistema u realnom vremenu, latenciju provajdera i stope gresaka.
+      </Step>
+      <Step title="Iteracija">
+        Na osnovu podataka sesija:
+        - Usavrsite sistemski prompt
+        - Dodajte dokumente u Bazu znanja
+        - Napravite prilagodjene funkcije za ceste zahteve
+        - Prilagodite podesavanja provajdera za bolju latenciju ili kvalitet
+      </Step>
+    </Steps>
+
+    ---
+
+    ## Sta je sledece?
+
+    <CardGroup cols={2}>
+      <Card title="Komandni centar" icon="sliders" href="/advanced/command-center">
+        Savladajte alatku za kreiranje agenata sa 9 tabova
+      </Card>
+      <Card title="Prilagodjene funkcije" icon="code" href="/advanced/custom-functions">
+        Napravite prilagodjene akcije za vaseg agenta
+      </Card>
+      <Card title="API referenca" icon="terminal" href="/api">
+        Integrisite Voru programski
+      </Card>
+      <Card title="Vodic za provajdere" icon="server" href="/providers">
+        Uporedite i konfigurisite provajdere
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
+
+---
+
+## Trebate pomoc?
+
+<CardGroup cols={2}>
+  <Card title="Resavanje problema" icon="wrench" href="/platform/support/troubleshooting">
+    Cesti problemi i resenja
+  </Card>
+  <Card title="Kontaktirajte podrsku" icon="headset" href="/platform/support">
+    Dobijte pomoc od naseg tima
+  </Card>
+</CardGroup>

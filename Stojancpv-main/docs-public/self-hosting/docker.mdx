@@ -1,0 +1,566 @@
+---
+title: Docker Deployment
+description: Deploy Vora with Docker Compose
+---
+
+# Docker Compose Deployment
+
+Deploy Vora on a single server using Docker Compose. Ideal for development, testing, and small-scale production.
+
+---
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Server**: Linux (Ubuntu 22.04+ recommended) or macOS
+- **Docker**: Version 24.0 or higher
+- **Docker Compose**: V2 (included with Docker Desktop)
+- **Domain**: With DNS pointing to your server
+- **SSL**: Let's Encrypt or your own certificates
+
+### Verify Docker Installation
+
+```bash
+# Check Docker version
+docker --version
+# Should output: Docker version 24.x or higher
+
+# Check Docker Compose
+docker compose version
+# Should output: Docker Compose version v2.x or higher
+```
+
+---
+
+## Quick Start
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/vorahq/vora-self-hosted.git
+cd vora-self-hosted
+```
+
+### 2. Configure Environment
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit with your configuration
+nano .env  # or your preferred editor
+```
+
+### 3. Set Required Variables
+
+At minimum, configure these variables in `.env`:
+
+```bash
+# Database
+DATABASE_URL=postgresql://vora:yourpassword@postgres:5432/vora
+
+# Redis
+REDIS_URL=redis://redis:6379
+
+# Authentication (Clerk)
+CLERK_PUBLISHABLE_KEY=pk_live_...
+CLERK_SECRET_KEY=sk_live_...
+
+# AI Providers (at least one of each)
+OPENAI_API_KEY=sk-...
+DEEPGRAM_API_KEY=...
+ELEVENLABS_API_KEY=...
+
+# LiveKit
+LIVEKIT_API_KEY=...
+LIVEKIT_API_SECRET=...
+LIVEKIT_URL=wss://your-livekit-server.com
+```
+
+### 4. Start the Stack
+
+```bash
+# Start all services
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Check status
+docker compose ps
+```
+
+### 5. Run Database Migrations
+
+```bash
+# Run Prisma migrations
+docker compose exec backend npx prisma migrate deploy
+```
+
+### 6. Access the Application
+
+Open `http://localhost:3000` in your browser.
+
+---
+
+## Docker Compose Configuration
+
+### Complete docker-compose.yml
+
+```yaml
+version: '3.8'
+
+services:
+  # Frontend (React SPA)
+  frontend:
+    image: vorahq/vora-frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:4000
+      - VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+      - VITE_LIVEKIT_URL=${LIVEKIT_URL}
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Backend API (Node.js/Express)
+  backend:
+    image: vorahq/vora-backend:latest
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      - LIVEKIT_URL=${LIVEKIT_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Background Workers (BullMQ)
+  worker:
+    image: vorahq/vora-backend:latest
+    command: ["node", "dist/worker.js"]
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=vora
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=vora
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vora -d vora"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (Cache & Queues)
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+---
+
+## Production Configuration
+
+### Adding SSL with Traefik
+
+Add Traefik as a reverse proxy for automatic HTTPS:
+
+```yaml
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=your@email.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    restart: unless-stopped
+
+  frontend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`app.yourdomain.com`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+
+  backend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`api.yourdomain.com`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+
+volumes:
+  letsencrypt:
+```
+
+### Resource Limits
+
+Add resource limits for production:
+
+```yaml
+services:
+  backend:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  postgres:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+```
+
+---
+
+## Health Checks
+
+### Verify All Services
+
+```bash
+# Check all container status
+docker compose ps
+
+# Expected output:
+# NAME                STATUS              PORTS
+# vora-frontend       Up (healthy)        0.0.0.0:3000->3000/tcp
+# vora-backend        Up (healthy)        0.0.0.0:4000->4000/tcp
+# vora-worker         Up
+# vora-postgres       Up (healthy)        0.0.0.0:5432->5432/tcp
+# vora-redis          Up (healthy)        0.0.0.0:6379->6379/tcp
+```
+
+### Individual Health Checks
+
+```bash
+# Backend health
+curl http://localhost:4000/health
+
+# Database connectivity
+docker compose exec postgres pg_isready -U vora
+
+# Redis connectivity
+docker compose exec redis redis-cli ping
+```
+
+---
+
+## Common Operations
+
+### View Logs
+
+```bash
+# All services
+docker compose logs -f
+
+# Specific service
+docker compose logs -f backend
+
+# Last 100 lines
+docker compose logs --tail=100 backend
+```
+
+### Restart Services
+
+```bash
+# Restart all
+docker compose restart
+
+# Restart specific service
+docker compose restart backend
+
+# Restart with rebuild
+docker compose up -d --build backend
+```
+
+### Update Images
+
+```bash
+# Pull latest images
+docker compose pull
+
+# Restart with new images
+docker compose up -d
+
+# Remove old images
+docker image prune -f
+```
+
+### Run Database Migrations
+
+```bash
+# Apply pending migrations
+docker compose exec backend npx prisma migrate deploy
+
+# Reset database (WARNING: destroys data)
+docker compose exec backend npx prisma migrate reset
+```
+
+### Access Shell
+
+```bash
+# Backend shell
+docker compose exec backend sh
+
+# PostgreSQL shell
+docker compose exec postgres psql -U vora -d vora
+
+# Redis CLI
+docker compose exec redis redis-cli
+```
+
+---
+
+## Backup & Restore
+
+### Backup Database
+
+```bash
+# Create backup
+docker compose exec postgres pg_dump -U vora vora > backup_$(date +%Y%m%d).sql
+
+# With compression
+docker compose exec postgres pg_dump -U vora vora | gzip > backup_$(date +%Y%m%d).sql.gz
+```
+
+### Restore Database
+
+```bash
+# Restore from backup
+docker compose exec -T postgres psql -U vora vora < backup.sql
+
+# From compressed backup
+gunzip -c backup.sql.gz | docker compose exec -T postgres psql -U vora vora
+```
+
+### Backup Redis
+
+```bash
+# Trigger RDB snapshot
+docker compose exec redis redis-cli BGSAVE
+
+# Copy RDB file
+docker cp $(docker compose ps -q redis):/data/dump.rdb ./redis_backup.rdb
+```
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Container won't start">
+    **Check logs first:**
+    ```bash
+    docker compose logs backend
+    ```
+
+    **Common causes:**
+    - Missing environment variables
+    - Database not ready
+    - Port already in use
+
+    **Fix port conflicts:**
+    ```bash
+    # Find what's using the port
+    sudo lsof -i :3000
+
+    # Or change the port in docker-compose.yml
+    ports:
+      - "3001:3000"
+    ```
+  </Accordion>
+
+  <Accordion title="Database connection failed">
+    **Verify PostgreSQL is running:**
+    ```bash
+    docker compose ps postgres
+    docker compose logs postgres
+    ```
+
+    **Check connection string:**
+    ```bash
+    # Test from backend container
+    docker compose exec backend sh
+    nc -zv postgres 5432
+    ```
+
+    **Common issues:**
+    - Wrong password in DATABASE_URL
+    - PostgreSQL not accepting connections
+    - Network issue between containers
+  </Accordion>
+
+  <Accordion title="Out of disk space">
+    **Clean up Docker:**
+    ```bash
+    # Remove unused images
+    docker image prune -a
+
+    # Remove unused volumes (WARNING: may delete data)
+    docker volume prune
+
+    # Remove everything unused
+    docker system prune -a
+    ```
+
+    **Check disk usage:**
+    ```bash
+    docker system df
+    ```
+  </Accordion>
+
+  <Accordion title="Slow performance">
+    **Check resource usage:**
+    ```bash
+    docker stats
+    ```
+
+    **Add resource limits** if containers are using too much memory.
+
+    **Optimize PostgreSQL:**
+    ```yaml
+    postgres:
+      command: postgres -c shared_buffers=256MB -c max_connections=100
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Security Hardening
+
+### Production Checklist
+
+- [ ] Change all default passwords
+- [ ] Enable SSL/TLS (use Traefik or nginx)
+- [ ] Restrict exposed ports
+- [ ] Set up firewall rules
+- [ ] Enable Docker security features
+- [ ] Regular security updates
+
+### Restrict Network Access
+
+```yaml
+services:
+  postgres:
+    # Remove port exposure in production
+    # ports:
+    #   - "5432:5432"
+
+  redis:
+    # Remove port exposure in production
+    # ports:
+    #   - "6379:6379"
+```
+
+### Use Secrets
+
+```yaml
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  api_key:
+    file: ./secrets/api_key.txt
+
+services:
+  backend:
+    secrets:
+      - db_password
+      - api_key
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="key" href="/self-hosting/environment">
+    Complete configuration reference
+  </Card>
+  <Card title="Database Setup" icon="database" href="/self-hosting/database">
+    PostgreSQL configuration
+  </Card>
+  <Card title="Scaling Guide" icon="arrows-alt" href="/self-hosting/scaling">
+    Scale beyond a single server
+  </Card>
+  <Card title="Monitoring" icon="chart-area" href="/self-hosting/monitoring">
+    Set up observability
+  </Card>
+</CardGroup>

@@ -1,0 +1,93 @@
+---
+title: ASR Provider Comparison
+description: Compare 12 speech-to-text providers for voice AI agents
+---
+
+# ASR Provider Comparison
+
+Vora integrates with 12 speech-to-text (ASR) providers. Choose the right one based on language support, accuracy, latency, and pricing.
+
+---
+
+## Provider Overview
+
+| Provider | Languages | Specialty | Pricing |
+|----------|-----------|-----------|---------|
+| **Google Cloud STT** | 125+ | Most languages, Chirp 3 | $0.016/min |
+| **Azure Speech** | 110+ | Enterprise, custom models | $0.017-$0.033/min |
+| **AWS Transcribe** | 100+ | Enterprise, medical | $0.016-$0.024/min |
+| **Deepgram Nova-3** | 30+ | Real-time, lowest latency | $0.0077/min |
+| **Soniox v4** | 60+ | Cheapest, real-time translation | $0.10/hr async |
+| **AssemblyAI Universal** | 99+ | Streaming, add-ons | $0.15/hr |
+| **ElevenLabs Scribe** | 99+ | High accuracy, batch | $0.40/hr |
+| **Speechmatics** | 55+ | Medical, enterprise | ~$0.04/min |
+| **Sarvam AI Saarika** | 11 Indian | Indian languages best | ~$0.35/hr |
+| **Munsit (CNTXT)** | Arabic (25+ dialects) | Arabic best | Enterprise |
+| **Valsea** | 7 SEA | SEA accents/Singlish | Contact |
+| **iFLYTEK** | 15 | Chinese/Asian focus | Contact |
+
+---
+
+## Choosing a Provider
+
+### By Use Case
+
+| Use Case | Recommended Provider |
+|----------|---------------------|
+| **English (US/UK)** | Deepgram Nova-3 |
+| **Multi-language (broad)** | Google Cloud STT |
+| **Indian languages** | Sarvam AI Saarika |
+| **Arabic dialects** | Munsit (CNTXT) |
+| **Southeast Asian** | Valsea |
+| **Lowest latency** | Deepgram Nova-3 |
+| **Lowest cost** | Soniox v4 |
+| **Enterprise/custom** | Azure Speech |
+
+### By Region
+
+| Region | Best Providers |
+|--------|---------------|
+| **North America** | Deepgram, Google, Azure |
+| **Europe** | Azure, Google, Speechmatics |
+| **India** | Sarvam AI, Google, Deepgram |
+| **MENA** | Munsit, Google, Azure |
+| **Southeast Asia** | Valsea, Google, Deepgram |
+| **China** | iFLYTEK, Google |
+
+---
+
+## Key Differences
+
+### Latency
+
+Real-time voice agents need low-latency STT. Rankings:
+1. **Deepgram** - Lowest latency (~100ms)
+2. **Soniox** - Very low (~150ms)
+3. **Google/Azure** - Low (~200-300ms)
+4. **AssemblyAI** - Moderate (~300ms)
+
+### Accuracy
+
+Accuracy varies by language and accent:
+- **English**: Deepgram and AssemblyAI lead
+- **Indian languages**: Sarvam AI leads
+- **Arabic**: Munsit leads (25+ dialect support)
+- **SEA languages**: Valsea leads (Singlish, accented English)
+
+### Pricing
+
+Most cost-effective options:
+1. **Deepgram** - $0.0077/min (best value for quality)
+2. **Soniox** - $0.10/hr async ($0.0017/min)
+3. **Google** - $0.016/min
+4. **Azure** - $0.017/min
+
+---
+
+## Configuration
+
+Configure ASR providers in the Command Center [Ears Tab](/advanced/command-center/ears-tab):
+1. Select your primary STT provider
+2. Set the language code
+3. Configure VAD (voice activity detection) settings
+4. Optionally set a fallback provider in the [Advanced Tab](/advanced/command-center/advanced-tab)

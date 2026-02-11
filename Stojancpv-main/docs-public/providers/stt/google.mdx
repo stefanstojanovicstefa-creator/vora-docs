@@ -1,0 +1,394 @@
+---
+title: Google Cloud STT
+description: Speech-to-text with 125+ language support
+---
+
+# Google Cloud STT
+
+Google Cloud Speech-to-Text offers the widest language coverage with reliable accuracy.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `google` |
+| Default Model | `latest_long` |
+| Streaming | ✅ Supported |
+| Latency | ~300-500ms |
+| Languages | 125+ |
+
+---
+
+## Available Models
+
+| Model | Description | Best For |
+|-------|-------------|----------|
+| `latest_long` | Long-form audio | Conversations, meetings |
+| `latest_short` | Short utterances | Commands, quick responses |
+| `phone_call` | Phone audio | Contact centers |
+| `medical_dictation` | Medical terms | Healthcare |
+| `medical_conversation` | Medical dialogue | Telehealth |
+
+<Note>
+**Recommended**: `latest_long` for voice AI conversations.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Multilingual Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  stt: {
+    provider: 'google',
+    model: 'latest_long'
+  }
+});
+```
+
+### Full Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Custom Agent',
+  systemPrompt: 'You are a specialized assistant.',
+  stt: {
+    provider: 'google',
+    model: 'latest_long',
+    languageCode: 'en-US',
+    alternativeLanguageCodes: ['es-ES', 'fr-FR'],
+    enableAutomaticPunctuation: true,
+    enableWordTimeOffsets: false,
+    profanityFilter: false,
+    speechContexts: [
+      {
+        phrases: ['product-name', 'technical-term'],
+        boost: 10
+      }
+    ]
+  }
+});
+```
+
+---
+
+## Why Google STT?
+
+### 1. Unmatched Language Coverage
+
+125+ languages and variants:
+- All major world languages
+- Regional dialects
+- Code-switching support
+
+### 2. Enterprise Reliability
+
+Google Cloud infrastructure:
+- 99.9%+ uptime SLA
+- Global data centers
+- SOC 2 / ISO certified
+
+### 3. Specialized Models
+
+Domain-specific models:
+- Medical (dictation + conversation)
+- Phone call optimized
+- Video transcription
+
+### 4. Multi-Language Detection
+
+Automatic language detection:
+
+```typescript
+stt: {
+  provider: 'google',
+  languageCode: 'en-US',
+  alternativeLanguageCodes: ['es-ES', 'fr-FR', 'de-DE']
+}
+```
+
+---
+
+## Language Support
+
+Google supports 125+ languages. Key examples:
+
+| Language | Codes | Variants |
+|----------|-------|----------|
+| English | `en-US`, `en-GB`, `en-AU` | 10+ |
+| Spanish | `es-ES`, `es-MX`, `es-AR` | 20+ |
+| Chinese | `zh-CN`, `zh-TW`, `zh-HK` | 3 |
+| Arabic | `ar-SA`, `ar-EG`, `ar-AE` | 15+ |
+| Hindi | `hi-IN` | 1 |
+| French | `fr-FR`, `fr-CA` | 5+ |
+| German | `de-DE`, `de-AT`, `de-CH` | 3 |
+| Portuguese | `pt-BR`, `pt-PT` | 2 |
+| Japanese | `ja-JP` | 1 |
+| Korean | `ko-KR` | 1 |
+
+---
+
+## Use Cases
+
+### Multilingual Support Center
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Global Support',
+  systemPrompt: `You are a multilingual support agent.
+  Respond in the language the customer speaks.`,
+  stt: {
+    provider: 'google',
+    languageCode: 'en-US',
+    alternativeLanguageCodes: [
+      'es-ES', 'es-MX',  // Spanish
+      'fr-FR', 'fr-CA',  // French
+      'de-DE',           // German
+      'pt-BR'            // Portuguese
+    ]
+  }
+});
+```
+
+### Medical Telehealth
+
+```typescript
+stt: {
+  provider: 'google',
+  model: 'medical_conversation',
+  languageCode: 'en-US',
+  enableAutomaticPunctuation: true
+}
+```
+
+### Phone Contact Center
+
+```typescript
+stt: {
+  provider: 'google',
+  model: 'phone_call',
+  languageCode: 'en-US',
+  enableAutomaticPunctuation: true,
+  useEnhanced: true
+}
+```
+
+### Regional Dialects
+
+```typescript
+// Middle East Arabic
+stt: {
+  provider: 'google',
+  languageCode: 'ar-AE',  // UAE Arabic
+  alternativeLanguageCodes: ['ar-SA', 'ar-EG']
+}
+
+// Latin American Spanish
+stt: {
+  provider: 'google',
+  languageCode: 'es-MX',  // Mexican Spanish
+  alternativeLanguageCodes: ['es-AR', 'es-CO']
+}
+```
+
+---
+
+## Speech Contexts
+
+Boost recognition of specific phrases:
+
+```typescript
+stt: {
+  provider: 'google',
+  speechContexts: [
+    {
+      phrases: [
+        'Vora',
+        'LiveKit',
+        '$OOV_CLASS_ALPHANUMERIC_SEQUENCE'  // Order IDs, etc.
+      ],
+      boost: 20  // -100 to 100
+    }
+  ]
+}
+```
+
+### Class Tokens
+
+Use built-in classes:
+
+| Token | Matches |
+|-------|---------|
+| `$OOV_CLASS_ALPHANUMERIC_SEQUENCE` | Order123, ID456 |
+| `$OOV_CLASS_DIGIT_SEQUENCE` | 123456 |
+| `$OPERAND` | Numbers |
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for Voice AI">
+    For conversational voice:
+
+    ```typescript
+    stt: {
+      provider: 'google',
+      model: 'latest_long',
+      enableAutomaticPunctuation: true,
+      singleUtterance: false,  // Allow long turns
+      interimResults: true
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Handle Multiple Languages">
+    For global applications:
+
+    ```typescript
+    stt: {
+      provider: 'google',
+      languageCode: 'en-US',  // Primary
+      alternativeLanguageCodes: ['es', 'fr', 'de'],
+      model: 'latest_long'
+    }
+    ```
+
+    Tips:
+    - Limit to 4-5 alternative languages
+    - Use broad codes (es vs es-ES) when unsure
+    - Consider separate agents per region for best accuracy
+  </Accordion>
+
+  <Accordion title="Improve Accuracy">
+    For domain-specific terms:
+
+    ```typescript
+    stt: {
+      provider: 'google',
+      speechContexts: [
+        {
+          phrases: ['your', 'domain', 'terms'],
+          boost: 15
+        }
+      ]
+    }
+    ```
+
+    Also:
+    - Use enhanced models when available
+    - Ensure good audio quality
+    - Consider model adaptation for custom vocab
+  </Accordion>
+
+  <Accordion title="HIPAA Compliance">
+    For healthcare:
+
+    ```typescript
+    stt: {
+      provider: 'google',
+      model: 'medical_conversation',
+      // Data residency and BAA through Google Cloud
+    }
+    ```
+
+    Requires:
+    - Google Cloud HIPAA BAA
+    - Proper project configuration
+    - Data residency settings
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## API Key Setup
+
+### Service Account
+
+Google STT requires a service account:
+
+```bash
+# Environment variable pointing to credentials file
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+```
+
+### Get Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Enable Speech-to-Text API
+3. Create a service account
+4. Download JSON key file
+5. Set environment variable
+
+### Alternative: API Key
+
+For simpler setup (less secure):
+
+```bash
+GOOGLE_API_KEY=AIza...
+```
+
+---
+
+## Pricing
+
+| Model | Cost per Hour |
+|-------|---------------|
+| Standard | $0.24 |
+| Enhanced (phone_call) | $0.36 |
+| Medical | $0.96 |
+
+<Note>
+First 60 minutes/month free for standard model.
+</Note>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Authentication Errors">
+    If authentication fails:
+
+    - Verify service account JSON exists
+    - Check GOOGLE_APPLICATION_CREDENTIALS path
+    - Ensure Speech-to-Text API is enabled
+    - Verify project billing is active
+  </Accordion>
+
+  <Accordion title="Language Detection Issues">
+    If wrong language is detected:
+
+    - Set explicit languageCode
+    - Limit alternativeLanguageCodes
+    - Consider language-specific agents
+  </Accordion>
+
+  <Accordion title="Accuracy Problems">
+    If transcription quality is low:
+
+    - Use speechContexts for domain terms
+    - Try enhanced model for phone audio
+    - Check audio sample rate (16kHz ideal)
+    - Reduce background noise
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare STT" icon="scale-balanced" href="/providers/stt">
+    See all STT options
+  </Card>
+  <Card title="Multilingual Agents" icon="globe" href="/platform/voice/languages">
+    Configure languages
+  </Card>
+</CardGroup>

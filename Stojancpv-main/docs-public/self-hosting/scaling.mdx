@@ -1,0 +1,642 @@
+---
+title: Scaling Guide
+description: Scale Vora for production workloads
+---
+
+# Scaling Guide
+
+Scale Vora from development to high-traffic production deployments.
+
+---
+
+## Scaling Overview
+
+```mermaid
+flowchart TB
+    subgraph LoadBalancer[Load Balancing]
+        LB[Load Balancer]
+    end
+
+    subgraph Backend[Backend API - Horizontal]
+        API1[API Server 1]
+        API2[API Server 2]
+        API3[API Server N]
+    end
+
+    subgraph Workers[Workers - Horizontal]
+        W1[Worker 1]
+        W2[Worker 2]
+        W3[Worker N]
+    end
+
+    subgraph LiveKit[LiveKit - Horizontal]
+        LK1[LiveKit 1]
+        LK2[LiveKit 2]
+    end
+
+    subgraph Data[Data Layer - Vertical + Read Replicas]
+        PG[(PostgreSQL Primary)]
+        PGR1[(Read Replica 1)]
+        PGR2[(Read Replica 2)]
+        Redis[(Redis Cluster)]
+    end
+
+    LB --> API1 & API2 & API3
+    API1 & API2 & API3 --> PG
+    API1 & API2 & API3 --> PGR1 & PGR2
+    API1 & API2 & API3 --> Redis
+    W1 & W2 & W3 --> Redis
+    W1 & W2 & W3 --> PG
+    LB --> LK1 & LK2
+```
+
+---
+
+## Scaling Dimensions
+
+| Component | Scaling Type | How to Scale |
+|-----------|--------------|--------------|
+| Backend API | Horizontal | Add more instances |
+| Workers | Horizontal | Add more workers |
+| LiveKit | Horizontal | Add more SFU nodes |
+| PostgreSQL | Vertical + Replicas | Larger instance + read replicas |
+| Redis | Vertical + Cluster | Larger instance or Redis Cluster |
+| Frontend | CDN | Static hosting with CDN |
+
+---
+
+## Capacity Planning
+
+### Reference Benchmarks
+
+| Metric | Small | Medium | Large |
+|--------|-------|--------|-------|
+| Concurrent calls | 10 | 100 | 1,000+ |
+| API requests/sec | 100 | 1,000 | 10,000+ |
+| Backend instances | 1-2 | 3-5 | 10+ |
+| Workers | 1-2 | 3-5 | 10+ |
+| PostgreSQL | 2 vCPU / 4GB | 4 vCPU / 16GB | 8+ vCPU / 32GB+ |
+| Redis | 1GB | 4GB | 16GB+ |
+
+### Estimating Requirements
+
+```
+Concurrent calls × 2 = Required backend instances (minimum)
+Concurrent calls × 0.5 = Required worker instances
+Concurrent calls × 100 = Required Redis memory (MB)
+Total users × 1KB = Estimated database size
+```
+
+---
+
+## Backend API Scaling
+
+### Horizontal Scaling
+
+The backend API is stateless and scales horizontally.
+
+#### Docker Compose
+
+```yaml
+services:
+  backend:
+    image: vorahq/vora-backend:latest
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+```
+
+#### Fly.io
+
+```bash
+# Scale to 5 instances
+fly scale count 5
+
+# Scale across regions
+fly scale count 2 --region iad
+fly scale count 2 --region lhr
+fly scale count 1 --region sin
+```
+
+#### Kubernetes
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vora-backend
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: vora-backend
+  template:
+    spec:
+      containers:
+        - name: backend
+          image: vorahq/vora-backend:latest
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vora-backend-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vora-backend
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+```
+
+### Load Balancing
+
+#### Nginx
+
+```nginx
+upstream vora_backend {
+    least_conn;
+    server backend-1:4000 weight=1;
+    server backend-2:4000 weight=1;
+    server backend-3:4000 weight=1;
+
+    keepalive 32;
+}
+
+server {
+    listen 443 ssl http2;
+
+    location /api {
+        proxy_pass http://vora_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+#### Health Check Configuration
+
+```nginx
+upstream vora_backend {
+    server backend-1:4000 max_fails=3 fail_timeout=30s;
+    server backend-2:4000 max_fails=3 fail_timeout=30s;
+
+    health_check interval=10s passes=2 fails=3 uri=/health;
+}
+```
+
+---
+
+## Worker Scaling
+
+### Horizontal Scaling
+
+Workers process background jobs and scale independently.
+
+```yaml
+services:
+  worker:
+    image: vorahq/vora-backend:latest
+    command: ["node", "dist/worker.js"]
+    deploy:
+      replicas: 5
+    environment:
+      - CONCURRENCY=10  # Jobs per worker
+```
+
+### Queue-Specific Workers
+
+For different job priorities:
+
+```yaml
+services:
+  worker-voice:
+    image: vorahq/vora-backend:latest
+    command: ["node", "dist/worker.js", "--queue=voice-sessions"]
+    deploy:
+      replicas: 5
+
+  worker-knowledge:
+    image: vorahq/vora-backend:latest
+    command: ["node", "dist/worker.js", "--queue=knowledge-indexing"]
+    deploy:
+      replicas: 2
+
+  worker-analytics:
+    image: vorahq/vora-backend:latest
+    command: ["node", "dist/worker.js", "--queue=analytics"]
+    deploy:
+      replicas: 1
+```
+
+### Autoscaling Workers
+
+Based on queue depth:
+
+```bash
+#!/bin/bash
+# autoscale-workers.sh
+
+QUEUE_DEPTH=$(redis-cli LLEN bull:voice-sessions:wait)
+CURRENT_WORKERS=$(docker compose ps worker --quiet | wc -l)
+
+# Scale up if queue > 100
+if [ $QUEUE_DEPTH -gt 100 ]; then
+  NEW_COUNT=$((CURRENT_WORKERS + 2))
+  docker compose scale worker=$NEW_COUNT
+fi
+
+# Scale down if queue < 10 and more than 2 workers
+if [ $QUEUE_DEPTH -lt 10 ] && [ $CURRENT_WORKERS -gt 2 ]; then
+  NEW_COUNT=$((CURRENT_WORKERS - 1))
+  docker compose scale worker=$NEW_COUNT
+fi
+```
+
+---
+
+## Database Scaling
+
+### Vertical Scaling
+
+Start with vertical scaling for PostgreSQL:
+
+| Stage | vCPU | Memory | Connections |
+|-------|------|--------|-------------|
+| Small | 2 | 4 GB | 100 |
+| Medium | 4 | 16 GB | 200 |
+| Large | 8 | 32 GB | 400 |
+| XLarge | 16 | 64 GB | 1000 |
+
+### Read Replicas
+
+For read-heavy workloads:
+
+```typescript
+// Prisma configuration for read replicas
+const prisma = new PrismaClient();
+
+// Use read replica for queries
+const readPrisma = new PrismaClient({
+  datasources: {
+    db: { url: process.env.DATABASE_READ_URL }
+  }
+});
+
+// Write to primary, read from replica
+await prisma.agent.create({ data: {...} });  // Primary
+await readPrisma.agent.findMany();           // Replica
+```
+
+### Connection Pooling
+
+With PgBouncer:
+
+```yaml
+services:
+  pgbouncer:
+    image: edoburu/pgbouncer:1.21.0
+    environment:
+      DATABASE_URL: postgresql://vora:pass@postgres:5432/vora
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 50
+      MIN_POOL_SIZE: 10
+      RESERVE_POOL_SIZE: 5
+    ports:
+      - "6432:6432"
+```
+
+### Partitioning
+
+For large tables:
+
+```sql
+-- Partition agent_sessions by month
+CREATE TABLE agent_sessions (
+    id UUID PRIMARY KEY,
+    agent_id UUID NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    -- other columns
+) PARTITION BY RANGE (created_at);
+
+-- Create partitions
+CREATE TABLE agent_sessions_2024_01 PARTITION OF agent_sessions
+    FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
+CREATE TABLE agent_sessions_2024_02 PARTITION OF agent_sessions
+    FOR VALUES FROM ('2024-02-01') TO ('2024-03-01');
+```
+
+---
+
+## Redis Scaling
+
+### Vertical Scaling
+
+Increase memory allocation:
+
+```bash
+# Fly.io
+fly scale memory 4096 -a vora-redis
+
+# Docker
+docker update --memory=4g vora-redis
+```
+
+### Redis Cluster
+
+For horizontal scaling:
+
+```yaml
+services:
+  redis-1:
+    image: redis:7-alpine
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf
+
+  redis-2:
+    image: redis:7-alpine
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf
+
+  redis-3:
+    image: redis:7-alpine
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf
+```
+
+### Upstash Redis (Serverless)
+
+Automatically scales:
+
+```bash
+REDIS_URL=rediss://default:xxx@global-xxx.upstash.io:6379
+```
+
+---
+
+## LiveKit Scaling
+
+### Multi-Region Deployment
+
+```yaml
+# livekit.yaml
+port: 7880
+rtc:
+  port_range_start: 50000
+  port_range_end: 60000
+  use_external_ip: true
+
+redis:
+  address: redis-cluster:6379
+
+turn:
+  enabled: true
+  domain: turn.yourdomain.com
+  tls_port: 5349
+  udp_port: 3478
+```
+
+### Horizontal Scaling
+
+LiveKit nodes can be added without configuration changes:
+
+```bash
+# Add more LiveKit servers
+docker run -d \
+  --name livekit-2 \
+  -e LIVEKIT_KEYS="APIxxx: secret" \
+  -p 7882:7880 \
+  livekit/livekit-server
+
+# They auto-discover via Redis
+```
+
+### Geographic Distribution
+
+Deploy LiveKit in multiple regions for lower latency:
+
+```yaml
+# Region: US East
+livekit-us-east:
+  region: us-east
+  hostname: livekit-us-east.yourdomain.com
+
+# Region: EU West
+livekit-eu-west:
+  region: eu-west
+  hostname: livekit-eu-west.yourdomain.com
+
+# Region: APAC
+livekit-apac:
+  region: ap-southeast
+  hostname: livekit-apac.yourdomain.com
+```
+
+---
+
+## Caching Strategy
+
+### Multi-Layer Caching
+
+```mermaid
+flowchart LR
+    Client --> CDN[CDN Cache]
+    CDN --> API[API Server]
+    API --> Redis[Redis Cache]
+    Redis --> DB[(PostgreSQL)]
+```
+
+### CDN for Static Assets
+
+```bash
+# CloudFlare, Fastly, or CloudFront
+# Frontend assets cached at edge
+
+# Example CloudFlare page rules:
+# *.js, *.css, *.png → Cache Everything, Edge TTL: 1 month
+# /api/* → Bypass Cache
+```
+
+### Application Caching
+
+```typescript
+// Cache LLM responses
+const cacheKey = `llm:${hash(prompt)}`;
+const cached = await redis.get(cacheKey);
+
+if (cached) {
+  return JSON.parse(cached);
+}
+
+const response = await openai.chat.completions.create({...});
+await redis.setex(cacheKey, 3600, JSON.stringify(response));
+
+return response;
+```
+
+---
+
+## Monitoring at Scale
+
+### Key Metrics
+
+| Metric | Warning | Critical |
+|--------|---------|----------|
+| API latency (p99) | > 500ms | > 2s |
+| Error rate | > 1% | > 5% |
+| CPU usage | > 70% | > 90% |
+| Memory usage | > 70% | > 90% |
+| Queue depth | > 100 | > 1000 |
+| DB connections | > 70% | > 90% |
+
+### Prometheus Metrics
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: 'vora-backend'
+    static_configs:
+      - targets:
+          - backend-1:9090
+          - backend-2:9090
+          - backend-3:9090
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+```
+
+### Alerting Rules
+
+```yaml
+# alerts.yml
+groups:
+  - name: vora
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+
+      - alert: QueueBacklog
+        expr: bullmq_queue_depth > 1000
+        for: 10m
+        labels:
+          severity: critical
+```
+
+---
+
+## Scaling Checklist
+
+### Before Scaling
+
+- [ ] Identify bottleneck (CPU, memory, I/O, network)
+- [ ] Profile application (APM, logs, metrics)
+- [ ] Optimize before scaling (queries, caching, algorithms)
+- [ ] Test scaling in staging
+
+### Horizontal Scaling
+
+- [ ] Ensure stateless services
+- [ ] Configure load balancer health checks
+- [ ] Set up session affinity if needed
+- [ ] Test failover scenarios
+
+### Data Layer Scaling
+
+- [ ] Implement connection pooling
+- [ ] Add read replicas for read-heavy workloads
+- [ ] Consider partitioning for large tables
+- [ ] Set up automated backups
+
+### After Scaling
+
+- [ ] Monitor new instances
+- [ ] Update alerting thresholds
+- [ ] Document new architecture
+- [ ] Update runbooks
+
+---
+
+## Cost Optimization
+
+### Right-Sizing
+
+| Symptom | Action |
+|---------|--------|
+| CPU < 30% | Reduce instance size |
+| Memory < 40% | Reduce memory allocation |
+| CPU > 70% consistently | Scale out or up |
+| Queue growing | Add more workers |
+
+### Reserved Instances
+
+For stable workloads, use reserved capacity:
+
+- **AWS**: Reserved Instances (up to 72% savings)
+- **Fly.io**: Reserved pricing
+- **GCP**: Committed use discounts
+
+### Spot/Preemptible for Workers
+
+Workers can use cheaper spot instances:
+
+```yaml
+# Kubernetes spot nodes
+nodeSelector:
+  kubernetes.io/lifecycle: spot
+
+tolerations:
+  - key: "kubernetes.io/lifecycle"
+    operator: "Equal"
+    value: "spot"
+    effect: "NoSchedule"
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Monitoring Setup" icon="chart-area" href="/self-hosting/monitoring">
+    Set up observability
+  </Card>
+  <Card title="Database Optimization" icon="database" href="/self-hosting/database">
+    Tune PostgreSQL
+  </Card>
+  <Card title="Redis Tuning" icon="bolt" href="/self-hosting/redis">
+    Optimize Redis
+  </Card>
+  <Card title="Environment Variables" icon="key" href="/self-hosting/environment">
+    Configuration reference
+  </Card>
+</CardGroup>

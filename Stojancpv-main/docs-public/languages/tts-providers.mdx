@@ -1,0 +1,92 @@
+---
+title: TTS Provider Comparison
+description: Compare 11 text-to-speech providers for voice AI agents
+---
+
+# TTS Provider Comparison
+
+Vora integrates with 11 text-to-speech (TTS) providers. Choose based on voice quality, language support, latency, and pricing.
+
+---
+
+## Provider Overview
+
+| Provider | Languages | Voices | Pricing |
+|----------|-----------|--------|---------|
+| **Google Cloud TTS** | 75+ | 380+ | $4-$16/1M chars |
+| **Azure Neural TTS** | 140+ | 300+ | $15/1M chars |
+| **AWS Polly** | 29 | 60+ | $16/1M chars |
+| **ElevenLabs** | 32+ | 100+ | $0.05-$0.15/min |
+| **Murf AI Falcon** | 35+ | 200+ | $0.01/min |
+| **Speechify** | 50+ | 100+ | $10/1M chars |
+| **Deepgram Aura** | 20+ | 30+ | $0.015-$0.030/1K chars |
+| **Cartesia Sonic** | 15+ | 30+ | Contact |
+| **Sarvam AI Bulbul** | 11 Indian | 20+ | ~$0.35/hr |
+| **Munsit (CNTXT)** | Arabic | 10+ | Enterprise |
+| **Inworld TTS** | 15 | 50+ | $5-$15/1M chars |
+
+---
+
+## Choosing a Provider
+
+### By Priority
+
+| Priority | Recommended Provider |
+|----------|---------------------|
+| **Most natural English** | ElevenLabs |
+| **Lowest latency** | Cartesia Sonic, Murf AI Falcon |
+| **Widest language coverage** | Google Cloud TTS |
+| **Indian languages** | Sarvam AI Bulbul |
+| **Arabic** | Munsit (CNTXT) |
+| **Lowest cost** | Murf AI Falcon ($0.01/min) |
+| **Voice cloning** | ElevenLabs, Speechify |
+| **Enterprise** | Azure Neural TTS |
+
+### Voice Quality Rankings
+
+For English voice quality:
+1. **ElevenLabs** - Most natural, expressive
+2. **Cartesia Sonic** - Very natural, low latency
+3. **Azure Neural** - High quality, customizable
+4. **Google WaveNet** - Good quality, many voices
+5. **Deepgram Aura** - Good, optimized for speed
+
+---
+
+## Key Differences
+
+### Latency
+
+For real-time voice agents, TTS latency matters:
+1. **Cartesia Sonic** - Ultra-low (~50ms first byte)
+2. **Murf AI Falcon** - Very low (~80ms)
+3. **Deepgram Aura** - Low (~100ms)
+4. **ElevenLabs** - Moderate (~200ms)
+5. **Google/Azure** - Moderate (~200-400ms)
+
+### Voice Naturalness
+
+Voice quality is subjective, but general rankings:
+1. **ElevenLabs** - Gold standard for naturalness
+2. **Cartesia** - Close to ElevenLabs, faster
+3. **Azure Neural** - Very good, especially custom voices
+4. **Sarvam AI** - Best for Indian languages
+5. **Munsit** - Best for Arabic dialects
+
+### Pricing
+
+Most cost-effective options:
+1. **Murf AI Falcon** - $0.01/min (cheapest)
+2. **Google Cloud** - $4/1M chars (~$0.02/min)
+3. **Deepgram Aura** - $0.015/1K chars
+4. **ElevenLabs** - $0.05/min (premium quality)
+
+---
+
+## Configuration
+
+Configure TTS providers in the Command Center [Voice Tab](/advanced/command-center/voice-tab):
+1. Select your TTS provider
+2. Browse and preview available voices
+3. Set speech speed
+4. Configure a fallback voice in the [Advanced Tab](/advanced/command-center/advanced-tab)

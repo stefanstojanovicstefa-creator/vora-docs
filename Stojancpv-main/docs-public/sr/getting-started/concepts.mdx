@@ -1,0 +1,185 @@
+---
+title: Osnovni koncepti
+description: Razumite kljucne gradivne blokove Vora platforme
+---
+
+# Osnovni koncepti
+
+Pre nego sto napravite svog prvog glasovnog agenta, upoznajte se sa kljucnim konceptima.
+
+---
+
+## Agenti
+
+**Agent** je glasovni AI asistent koji moze da odgovara na telefonske pozive, veb cetove ili glasovne interakcije u aplikaciji. Svaki agent ima:
+
+<Tabs>
+  <Tab title="Jednostavno">
+    - **Licnost** - Kako agent zvuci i kako se ponasa
+    - **Znanje** - Dokumenti i informacije koje agent moze da koristi
+    - **Glas** - Glas kojim govori
+    - **Jezik** - Koji jezik(e) govori
+    - **Pozdrav** - Prva stvar koju kaze pozivaocu
+  </Tab>
+  <Tab title="Napredno">
+    - **Sistemski prompt** - Instrukcije koje definisu ponasanje agenta
+    - **LLM provajder** - AI model koji pogoni odgovore (Gemini, GPT-4, Claude, itd.)
+    - **STT provajder** - Motor za pretvaranje govora u tekst (Deepgram, Google, AssemblyAI)
+    - **TTS provajder** - Glas za pretvaranje teksta u govor (ElevenLabs, Cartesia, Google)
+    - **Baza znanja** - RAG-pogonjen sistem za preuzimanje dokumenata
+    - **Funkcije** - Prilagodjeni pozivi alata koje agent moze da izvrsi
+    - **Konfiguracija pokretanja** - Telefonski brojevi, veb vidzeti, SIP magistrale
+  </Tab>
+</Tabs>
+
+---
+
+## Glasovni pipeline
+
+Svaki glasovni razgovor prolazi kroz pipeline:
+
+<Tabs>
+  <Tab title="Jednostavno">
+    ```
+    Pozivalac govori -> Vora razume -> AI razmislja -> Vora odgovara
+    ```
+
+    Sve se desava u realnom vremenu sa latencijom ispod 500ms. Pozivalac ima prirodan razgovor - moze da prekida, postavlja dodatna pitanja, a agent prirodno odgovara.
+  </Tab>
+  <Tab title="Napredno">
+    ```
+    Audio ulaz -> STT (Deepgram/Google) -> LLM (Gemini/GPT-4) -> TTS (ElevenLabs/Cartesia) -> Audio izlaz
+                                                ↕
+                                          Baza znanja (RAG)
+                                                ↕
+                                          Funkcije (pozivi alata)
+    ```
+
+    Pipeline obradjuje audio u realnom vremenu koristeci WebRTC putem LiveKit-a:
+    1. **STT** transkribuje govor pozivaoca sa strimujucim prepoznavanjem
+    2. **LLM** obradjuje transkript sa istorijom razgovora i RAG kontekstom
+    3. **TTS** pretvara odgovor u prirodan govor sa strimujucim izlazom
+    4. **Detekcija prekida** omogucava pozivaocu da prekine usred odgovora
+
+    Svaki provajder u pipeline-u moze se nezavisno konfigurisati po agentu.
+  </Tab>
+</Tabs>
+
+---
+
+## Baza znanja
+
+Baza znanja omogucava vasem agentu da odgovara na pitanja koristeci vase sopstvene dokumente.
+
+<Tabs>
+  <Tab title="Jednostavno">
+    Otpremite fajlove (PDF, DOCX, TXT) ili nalepite URL-ove, i vas agent moze da koristi te informacije tokom razgovora. Zamislite to kao prirucnik koji agent uci.
+  </Tab>
+  <Tab title="Napredno">
+    Baza znanja koristi RAG (Retrieval-Augmented Generation):
+    1. Dokumenti se dele na delove i pretvaraju u vektorske embeddings
+    2. Tokom razgovora, relevantni delovi se preuzimaju na osnovu semanticke slicnosti
+    3. Preuzeti kontekst se ubacuje u LLM prompt
+    4. Agent generise odgovore zasnovane na vasim dokumentima
+
+    Podrzani izvori: PDF, DOCX, TXT, Markdown, URL-ovi (automatsko pretrazivanje), i direktan unos teksta.
+  </Tab>
+</Tabs>
+
+---
+
+## Sesije
+
+**Sesija** je jedan razgovor izmedju pozivaoca i agenta.
+
+<Tabs>
+  <Tab title="Jednostavno">
+    Svaki telefonski poziv ili veb cet kreira sesiju. Mozete pregledati sesije da vidite:
+    - Potpuni transkript razgovora
+    - Trajanje poziva i ishod
+    - Reprodukcija snimka
+  </Tab>
+  <Tab title="Napredno">
+    Sesije prate ceo zivotni ciklus razgovora:
+    - **Transkript** - Tekst sa vremenskim oznakama i oznakama govornika
+    - **Dogadjaji** - Povezivanje, prekid veze, pozivi funkcija, transferi
+    - **Snimci** - Kompletni audio snimak (kada je ukljucen)
+    - **Metapodaci** - Trajanje, cena, iskoristeni tokeni, latencija provajdera
+    - **Analitika** - Sentiment, klasifikacija tema, metrike uspeha
+  </Tab>
+</Tabs>
+
+---
+
+## Funkcije
+
+Funkcije omogucavaju vasem agentu da preduzima akcije tokom razgovora.
+
+<Tabs>
+  <Tab title="Jednostavno">
+    Funkcije su akcije koje vas agent moze da izvrsi, kao sto su:
+    - Zakazivanje termina na Google kalendaru
+    - Provera statusa narudzbine u vasem CRM-u
+    - Slanje email potvrda
+    - Prebacivanje na ljudskog agenta
+
+    Vora ukljucuje ugradjene funkcije, ili mozete povezati spoljne alate.
+  </Tab>
+  <Tab title="Napredno">
+    Funkcije koriste mogucnost pozivanja alata LLM-a:
+    1. Definisite semu funkcije (ime, opis, parametri)
+    2. LLM odlucuje kada da pozove funkciju na osnovu konteksta razgovora
+    3. Vora izvrsava funkciju i vraca rezultate LLM-u
+    4. Agent ukljucuje rezultat u svoj odgovor
+
+    Mozete kreirati funkcije putem:
+    - **Ugradjene funkcije** - Kalendar, CRM, transfer, zavrsi poziv
+    - **Prilagodjene funkcije** - Napisite kod koji se izvrsava u Vorinom sandboxu
+    - **Webhook funkcije** - Pozovite spoljne API-je sa definisanim semama
+    - **Sabloni funkcija** - Gotovi sabloni za ceste slucajeve koriscenja
+  </Tab>
+</Tabs>
+
+---
+
+## Pokretanje
+
+Kada je vas agent spreman, pokrenite ga da prima pozive.
+
+<Tabs>
+  <Tab title="Jednostavno">
+    Tri nacina za pokretanje:
+    1. **Telefonski broj** - Dobijte broj ili dovedite svoj
+    2. **Veb vidzet** - Dodajte glasovni dugmic na svoju veb stranicu
+    3. **Test poziv** - Prvo probajte sa kontrolne table
+
+    Samo kliknite Pokreni na stranici vaseg agenta da pocnete.
+  </Tab>
+  <Tab title="Napredno">
+    Opcije pokretanja:
+    - **Telefonski brojevi** - Provisionisani putem LiveKit/Twilio SIP-a
+    - **Veb ugradjivanje** - JavaScript vidzet sa prilagodljivim korisnickim interfejsom
+    - **SIP magistrala** - Povezite vas postojeci PBX/telefonski sistem
+    - **API** - Programski kreirajte sesije putem REST API-ja
+    - **Mobilni SDK** - React Native integracija putem LiveKit-a
+
+    Svaki kanal pokretanja podrzava:
+    - Prilagodjene pozdravne poruke
+    - Webhook notifikacije za dogadjaje sesija
+    - Ogranicavanje brzine i ogranicenja istovremenih sesija
+    - Geografski izbor broja
+  </Tab>
+</Tabs>
+
+---
+
+## Sledeci koraci
+
+<CardGroup cols={2}>
+  <Card title="Brzi start" icon="rocket" href="/platform/quickstart">
+    Napravite svog prvog agenta za 5 minuta
+  </Card>
+  <Card title="Jednostavan i Napredni rezim" icon="toggle-on" href="/getting-started/modes">
+    Saznajte vise o dva rezima interfejsa
+  </Card>
+</CardGroup>

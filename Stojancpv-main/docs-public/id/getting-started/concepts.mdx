@@ -1,0 +1,68 @@
+---
+title: Konsep Dasar
+description: Pahami blok pembangunan utama platform Vora
+---
+
+# Konsep Dasar
+
+Sebelum membangun agen suara pertama Anda, kenali konsep-konsep utama ini.
+
+---
+
+## Agen
+
+**Agen** adalah asisten AI suara yang dapat menangani panggilan telepon, obrolan web, atau interaksi suara dalam aplikasi.
+
+<Tabs>
+  <Tab title="Sederhana">
+    - **Kepribadian** - Bagaimana agen terdengar dan berperilaku
+    - **Pengetahuan** - Dokumen dan informasi yang bisa dirujuk agen
+    - **Suara** - Suara yang digunakan untuk berbicara
+    - **Bahasa** - Bahasa yang digunakan
+    - **Sapaan** - Hal pertama yang dikatakan kepada penelepon
+  </Tab>
+  <Tab title="Lanjutan">
+    - **Prompt Sistem** - Instruksi yang mendefinisikan perilaku agen
+    - **Penyedia LLM** - Model AI yang menggerakkan respons (Gemini, GPT-4, Claude)
+    - **Penyedia STT** - Mesin ucapan-ke-teks (Deepgram, Google, AssemblyAI)
+    - **Penyedia TTS** - Suara teks-ke-ucapan (ElevenLabs, Cartesia, Google)
+    - **Basis Pengetahuan** - Pengambilan dokumen berbasis RAG
+    - **Fungsi** - Panggilan alat kustom yang bisa dijalankan agen
+  </Tab>
+</Tabs>
+
+---
+
+## Pipeline Suara
+
+Setiap percakapan suara mengalir melalui pipeline:
+
+<Tabs>
+  <Tab title="Sederhana">
+    ```
+    Penelepon berbicara → Vora memahami → AI berpikir → Vora merespons
+    ```
+
+    Terjadi real-time dengan latensi di bawah 500ms.
+  </Tab>
+  <Tab title="Lanjutan">
+    ```
+    Audio Masuk → STT (Deepgram/Google) → LLM (Gemini/GPT-4) → TTS (ElevenLabs/Cartesia) → Audio Keluar
+    ```
+
+    Pipeline memproses audio real-time menggunakan WebRTC via LiveKit. Setiap penyedia dapat dikonfigurasi secara independen per agen.
+  </Tab>
+</Tabs>
+
+---
+
+## Langkah Selanjutnya
+
+<CardGroup cols={2}>
+  <Card title="Mulai Cepat" icon="rocket" href="/platform/quickstart">
+    Buat agen pertama Anda dalam 5 menit
+  </Card>
+  <Card title="Mode Sederhana & Lanjutan" icon="toggle-on" href="/getting-started/modes">
+    Pelajari tentang dua mode antarmuka
+  </Card>
+</CardGroup>

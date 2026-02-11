@@ -1,0 +1,350 @@
+---
+title: New Developer Guide
+description: Welcome guide for new developers joining the Vora team
+---
+
+# Welcome to Vora
+
+Welcome to the Vora team! This guide will help you get started and become productive quickly.
+
+---
+
+## Your First Week
+
+### Day 1: Setup & Access
+
+**Morning:**
+- [ ] Receive your work laptop
+- [ ] Set up company email and Slack
+- [ ] Join required Slack channels (see below)
+- [ ] Complete HR onboarding paperwork
+
+**Afternoon:**
+- [ ] Meet your buddy/mentor
+- [ ] Get access to GitHub organization
+- [ ] Get access to 1Password team vault
+- [ ] Clone the main repository
+
+### Day 2: Development Environment
+
+- [ ] Complete [Local Setup Guide](/internal/onboarding/local-setup)
+- [ ] Run the application locally
+- [ ] Verify you can make a test voice call
+- [ ] Review the [Codebase Tour](/internal/onboarding/codebase-tour)
+
+### Day 3: Learn the Product
+
+- [ ] Watch product demo video (in Notion)
+- [ ] Create a test agent and have a conversation
+- [ ] Read the [Architecture Overview](/internal/architecture/overview)
+- [ ] Understand the voice pipeline flow
+
+### Day 4: First Contribution
+
+- [ ] Pick a "good first issue" from GitHub
+- [ ] Complete the [First Contribution Guide](/internal/onboarding/first-contribution)
+- [ ] Submit your first pull request
+- [ ] Get familiar with our review process
+
+### Day 5: Deep Dive
+
+- [ ] Shadow a senior developer
+- [ ] Attend team standup
+- [ ] Review open PRs to learn patterns
+- [ ] Ask questions!
+
+---
+
+## Required Access
+
+Request access to these services on Day 1:
+
+| Service | Purpose | Request From |
+|---------|---------|--------------|
+| GitHub | Code repository | Team Lead |
+| 1Password | Credentials | IT/Security |
+| Vercel | Frontend hosting | DevOps |
+| Fly.io | Backend hosting | DevOps |
+| Supabase | Database | DevOps |
+| Clerk | Authentication | DevOps |
+| Sentry | Error tracking | Team Lead |
+| Linear/Jira | Issue tracking | Project Manager |
+| Notion | Documentation | Team Lead |
+| Figma | Design files | Design Lead |
+
+---
+
+## Slack Channels
+
+### Required
+
+| Channel | Purpose |
+|---------|---------|
+| #engineering | General engineering discussion |
+| #engineering-alerts | Production alerts (muted except @mentions) |
+| #deploys | Deployment notifications |
+| #standup | Daily async standups |
+| #code-review | PR discussions |
+
+### Recommended
+
+| Channel | Purpose |
+|---------|---------|
+| #frontend | Frontend-specific discussion |
+| #backend | Backend-specific discussion |
+| #voice-ai | Voice/AI engineering |
+| #random | Team bonding |
+| #til | Today I learned |
+
+---
+
+## Key People
+
+| Role | Person | What They Help With |
+|------|--------|---------------------|
+| Engineering Lead | [Name] | Architecture, major decisions |
+| Backend Lead | [Name] | API, database, services |
+| Frontend Lead | [Name] | React, UI/UX, performance |
+| DevOps | [Name] | Infrastructure, deployments |
+| Product Manager | [Name] | Requirements, priorities |
+| Your Buddy | [Assigned] | Day-to-day questions |
+
+---
+
+## Development Workflow
+
+### Daily Routine
+
+```
+09:00 - Check Slack, respond to any overnight messages
+09:15 - Review assigned issues/PRs
+09:30 - Post async standup in #standup
+10:00 - Focus time: coding
+12:00 - Lunch
+13:00 - Focus time: coding
+15:00 - Check PRs, code review
+16:00 - Focus time: coding
+17:00 - Push work, update issues
+```
+
+### Async Standup Format
+
+Post daily in #standup:
+
+```markdown
+**Yesterday:** What I completed
+**Today:** What I'm working on
+**Blockers:** Any blockers (or "None")
+```
+
+### Git Workflow
+
+```bash
+# 1. Start from develop
+git checkout develop
+git pull origin develop
+
+# 2. Create feature branch
+git checkout -b feature/add-voice-effects
+
+# 3. Make changes, commit often
+git add .
+git commit -m "feat(voice): add echo cancellation"
+
+# 4. Push and create PR
+git push -u origin feature/add-voice-effects
+# Create PR targeting develop
+
+# 5. After approval, squash merge
+# PR gets auto-merged by reviewer
+```
+
+---
+
+## Code Review Process
+
+### Submitting PRs
+
+1. **Self-review first** - Check your own diff before requesting review
+2. **Small PRs** - Keep PRs under 400 lines when possible
+3. **Clear description** - Explain what and why
+4. **Link issues** - Reference related tickets
+5. **Add screenshots** - For UI changes
+
+### Reviewing PRs
+
+1. **Be constructive** - Suggest improvements, don't criticize
+2. **Ask questions** - If something is unclear
+3. **Approve or request changes** - Don't leave PRs hanging
+4. **Test locally** - For significant changes
+
+### PR Template
+
+```markdown
+## What
+
+Brief description of changes.
+
+## Why
+
+Why these changes are needed.
+
+## Testing
+
+How to test these changes.
+
+## Screenshots
+
+(For UI changes)
+
+## Checklist
+
+- [ ] Tests added/updated
+- [ ] Documentation updated
+- [ ] No console.logs left
+- [ ] Follows coding standards
+```
+
+---
+
+## Learning Resources
+
+### Internal Documentation
+
+- [Architecture Overview](/internal/architecture/overview)
+- [Coding Standards](/internal/standards/style-guide)
+- [Testing Guide](/internal/testing/overview)
+- [Deployment Guide](/internal/deployment/overview)
+
+### External Resources
+
+**React & TypeScript:**
+- [React Docs](https://react.dev)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/)
+- [TanStack Query Docs](https://tanstack.com/query/latest)
+
+**Voice & AI:**
+- [LiveKit Docs](https://docs.livekit.io/)
+- [OpenAI API Docs](https://platform.openai.com/docs)
+- [Deepgram Docs](https://developers.deepgram.com/)
+- [ElevenLabs Docs](https://docs.elevenlabs.io/)
+
+**Infrastructure:**
+- [Prisma Docs](https://www.prisma.io/docs)
+- [Fly.io Docs](https://fly.io/docs/)
+- [Vercel Docs](https://vercel.com/docs)
+
+---
+
+## Common Questions
+
+### "What should I work on?"
+
+1. Check your assigned issues in Linear/Jira
+2. Look for "good first issue" labels on GitHub
+3. Ask your buddy or team lead
+4. Check #engineering for open tasks
+
+### "I'm stuck on something"
+
+1. Spend 15-30 minutes trying to solve it yourself
+2. Search Slack history - someone might have solved it before
+3. Check documentation
+4. Ask in #engineering or DM your buddy
+5. No question is too basic to ask!
+
+### "How do I know if I'm doing okay?"
+
+- Your PRs are getting approved
+- You're completing tickets
+- You're asking good questions
+- You're attending meetings
+- You had a positive 1-on-1 with your manager
+
+### "Where do I find X?"
+
+| Looking For | Location |
+|-------------|----------|
+| API credentials | 1Password |
+| Product specs | Notion |
+| Design mockups | Figma |
+| Environment URLs | This documentation |
+| Coding patterns | Existing codebase |
+
+---
+
+## Team Rituals
+
+| Ritual | Frequency | Purpose |
+|--------|-----------|---------|
+| Daily Standup | Daily (async) | Share progress |
+| Sprint Planning | Bi-weekly | Plan work |
+| Code Review | Ongoing | Quality assurance |
+| Demo Day | Weekly | Show work |
+| Retro | Bi-weekly | Improve process |
+| 1:1 with Manager | Weekly | Career growth |
+
+---
+
+## Tips for Success
+
+### Do
+
+- Ask questions early and often
+- Share your progress, even if incomplete
+- Review other people's code to learn
+- Document things you learn
+- Take breaks and avoid burnout
+
+### Don't
+
+- Suffer in silence when stuck
+- Wait until the last minute to raise concerns
+- Skip tests to go faster
+- Merge your own PRs without review
+- Work on weekends (unless critical incident)
+
+---
+
+## Your Checklist
+
+Print this and check off as you go:
+
+**Week 1:**
+- [ ] All accounts set up
+- [ ] Development environment working
+- [ ] First PR submitted
+- [ ] Met all key team members
+- [ ] Understand the product
+
+**Month 1:**
+- [ ] Completed 5+ tickets
+- [ ] Reviewed 5+ PRs
+- [ ] Comfortable with codebase
+- [ ] Participated in sprint ceremonies
+- [ ] Had first 1:1 with manager
+
+**Month 3:**
+- [ ] Owning a feature area
+- [ ] Mentoring newer developers
+- [ ] Contributing to architecture discussions
+- [ ] Comfortable with deployments
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Local Setup" icon="laptop" href="/internal/onboarding/local-setup">
+    Set up your development environment
+  </Card>
+  <Card title="Codebase Tour" icon="map" href="/internal/onboarding/codebase-tour">
+    Learn the code structure
+  </Card>
+  <Card title="First Contribution" icon="code-pull-request" href="/internal/onboarding/first-contribution">
+    Submit your first PR
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/internal/architecture/overview">
+    Understand the system
+  </Card>
+</CardGroup>

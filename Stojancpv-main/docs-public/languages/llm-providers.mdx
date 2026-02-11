@@ -1,0 +1,115 @@
+---
+title: LLM Provider Comparison
+description: Compare 15 language model providers for voice AI agents
+---
+
+# LLM Provider Comparison
+
+Vora integrates with 15 LLM providers. Choose based on language support, reasoning quality, speed, and cost.
+
+---
+
+## Provider Overview
+
+| Provider | Languages | Specialty | Input / Output (per 1M tokens) |
+|----------|-----------|-----------|-------------------------------|
+| **GPT-4o** | 50+ | Multimodal, general | $5 / $15 |
+| **GPT-4o-mini** | 50+ | Fast, cost-effective | $0.15 / $0.60 |
+| **GPT-5** | 50+ | Advanced reasoning | $1.25 / $10 |
+| **Gemini 2.5 Flash** | 100+ | Fastest, voice agents | $0.15 / $0.60 |
+| **Gemini 2.5 Pro** | 100+ | 1M context, research | $1.25-$2.50 / $10-$15 |
+| **Claude Sonnet 4** | 30+ | Coding, reasoning | $3 / $15 |
+| **Claude Opus 4** | 30+ | Complex analysis | $15 / $75 |
+| **Cohere Command-R+** | 23 | Enterprise, RAG | $2.50 / $10 |
+| **Cohere Aya Expanse** | 23 | Multilingual focus | $0.50 / $1.50 |
+| **Qwen 2.5** | 100+ | Asian/SEA best | $0.30 / $0.90 |
+| **Mistral Large** | 20+ | European languages | $2-$6 |
+| **Grok 3** | 20+ | Real-time data | $3 / $15 |
+| **Sarvam 2B** | 11 Indian | Indian languages best | ~$0.02/min |
+| **Falcon Arabic** | Arabic + English | Arabic best | Enterprise |
+| **DeepSeek** | 30+ | Code, reasoning | $0.27 / $1.10 |
+
+---
+
+## Choosing a Provider
+
+### By Use Case
+
+| Use Case | Recommended |
+|----------|------------|
+| **Voice agents (general)** | Gemini 2.5 Flash |
+| **English conversations** | GPT-4o or Gemini Flash |
+| **Complex reasoning** | Claude Sonnet 4 or GPT-5 |
+| **Indian languages** | Sarvam 2B |
+| **Arabic** | Falcon Arabic |
+| **SEA languages** | Qwen 2.5 |
+| **European languages** | Mistral Large |
+| **Budget-conscious** | GPT-4o-mini or Gemini Flash |
+| **RAG-heavy** | Cohere Command-R+ |
+
+### By Region
+
+| Region | Best Providers |
+|--------|---------------|
+| **Global/English** | Gemini Flash, GPT-4o |
+| **India** | Sarvam 2B, Gemini, GPT-4o |
+| **MENA** | Falcon Arabic, Gemini, GPT-4o |
+| **Southeast Asia** | Qwen 2.5, Gemini, GPT-4o |
+| **Europe** | Mistral Large, Claude, GPT-4o |
+
+---
+
+## Key Differences
+
+### Speed (Time to First Token)
+
+For voice agents, low latency is critical:
+1. **Gemini 2.5 Flash** - Fastest (~100ms TTFT)
+2. **GPT-4o-mini** - Very fast (~150ms)
+3. **Groq (Llama 3)** - Ultra-fast via custom hardware
+4. **Qwen 2.5** - Fast (~200ms)
+5. **Claude Sonnet** - Moderate (~300ms)
+
+### Multilingual Quality
+
+Best multilingual understanding:
+1. **Gemini** - 100+ languages, best coverage
+2. **Qwen** - Strong Asian/SEA language support
+3. **GPT-4o** - Good across 50+ languages
+4. **Sarvam 2B** - Best for 11 Indian languages
+5. **Falcon Arabic** - Best for Arabic + dialects
+
+### Cost Efficiency
+
+For voice agents (short responses, many calls):
+1. **Gemini Flash** - $0.15/$0.60 per 1M tokens (best value)
+2. **GPT-4o-mini** - $0.15/$0.60 (same price, slightly less multilingual)
+3. **Qwen 2.5** - $0.30/$0.90
+4. **DeepSeek** - $0.27/$1.10
+5. **Cohere Aya** - $0.50/$1.50
+
+---
+
+## Voice Agent Recommendations
+
+For most voice agents, we recommend:
+
+| Component | Provider | Why |
+|-----------|----------|-----|
+| **Primary LLM** | Gemini 2.5 Flash | Lowest latency, 100+ languages, best cost |
+| **Fallback LLM** | GPT-4o-mini | Fast, reliable fallback |
+| **Complex tasks** | Claude Sonnet 4 | When reasoning quality matters more than speed |
+
+<Tip>
+  For voice agents, speed matters more than raw intelligence. Callers are waiting on the line. Gemini Flash at 100ms TTFT provides a much better experience than GPT-4o at 300ms, even though GPT-4o may score higher on benchmarks.
+</Tip>
+
+---
+
+## Configuration
+
+Configure LLM providers in the Command Center [Brain Tab](/advanced/command-center/brain-tab):
+1. Select your LLM provider and model
+2. Set temperature and max tokens
+3. Write your system prompt
+4. Configure a fallback LLM in the [Advanced Tab](/advanced/command-center/advanced-tab)

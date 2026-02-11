@@ -1,0 +1,624 @@
+---
+title: E2E Testing
+description: End-to-end testing with Playwright for the Vora platform
+---
+
+# E2E Testing
+
+End-to-end tests verify complete user flows through the application. This guide covers Playwright-based E2E testing for the Vora platform.
+
+---
+
+## Playwright Setup
+
+### Configuration
+
+```typescript
+// playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests/e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [
+    ['html'],
+    ['json', { outputFile: 'test-results/results.json' }],
+    ['junit', { outputFile: 'test-results/junit.xml' }],
+  ],
+
+  use: {
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'on-first-retry',
+  },
+
+  projects: [
+    // Desktop browsers
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+
+    // Mobile browsers
+    {
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'mobile-safari',
+      use: { ...devices['iPhone 13'] },
+    },
+  ],
+
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+  },
+});
+```
+
+### Test Structure
+
+```
+tests/e2e/
+├── fixtures/
+│   ├── auth.ts          # Auth fixtures
+│   └── test-data.ts     # Test data
+├── pages/
+│   ├── dashboard.ts     # Page objects
+│   ├── agent-builder.ts
+│   └── voice-session.ts
+├── specs/
+│   ├── auth.spec.ts     # Test specs
+│   ├── agents.spec.ts
+│   └── voice.spec.ts
+└── global-setup.ts
+```
+
+---
+
+## Page Objects
+
+### Base Page
+
+```typescript
+// tests/e2e/pages/base.page.ts
+import { Page, Locator, expect } from '@playwright/test';
+
+export class BasePage {
+  readonly page: Page;
+  readonly header: Locator;
+  readonly sidebar: Locator;
+  readonly toast: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.header = page.locator('header');
+    this.sidebar = page.locator('nav[aria-label="Sidebar"]');
+    this.toast = page.locator('[role="status"]');
+  }
+
+  async waitForPageLoad() {
+    await this.page.waitForLoadState('networkidle');
+  }
+
+  async expectToastMessage(message: string) {
+    await expect(this.toast).toContainText(message);
+  }
+
+  async navigateTo(path: string) {
+    await this.page.goto(path);
+    await this.waitForPageLoad();
+  }
+}
+```
+
+### Dashboard Page
+
+```typescript
+// tests/e2e/pages/dashboard.page.ts
+import { Page, Locator, expect } from '@playwright/test';
+import { BasePage } from './base.page';
+
+export class DashboardPage extends BasePage {
+  readonly agentCards: Locator;
+  readonly createAgentButton: Locator;
+  readonly searchInput: Locator;
+  readonly statsCards: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.agentCards = page.locator('[data-testid="agent-card"]');
+    this.createAgentButton = page.locator('button:has-text("Create Agent")');
+    this.searchInput = page.locator('input[placeholder*="Search"]');
+    this.statsCards = page.locator('[data-testid="stats-card"]');
+  }
+
+  async goto() {
+    await this.navigateTo('/');
+  }
+
+  async getAgentCount() {
+    return await this.agentCards.count();
+  }
+
+  async clickCreateAgent() {
+    await this.createAgentButton.click();
+    await this.page.waitForURL('**/agents/new');
+  }
+
+  async searchAgents(query: string) {
+    await this.searchInput.fill(query);
+    await this.page.waitForTimeout(300); // Debounce
+  }
+
+  async selectAgent(name: string) {
+    await this.agentCards.filter({ hasText: name }).click();
+  }
+}
+```
+
+### Agent Builder Page
+
+```typescript
+// tests/e2e/pages/agent-builder.page.ts
+import { Page, Locator, expect } from '@playwright/test';
+import { BasePage } from './base.page';
+
+export class AgentBuilderPage extends BasePage {
+  readonly nameInput: Locator;
+  readonly systemPromptInput: Locator;
+  readonly llmProviderSelect: Locator;
+  readonly llmModelSelect: Locator;
+  readonly sttProviderSelect: Locator;
+  readonly ttsProviderSelect: Locator;
+  readonly voiceSelect: Locator;
+  readonly saveButton: Locator;
+  readonly testButton: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.nameInput = page.locator('input[name="name"]');
+    this.systemPromptInput = page.locator('textarea[name="systemPrompt"]');
+    this.llmProviderSelect = page.locator('[data-testid="llm-provider"]');
+    this.llmModelSelect = page.locator('[data-testid="llm-model"]');
+    this.sttProviderSelect = page.locator('[data-testid="stt-provider"]');
+    this.ttsProviderSelect = page.locator('[data-testid="tts-provider"]');
+    this.voiceSelect = page.locator('[data-testid="voice-select"]');
+    this.saveButton = page.locator('button:has-text("Save Agent")');
+    this.testButton = page.locator('button:has-text("Test Agent")');
+  }
+
+  async goto() {
+    await this.navigateTo('/agents/new');
+  }
+
+  async fillBasicInfo(name: string, systemPrompt: string) {
+    await this.nameInput.fill(name);
+    await this.systemPromptInput.fill(systemPrompt);
+  }
+
+  async configureLLM(provider: string, model: string) {
+    await this.llmProviderSelect.click();
+    await this.page.locator(`[data-value="${provider}"]`).click();
+    await this.llmModelSelect.click();
+    await this.page.locator(`[data-value="${model}"]`).click();
+  }
+
+  async configureVoice(sttProvider: string, ttsProvider: string, voice: string) {
+    await this.sttProviderSelect.click();
+    await this.page.locator(`[data-value="${sttProvider}"]`).click();
+    await this.ttsProviderSelect.click();
+    await this.page.locator(`[data-value="${ttsProvider}"]`).click();
+    await this.voiceSelect.click();
+    await this.page.locator(`[data-value="${voice}"]`).click();
+  }
+
+  async save() {
+    await this.saveButton.click();
+    await expect(this.toast).toContainText('Agent created');
+  }
+
+  async createAgent(config: {
+    name: string;
+    systemPrompt: string;
+    llmProvider?: string;
+    llmModel?: string;
+  }) {
+    await this.fillBasicInfo(config.name, config.systemPrompt);
+    if (config.llmProvider && config.llmModel) {
+      await this.configureLLM(config.llmProvider, config.llmModel);
+    }
+    await this.save();
+  }
+}
+```
+
+---
+
+## Authentication Fixtures
+
+### Auth Setup
+
+```typescript
+// tests/e2e/fixtures/auth.ts
+import { test as base, Page } from '@playwright/test';
+
+type AuthFixture = {
+  authenticatedPage: Page;
+  adminPage: Page;
+};
+
+export const test = base.extend<AuthFixture>({
+  authenticatedPage: async ({ browser }, use) => {
+    // Create authenticated context
+    const context = await browser.newContext({
+      storageState: 'tests/e2e/.auth/user.json',
+    });
+    const page = await context.newPage();
+    await use(page);
+    await context.close();
+  },
+
+  adminPage: async ({ browser }, use) => {
+    const context = await browser.newContext({
+      storageState: 'tests/e2e/.auth/admin.json',
+    });
+    const page = await context.newPage();
+    await use(page);
+    await context.close();
+  },
+});
+
+export { expect } from '@playwright/test';
+```
+
+### Global Setup for Auth
+
+```typescript
+// tests/e2e/global-setup.ts
+import { chromium, FullConfig } from '@playwright/test';
+
+async function globalSetup(config: FullConfig) {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  // Login as regular user
+  await page.goto('http://localhost:3000/sign-in');
+  await page.fill('input[name="email"]', process.env.TEST_USER_EMAIL!);
+  await page.fill('input[name="password"]', process.env.TEST_USER_PASSWORD!);
+  await page.click('button[type="submit"]');
+  await page.waitForURL('**/');
+
+  // Save auth state
+  await page.context().storageState({ path: 'tests/e2e/.auth/user.json' });
+
+  // Login as admin
+  await page.goto('http://localhost:3000/sign-in');
+  await page.fill('input[name="email"]', process.env.TEST_ADMIN_EMAIL!);
+  await page.fill('input[name="password"]', process.env.TEST_ADMIN_PASSWORD!);
+  await page.click('button[type="submit"]');
+  await page.waitForURL('**/');
+
+  await page.context().storageState({ path: 'tests/e2e/.auth/admin.json' });
+
+  await browser.close();
+}
+
+export default globalSetup;
+```
+
+---
+
+## Test Specs
+
+### Agent Creation Flow
+
+```typescript
+// tests/e2e/specs/agents.spec.ts
+import { test, expect } from '../fixtures/auth';
+import { DashboardPage } from '../pages/dashboard.page';
+import { AgentBuilderPage } from '../pages/agent-builder.page';
+
+test.describe('Agent Management', () => {
+  test('creates new agent from dashboard', async ({ authenticatedPage }) => {
+    const dashboard = new DashboardPage(authenticatedPage);
+    const builder = new AgentBuilderPage(authenticatedPage);
+
+    // Navigate to dashboard
+    await dashboard.goto();
+    const initialCount = await dashboard.getAgentCount();
+
+    // Create agent
+    await dashboard.clickCreateAgent();
+    await builder.createAgent({
+      name: 'E2E Test Agent',
+      systemPrompt: 'You are a helpful test assistant.',
+      llmProvider: 'openai',
+      llmModel: 'gpt-4',
+    });
+
+    // Verify agent appears
+    await dashboard.goto();
+    const finalCount = await dashboard.getAgentCount();
+    expect(finalCount).toBe(initialCount + 1);
+  });
+
+  test('edits existing agent', async ({ authenticatedPage }) => {
+    const dashboard = new DashboardPage(authenticatedPage);
+    const builder = new AgentBuilderPage(authenticatedPage);
+
+    await dashboard.goto();
+    await dashboard.selectAgent('E2E Test Agent');
+
+    await builder.nameInput.fill('Updated E2E Agent');
+    await builder.saveButton.click();
+
+    await expect(builder.toast).toContainText('Agent updated');
+  });
+
+  test('deletes agent with confirmation', async ({ authenticatedPage }) => {
+    const dashboard = new DashboardPage(authenticatedPage);
+
+    await dashboard.goto();
+    const initialCount = await dashboard.getAgentCount();
+
+    // Click delete on agent card
+    await dashboard.agentCards
+      .filter({ hasText: 'Updated E2E Agent' })
+      .locator('[data-testid="delete-button"]')
+      .click();
+
+    // Confirm deletion
+    await authenticatedPage.locator('button:has-text("Confirm")').click();
+    await expect(dashboard.toast).toContainText('Agent deleted');
+
+    // Verify count decreased
+    const finalCount = await dashboard.getAgentCount();
+    expect(finalCount).toBe(initialCount - 1);
+  });
+});
+```
+
+### Voice Session Flow
+
+```typescript
+// tests/e2e/specs/voice.spec.ts
+import { test, expect } from '../fixtures/auth';
+import { DashboardPage } from '../pages/dashboard.page';
+
+test.describe('Voice Sessions', () => {
+  test.beforeEach(async ({ authenticatedPage }) => {
+    // Grant microphone permission
+    await authenticatedPage.context().grantPermissions(['microphone']);
+  });
+
+  test('starts voice session with agent', async ({ authenticatedPage }) => {
+    const dashboard = new DashboardPage(authenticatedPage);
+    await dashboard.goto();
+
+    // Click test button on agent card
+    await dashboard.agentCards
+      .first()
+      .locator('button:has-text("Test")')
+      .click();
+
+    // Wait for voice session modal
+    const voiceModal = authenticatedPage.locator('[data-testid="voice-modal"]');
+    await expect(voiceModal).toBeVisible();
+
+    // Verify connection status
+    const statusIndicator = voiceModal.locator('[data-testid="connection-status"]');
+    await expect(statusIndicator).toHaveText('Connected', { timeout: 10000 });
+  });
+
+  test('displays voice visualizer during session', async ({ authenticatedPage }) => {
+    const dashboard = new DashboardPage(authenticatedPage);
+    await dashboard.goto();
+
+    await dashboard.agentCards.first().locator('button:has-text("Test")').click();
+
+    const visualizer = authenticatedPage.locator('[data-testid="voice-visualizer"]');
+    await expect(visualizer).toBeVisible();
+  });
+
+  test('shows transcript during conversation', async ({ authenticatedPage }) => {
+    const dashboard = new DashboardPage(authenticatedPage);
+    await dashboard.goto();
+
+    await dashboard.agentCards.first().locator('button:has-text("Test")').click();
+
+    // Wait for initial greeting
+    const transcript = authenticatedPage.locator('[data-testid="transcript"]');
+    await expect(transcript.locator('.agent-message')).toBeVisible({
+      timeout: 15000,
+    });
+  });
+
+  test('ends session cleanly', async ({ authenticatedPage }) => {
+    const dashboard = new DashboardPage(authenticatedPage);
+    await dashboard.goto();
+
+    await dashboard.agentCards.first().locator('button:has-text("Test")').click();
+
+    // End session
+    await authenticatedPage.locator('button:has-text("End Session")').click();
+
+    // Verify modal closes
+    const voiceModal = authenticatedPage.locator('[data-testid="voice-modal"]');
+    await expect(voiceModal).not.toBeVisible();
+  });
+});
+```
+
+### Authentication Flow
+
+```typescript
+// tests/e2e/specs/auth.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Authentication', () => {
+  test('redirects to login when unauthenticated', async ({ page }) => {
+    await page.goto('/');
+    await expect(page).toHaveURL(/sign-in/);
+  });
+
+  test('shows error for invalid credentials', async ({ page }) => {
+    await page.goto('/sign-in');
+    await page.fill('input[name="email"]', 'invalid@example.com');
+    await page.fill('input[name="password"]', 'wrongpassword');
+    await page.click('button[type="submit"]');
+
+    await expect(page.locator('.error-message')).toContainText(
+      'Invalid credentials'
+    );
+  });
+
+  test('successful login redirects to dashboard', async ({ page }) => {
+    await page.goto('/sign-in');
+    await page.fill('input[name="email"]', process.env.TEST_USER_EMAIL!);
+    await page.fill('input[name="password"]', process.env.TEST_USER_PASSWORD!);
+    await page.click('button[type="submit"]');
+
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('header')).toContainText('Dashboard');
+  });
+
+  test('logout clears session', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/');
+    await authenticatedPage.locator('[data-testid="user-menu"]').click();
+    await authenticatedPage.locator('button:has-text("Logout")').click();
+
+    await expect(authenticatedPage).toHaveURL(/sign-in/);
+
+    // Verify protected route redirects
+    await authenticatedPage.goto('/agents');
+    await expect(authenticatedPage).toHaveURL(/sign-in/);
+  });
+});
+```
+
+---
+
+## Visual Testing
+
+### Screenshot Comparisons
+
+```typescript
+test('dashboard matches snapshot', async ({ authenticatedPage }) => {
+  await authenticatedPage.goto('/');
+  await authenticatedPage.waitForLoadState('networkidle');
+
+  await expect(authenticatedPage).toHaveScreenshot('dashboard.png', {
+    maxDiffPixels: 100,
+  });
+});
+
+test('agent card matches snapshot', async ({ authenticatedPage }) => {
+  await authenticatedPage.goto('/');
+
+  const agentCard = authenticatedPage.locator('[data-testid="agent-card"]').first();
+  await expect(agentCard).toHaveScreenshot('agent-card.png');
+});
+```
+
+### Responsive Testing
+
+```typescript
+const viewports = [
+  { name: 'desktop', width: 1920, height: 1080 },
+  { name: 'tablet', width: 768, height: 1024 },
+  { name: 'mobile', width: 375, height: 667 },
+];
+
+for (const viewport of viewports) {
+  test(`dashboard renders correctly on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    await expect(page).toHaveScreenshot(`dashboard-${viewport.name}.png`);
+  });
+}
+```
+
+---
+
+## Best Practices
+
+### Reliable Selectors
+
+```typescript
+// Prefer test IDs
+page.locator('[data-testid="agent-card"]')
+
+// Or semantic selectors
+page.locator('button:has-text("Create Agent")')
+page.getByRole('button', { name: 'Submit' })
+page.getByLabel('Email')
+
+// Avoid fragile selectors
+page.locator('.btn-primary')  // CSS class might change
+page.locator('div > div > button')  // Depends on structure
+```
+
+### Wait Strategies
+
+```typescript
+// Wait for specific element
+await expect(page.locator('.toast')).toBeVisible();
+
+// Wait for network idle
+await page.waitForLoadState('networkidle');
+
+// Wait for navigation
+await page.waitForURL('**/dashboard');
+
+// Custom wait
+await page.waitForFunction(() => {
+  return document.querySelector('.agent-list')?.children.length > 0;
+});
+```
+
+### Test Isolation
+
+```typescript
+test.beforeEach(async ({ page }) => {
+  // Reset test data via API
+  await page.request.post('/api/test/reset', {
+    headers: { 'X-Test-Key': process.env.TEST_API_KEY },
+  });
+});
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Testing Overview" icon="flask" href="/internal/testing/overview">
+    Testing philosophy
+  </Card>
+  <Card title="Integration Testing" icon="layer-group" href="/internal/testing/integration">
+    API testing
+  </Card>
+  <Card title="Security Testing" icon="shield" href="/internal/testing/security">
+    Security test patterns
+  </Card>
+  <Card title="CI/CD" icon="rocket" href="/internal/deployment/overview">
+    Test automation
+  </Card>
+</CardGroup>

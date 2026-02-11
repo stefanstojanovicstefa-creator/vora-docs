@@ -1,0 +1,423 @@
+---
+title: Google Calendar Integration
+description: Enable appointment booking with Google Calendar
+---
+
+# Google Calendar Integration
+
+Connect Vora to Google Calendar to let your agent check availability, book appointments, and manage calendar events.
+
+---
+
+## Overview
+
+The Google Calendar integration enables:
+
+- **Check availability** - Find open time slots
+- **Book appointments** - Create calendar events
+- **Reschedule** - Move existing appointments
+- **Cancel** - Remove appointments
+- **Send invites** - Email confirmations to attendees
+
+---
+
+## Setup
+
+<Steps>
+  <Step title="Navigate to Integrations">
+    Go to **Integrations** → **Google Calendar** → **Connect**.
+  </Step>
+  <Step title="Sign in to Google">
+    Click **Connect with Google** and sign in.
+  </Step>
+  <Step title="Grant permissions">
+    Allow Vora to:
+    - View your calendars
+    - Create and modify events
+    - Send invites on your behalf
+  </Step>
+  <Step title="Select calendars">
+    Choose which calendars to make available to agents.
+  </Step>
+  <Step title="Configure settings">
+    Set booking rules, availability, and defaults.
+  </Step>
+</Steps>
+
+---
+
+## Available Functions
+
+### `gcal.availability.check`
+
+Check available time slots.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `calendarId` | string | No | Calendar ID (default: primary) |
+| `date` | string | Yes | Date to check (YYYY-MM-DD) |
+| `duration` | number | Yes | Duration in minutes |
+| `startTime` | string | No | Earliest time (HH:MM) |
+| `endTime` | string | No | Latest time (HH:MM) |
+
+**Returns:**
+
+```json
+{
+  "date": "2024-01-20",
+  "availableSlots": [
+    { "start": "09:00", "end": "09:30" },
+    { "start": "10:30", "end": "11:00" },
+    { "start": "14:00", "end": "14:30" },
+    { "start": "15:30", "end": "16:00" }
+  ]
+}
+```
+
+---
+
+### `gcal.event.create`
+
+Create a calendar event/appointment.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `calendarId` | string | No | Calendar ID |
+| `title` | string | Yes | Event title |
+| `startTime` | string | Yes | ISO datetime |
+| `endTime` | string | Yes | ISO datetime |
+| `attendees` | array | No | Attendee emails |
+| `description` | string | No | Event description |
+| `location` | string | No | Event location |
+| `sendInvites` | boolean | No | Send email invites |
+
+**Returns:**
+
+```json
+{
+  "eventId": "abc123xyz",
+  "title": "Consultation Call",
+  "start": "2024-01-20T10:30:00Z",
+  "end": "2024-01-20T11:00:00Z",
+  "htmlLink": "https://calendar.google.com/event?eid=abc123"
+}
+```
+
+---
+
+### `gcal.event.get`
+
+Get details of an existing event.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `calendarId` | string | No | Calendar ID |
+| `eventId` | string | Yes | Event ID |
+
+---
+
+### `gcal.event.update`
+
+Reschedule or modify an event.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `calendarId` | string | No | Calendar ID |
+| `eventId` | string | Yes | Event ID |
+| `startTime` | string | No | New start time |
+| `endTime` | string | No | New end time |
+| `title` | string | No | New title |
+| `sendUpdates` | boolean | No | Notify attendees |
+
+---
+
+### `gcal.event.cancel`
+
+Cancel/delete an event.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `calendarId` | string | No | Calendar ID |
+| `eventId` | string | Yes | Event ID |
+| `sendCancellation` | boolean | No | Notify attendees |
+
+**Returns:**
+
+```json
+{
+  "success": true,
+  "message": "Event cancelled"
+}
+```
+
+---
+
+### `gcal.events.list`
+
+List upcoming events.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `calendarId` | string | No | Calendar ID |
+| `dateFrom` | string | Yes | Start date |
+| `dateTo` | string | No | End date |
+| `limit` | number | No | Max results |
+
+---
+
+## Configuration
+
+### Calendar Selection
+
+Choose which calendars agents can access:
+
+| Calendar | Access | Description |
+|----------|--------|-------------|
+| Primary | Read/Write | Main calendar |
+| Team Meetings | Read only | View only |
+| Appointments | Read/Write | Booking calendar |
+
+### Availability Rules
+
+Define when appointments can be booked:
+
+```javascript
+{
+  "availability": {
+    "timezone": "America/New_York",
+    "businessHours": {
+      "monday": { "start": "09:00", "end": "17:00" },
+      "tuesday": { "start": "09:00", "end": "17:00" },
+      "wednesday": { "start": "09:00", "end": "17:00" },
+      "thursday": { "start": "09:00", "end": "17:00" },
+      "friday": { "start": "09:00", "end": "17:00" },
+      "saturday": null,
+      "sunday": null
+    },
+    "bufferBefore": 15,  // minutes before appointments
+    "bufferAfter": 10,   // minutes after appointments
+    "minNotice": 60,     // minimum advance booking (minutes)
+    "maxAdvance": 30     // maximum days in advance
+  }
+}
+```
+
+### Appointment Types
+
+Define appointment types with presets:
+
+| Type | Duration | Calendar | Description |
+|------|----------|----------|-------------|
+| Consultation | 30 min | Appointments | Initial call |
+| Demo | 60 min | Sales | Product demo |
+| Support | 30 min | Support | Support call |
+| Follow-up | 15 min | Appointments | Quick check-in |
+
+### Event Defaults
+
+Set default values for new events:
+
+```javascript
+{
+  "defaults": {
+    "title": "Phone Consultation",
+    "description": "Scheduled via voice assistant",
+    "location": "Phone call",
+    "reminders": [
+      { "method": "email", "minutes": 1440 },  // 1 day
+      { "method": "popup", "minutes": 30 }
+    ],
+    "sendInvites": true
+  }
+}
+```
+
+---
+
+## Agent Instructions
+
+Example instructions for booking appointments:
+
+```markdown
+## Appointment Booking
+
+When a caller wants to schedule an appointment:
+
+1. Ask what type of appointment they need (consultation, demo, support)
+2. Ask for their preferred date and time
+3. Use gcal.availability.check to find available slots
+4. Present 2-3 options to the caller
+5. Confirm their choice
+6. Use gcal.event.create to book the appointment
+7. Confirm the booking details with the caller
+
+When checking availability:
+- Always confirm the timezone with the caller
+- Offer alternatives if their preferred time isn't available
+- Book at least 1 hour in advance
+
+When rescheduling:
+1. Ask for their email to look up the appointment
+2. Find the existing event
+3. Use gcal.event.update to move it
+4. Confirm the new time
+```
+
+---
+
+## Example Conversation
+
+```
+Agent: I'd be happy to help you schedule a consultation.
+       What day works best for you?
+
+User: How about this Thursday?
+
+Agent: Let me check what's available Thursday.
+
+[Function: gcal.availability.check]
+Input: { "date": "2024-01-18", "duration": 30 }
+Output: { "availableSlots": [
+  { "start": "10:30", "end": "11:00" },
+  { "start": "14:00", "end": "14:30" },
+  { "start": "15:30", "end": "16:00" }
+]}
+
+Agent: I have a few times available Thursday:
+       10:30 AM, 2:00 PM, or 3:30 PM.
+       Which works best for you?
+
+User: 2 PM works great.
+
+Agent: Perfect. And what email should I send the confirmation to?
+
+User: john@example.com
+
+[Function: gcal.event.create]
+Input: {
+  "title": "Consultation Call",
+  "startTime": "2024-01-18T14:00:00",
+  "endTime": "2024-01-18T14:30:00",
+  "attendees": ["john@example.com"],
+  "sendInvites": true
+}
+Output: { "eventId": "abc123", "htmlLink": "..." }
+
+Agent: You're all set! I've booked your consultation for
+       Thursday, January 18th at 2:00 PM.
+       You'll receive a calendar invite at john@example.com.
+       Is there anything else I can help with?
+```
+
+---
+
+## Multiple Calendars
+
+### Use Case: Team Scheduling
+
+Route appointments to the right calendar:
+
+```javascript
+// Route by appointment type
+function getCalendarId(appointmentType) {
+  const calendars = {
+    "consultation": "calendar_sales@group.calendar.google.com",
+    "support": "calendar_support@group.calendar.google.com",
+    "demo": "calendar_demos@group.calendar.google.com"
+  };
+  return calendars[appointmentType] || "primary";
+}
+```
+
+### Aggregate Availability
+
+Check availability across multiple calendars:
+
+```javascript
+// Check all team members' availability
+const calendars = [
+  "sales1@company.com",
+  "sales2@company.com",
+  "sales3@company.com"
+];
+
+// Returns first available slot across all calendars
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| **No slots available** | Fully booked or wrong date | Try different dates |
+| **Event not created** | Permission issue | Reconnect integration |
+| **Wrong timezone** | Timezone mismatch | Confirm timezone settings |
+| **Invite not sent** | Email issue | Check attendee email |
+
+### Calendar Not Showing
+
+If a calendar doesn't appear:
+
+1. Ensure the calendar is shared with the connected account
+2. Check that you have edit permissions
+3. Try reconnecting the integration
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Always confirm timezone">
+    Explicitly confirm the caller's timezone to avoid scheduling errors.
+  </Accordion>
+
+  <Accordion title="Offer multiple options">
+    Give callers 2-3 time slot options rather than just one.
+  </Accordion>
+
+  <Accordion title="Set appropriate buffers">
+    Add buffer time between appointments for preparation and overrun.
+  </Accordion>
+
+  <Accordion title="Send confirmations">
+    Always send calendar invites so callers have the event in their calendar.
+  </Accordion>
+
+  <Accordion title="Handle same-day booking">
+    Set minimum notice periods to avoid last-minute scheduling issues.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="HubSpot" icon="hubspot" href="/platform/integrations/hubspot">
+    Connect HubSpot CRM
+  </Card>
+  <Card title="Email" icon="envelope" href="/platform/integrations/email">
+    Send follow-up emails
+  </Card>
+  <Card title="Functions" icon="code" href="/platform/functions">
+    Custom functions
+  </Card>
+  <Card title="Agent Configuration" icon="sliders" href="/platform/agents/configuration">
+    Configure your agent
+  </Card>
+</CardGroup>

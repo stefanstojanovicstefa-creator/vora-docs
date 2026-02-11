@@ -1,0 +1,564 @@
+---
+title: Documents
+description: Upload, list, and manage documents in a knowledge base
+api: POST /knowledge-base/:id/documents
+---
+
+# Documents API
+
+Manage documents within a knowledge base. Upload files, track processing status, and delete outdated content.
+
+## Upload Document
+
+Upload a document to a knowledge base for indexing.
+
+```
+POST https://api.voicevora.com/v1/knowledge-base/:id/documents
+```
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_KEY` | Yes |
+| `Content-Type` | `multipart/form-data` | Yes |
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Knowledge base ID |
+
+### Form Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `file` | file | Yes | The document file |
+| `name` | string | No | Display name (defaults to filename) |
+| `metadata` | string | No | JSON string of custom metadata |
+
+### Supported File Types
+
+| Format | Extensions | Max Size |
+|--------|------------|----------|
+| PDF | `.pdf` | 50 MB |
+| Plain Text | `.txt` | 10 MB |
+| Word | `.docx`, `.doc` | 25 MB |
+| Markdown | `.md` | 10 MB |
+| HTML | `.html`, `.htm` | 10 MB |
+| CSV | `.csv` | 25 MB |
+
+### Response
+
+<Tabs>
+  <Tab title="Success (202)">
+    ```json
+    {
+      "data": {
+        "id": "doc_xyz789",
+        "knowledge_base_id": "kb_abc123",
+        "name": "Product Manual v2.1",
+        "filename": "product-manual.pdf",
+        "mime_type": "application/pdf",
+        "size_bytes": 2457600,
+        "status": "processing",
+        "chunks_count": null,
+        "metadata": {
+          "version": "2.1",
+          "category": "manuals"
+        },
+        "created_at": "2024-01-15T10:30:00Z"
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Invalid File (422)">
+    ```json
+    {
+      "error": {
+        "code": "INVALID_FILE_TYPE",
+        "message": "Unsupported file type",
+        "details": {
+          "mime_type": "image/png",
+          "supported": ["application/pdf", "text/plain", "text/markdown"]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="File Too Large (413)">
+    ```json
+    {
+      "error": {
+        "code": "FILE_TOO_LARGE",
+        "message": "File exceeds maximum size",
+        "details": {
+          "size_bytes": 52428800,
+          "max_bytes": 52428800,
+          "mime_type": "application/pdf"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Examples
+
+#### Basic Upload
+
+<CodeGroup>
+```javascript JavaScript
+const document = await vora.knowledgeBases.uploadDocument('kb_abc123', {
+  file: fs.createReadStream('manual.pdf'),
+  name: 'Product Manual'
+});
+
+console.log(`Document ID: ${document.id}`);
+console.log(`Status: ${document.status}`); // 'processing'
+```
+
+```python Python
+with open('manual.pdf', 'rb') as f:
+    document = vora.knowledge_bases.upload_document(
+        'kb_abc123',
+        file=f,
+        name='Product Manual'
+    )
+
+print(f"Document ID: {document.id}")
+print(f"Status: {document.status}")  # 'processing'
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/knowledge-base/kb_abc123/documents \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "file=@manual.pdf" \
+  -F "name=Product Manual"
+```
+</CodeGroup>
+
+#### Upload with Metadata
+
+<CodeGroup>
+```javascript JavaScript
+const document = await vora.knowledgeBases.uploadDocument('kb_abc123', {
+  file: fs.createReadStream('manual-v2.pdf'),
+  name: 'Product Manual v2.0',
+  metadata: {
+    version: '2.0',
+    product: 'Widget Pro',
+    last_updated: '2024-01-15',
+    author: 'Documentation Team'
+  }
+});
+```
+
+```python Python
+import json
+
+with open('manual-v2.pdf', 'rb') as f:
+    document = vora.knowledge_bases.upload_document(
+        'kb_abc123',
+        file=f,
+        name='Product Manual v2.0',
+        metadata=json.dumps({
+            'version': '2.0',
+            'product': 'Widget Pro',
+            'last_updated': '2024-01-15'
+        })
+    )
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/knowledge-base/kb_abc123/documents \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "file=@manual-v2.pdf" \
+  -F "name=Product Manual v2.0" \
+  -F 'metadata={"version": "2.0", "product": "Widget Pro"}'
+```
+</CodeGroup>
+
+#### Upload from URL
+
+<CodeGroup>
+```javascript JavaScript
+const document = await vora.knowledgeBases.uploadFromUrl('kb_abc123', {
+  url: 'https://example.com/docs/manual.pdf',
+  name: 'External Manual'
+});
+```
+
+```python Python
+document = vora.knowledge_bases.upload_from_url(
+    'kb_abc123',
+    url='https://example.com/docs/manual.pdf',
+    name='External Manual'
+)
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/knowledge-base/kb_abc123/documents/url \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com/docs/manual.pdf",
+    "name": "External Manual"
+  }'
+```
+</CodeGroup>
+
+---
+
+## List Documents
+
+Get all documents in a knowledge base.
+
+```
+GET https://api.voicevora.com/v1/knowledge-base/:id/documents
+```
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | integer | `20` | Items per page (max: 100) |
+| `cursor` | string | - | Pagination cursor |
+| `status` | string | - | Filter by status |
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "id": "doc_xyz789",
+      "name": "Product Manual v2.1",
+      "filename": "product-manual.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 2457600,
+      "status": "ready",
+      "chunks_count": 145,
+      "created_at": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "doc_abc123",
+      "name": "FAQ",
+      "filename": "faq.md",
+      "mime_type": "text/markdown",
+      "size_bytes": 45000,
+      "status": "ready",
+      "chunks_count": 23,
+      "created_at": "2024-01-14T09:00:00Z"
+    }
+  ],
+  "pagination": {
+    "has_more": false,
+    "next_cursor": null,
+    "total": 2
+  }
+}
+```
+
+### Examples
+
+<CodeGroup>
+```javascript JavaScript
+const { data: documents } = await vora.knowledgeBases.listDocuments('kb_abc123');
+
+documents.forEach(doc => {
+  console.log(`${doc.name}: ${doc.chunks_count} chunks (${doc.status})`);
+});
+```
+
+```python Python
+result = vora.knowledge_bases.list_documents('kb_abc123')
+
+for doc in result.data:
+    print(f"{doc.name}: {doc.chunks_count} chunks ({doc.status})")
+```
+
+```bash cURL
+curl https://api.voicevora.com/v1/knowledge-base/kb_abc123/documents \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+---
+
+## Get Document
+
+Retrieve details about a specific document.
+
+```
+GET https://api.voicevora.com/v1/knowledge-base/:id/documents/:docId
+```
+
+### Response
+
+```json
+{
+  "data": {
+    "id": "doc_xyz789",
+    "knowledge_base_id": "kb_abc123",
+    "name": "Product Manual v2.1",
+    "filename": "product-manual.pdf",
+    "mime_type": "application/pdf",
+    "size_bytes": 2457600,
+    "status": "ready",
+    "chunks_count": 145,
+    "metadata": {
+      "version": "2.1",
+      "category": "manuals"
+    },
+    "processing": {
+      "started_at": "2024-01-15T10:30:00Z",
+      "completed_at": "2024-01-15T10:32:15Z",
+      "duration_seconds": 135
+    },
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:32:15Z"
+  }
+}
+```
+
+---
+
+## Delete Document
+
+Remove a document from the knowledge base.
+
+```
+DELETE https://api.voicevora.com/v1/knowledge-base/:id/documents/:docId
+```
+
+### Response
+
+```json
+{
+  "data": {
+    "id": "doc_xyz789",
+    "deleted": true
+  }
+}
+```
+
+### Examples
+
+<CodeGroup>
+```javascript JavaScript
+await vora.knowledgeBases.deleteDocument('kb_abc123', 'doc_xyz789');
+console.log('Document deleted');
+```
+
+```python Python
+vora.knowledge_bases.delete_document('kb_abc123', 'doc_xyz789')
+print('Document deleted')
+```
+
+```bash cURL
+curl -X DELETE https://api.voicevora.com/v1/knowledge-base/kb_abc123/documents/doc_xyz789 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+---
+
+## Document Status
+
+Documents go through several processing stages:
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Upload received, waiting for processing |
+| `processing` | Being parsed and chunked |
+| `embedding` | Generating vector embeddings |
+| `ready` | Successfully indexed and searchable |
+| `error` | Processing failed |
+
+### Checking Processing Status
+
+<CodeGroup>
+```javascript JavaScript
+async function waitForDocument(kbId, docId, timeoutMs = 300000) {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeoutMs) {
+    const doc = await vora.knowledgeBases.getDocument(kbId, docId);
+
+    switch (doc.status) {
+      case 'ready':
+        console.log(`Document ready: ${doc.chunks_count} chunks`);
+        return doc;
+
+      case 'error':
+        throw new Error(`Processing failed: ${doc.error?.message}`);
+
+      default:
+        console.log(`Status: ${doc.status}...`);
+        await sleep(5000);
+    }
+  }
+
+  throw new Error('Processing timeout');
+}
+
+const doc = await waitForDocument('kb_abc123', 'doc_xyz789');
+```
+
+```python Python
+import time
+
+def wait_for_document(kb_id: str, doc_id: str, timeout: int = 300):
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        doc = vora.knowledge_bases.get_document(kb_id, doc_id)
+
+        if doc.status == 'ready':
+            print(f"Document ready: {doc.chunks_count} chunks")
+            return doc
+
+        if doc.status == 'error':
+            raise Exception(f"Processing failed: {doc.error.get('message')}")
+
+        print(f"Status: {doc.status}...")
+        time.sleep(5)
+
+    raise Exception('Processing timeout')
+
+doc = wait_for_document('kb_abc123', 'doc_xyz789')
+```
+</CodeGroup>
+
+## Bulk Upload
+
+Upload multiple documents efficiently:
+
+<CodeGroup>
+```javascript JavaScript
+async function bulkUpload(kbId, files) {
+  const results = [];
+
+  // Upload in parallel batches of 5
+  for (let i = 0; i < files.length; i += 5) {
+    const batch = files.slice(i, i + 5);
+
+    const uploads = await Promise.all(
+      batch.map(file =>
+        vora.knowledgeBases.uploadDocument(kbId, {
+          file: fs.createReadStream(file.path),
+          name: file.name
+        })
+      )
+    );
+
+    results.push(...uploads);
+    console.log(`Uploaded ${Math.min(i + 5, files.length)}/${files.length}`);
+  }
+
+  // Wait for all to process
+  await Promise.all(
+    results.map(doc => waitForDocument(kbId, doc.id))
+  );
+
+  return results;
+}
+
+const files = [
+  { path: 'manual.pdf', name: 'Product Manual' },
+  { path: 'faq.md', name: 'FAQ' },
+  { path: 'guide.docx', name: 'User Guide' }
+];
+
+await bulkUpload('kb_abc123', files);
+```
+
+```python Python
+import concurrent.futures
+
+def bulk_upload(kb_id: str, files: list):
+    results = []
+
+    # Upload with thread pool
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = []
+        for file_info in files:
+            with open(file_info['path'], 'rb') as f:
+                future = executor.submit(
+                    vora.knowledge_bases.upload_document,
+                    kb_id,
+                    file=f,
+                    name=file_info['name']
+                )
+                futures.append(future)
+
+        for future in concurrent.futures.as_completed(futures):
+            results.append(future.result())
+
+    # Wait for processing
+    for doc in results:
+        wait_for_document(kb_id, doc.id)
+
+    return results
+
+files = [
+    {'path': 'manual.pdf', 'name': 'Product Manual'},
+    {'path': 'faq.md', 'name': 'FAQ'},
+    {'path': 'guide.docx', 'name': 'User Guide'}
+]
+
+bulk_upload('kb_abc123', files)
+```
+</CodeGroup>
+
+## Replace Document
+
+Update a document while preserving its ID reference:
+
+<CodeGroup>
+```javascript JavaScript
+async function replaceDocument(kbId, docId, newFile, name) {
+  // Get original metadata
+  const original = await vora.knowledgeBases.getDocument(kbId, docId);
+
+  // Delete old version
+  await vora.knowledgeBases.deleteDocument(kbId, docId);
+
+  // Upload new version with same metadata
+  const updated = await vora.knowledgeBases.uploadDocument(kbId, {
+    file: newFile,
+    name: name || original.name,
+    metadata: original.metadata
+  });
+
+  // Wait for processing
+  await waitForDocument(kbId, updated.id);
+
+  return updated;
+}
+```
+</CodeGroup>
+
+## Error Codes
+
+| Code | Description | Resolution |
+|------|-------------|------------|
+| `INVALID_FILE_TYPE` | Unsupported format | Use a supported file type |
+| `FILE_TOO_LARGE` | Exceeds size limit | Reduce file size or split |
+| `PROCESSING_FAILED` | Content extraction failed | Check file is not corrupted |
+| `QUOTA_EXCEEDED` | Document limit reached | Delete old docs or upgrade |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Search" icon="magnifying-glass" href="/api/knowledge-base/search">
+    Query your documents
+  </Card>
+  <Card title="Knowledge Base" icon="database" href="/api/knowledge-base">
+    Back to overview
+  </Card>
+</CardGroup>

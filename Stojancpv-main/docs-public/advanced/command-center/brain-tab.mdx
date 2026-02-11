@@ -1,0 +1,88 @@
+---
+title: Brain Tab
+description: Configure the AI model, system prompt, and reasoning settings
+---
+
+# Brain Tab
+
+The Brain tab controls the AI model that powers your agent's intelligence - what it knows, how it thinks, and how it responds.
+
+---
+
+## LLM Provider
+
+Choose which AI model provider processes your agent's conversations.
+
+| Provider | Models | Best For |
+|----------|--------|----------|
+| **Google Gemini** | Flash 2.0, Pro 1.5 | Low latency, multilingual, cost-effective |
+| **OpenAI** | GPT-4o, GPT-4o-mini | Versatile, strong reasoning |
+| **Anthropic** | Claude 3.5 Sonnet | Nuanced conversations, long context |
+| **Groq** | Llama 3, Mixtral | Ultra-low latency |
+| **Mistral** | Mistral Large, Medium | European hosting, multilingual |
+
+<Tip>
+  **Recommended default**: Gemini Flash 2.0 offers the best balance of speed, quality, and cost for voice agents. Switch to GPT-4o or Claude for complex reasoning tasks.
+</Tip>
+
+---
+
+## System Prompt
+
+The system prompt defines your agent's personality, knowledge, and rules. Write clear instructions for how the agent should behave.
+
+**Good system prompt structure:**
+1. **Role** - Who the agent is (e.g., "You are Sarah, a customer support agent for Acme Corp")
+2. **Context** - Business information and domain knowledge
+3. **Rules** - What the agent should and shouldn't do
+4. **Tone** - How the agent should sound (friendly, professional, casual)
+5. **Escalation** - When to transfer to a human
+
+```
+You are Sarah, a friendly customer support agent for Acme Corp.
+
+## About Acme Corp
+Acme Corp sells premium widgets. Our hours are 9 AM - 5 PM EST, Monday through Friday.
+
+## Rules
+- Always be helpful and professional
+- If you don't know the answer, say so honestly
+- Never make up information about products or pricing
+- Transfer to a human agent if the customer is upset or has a billing issue
+
+## Tone
+Speak in a warm, conversational tone. Use simple language. Keep responses concise for voice delivery.
+```
+
+---
+
+## Temperature
+
+Controls how creative or predictable the agent's responses are.
+
+| Value | Behavior |
+|-------|----------|
+| **0.0 - 0.3** | Highly predictable, consistent responses |
+| **0.4 - 0.7** | Balanced (recommended for most agents) |
+| **0.8 - 1.0** | More creative, varied responses |
+
+<Note>
+  For customer support and business agents, keep temperature between **0.3 - 0.5**. Higher values can lead to inconsistent or off-topic responses.
+</Note>
+
+---
+
+## Max Tokens
+
+Set the maximum length of the agent's responses. For voice agents, shorter is usually better:
+- **150-300 tokens** - Concise voice responses (recommended)
+- **300-500 tokens** - Detailed explanations when needed
+- **500+** - Long-form responses (not ideal for voice)
+
+---
+
+## Conversation History
+
+Configure how much conversation context the agent retains:
+- **Messages to keep** - Number of recent messages in context
+- **Summary generation** - Automatically summarize older messages to save context space

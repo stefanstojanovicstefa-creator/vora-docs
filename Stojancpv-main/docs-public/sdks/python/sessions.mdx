@@ -1,0 +1,512 @@
+---
+title: Sessions API
+description: Create and manage voice sessions with the Python SDK
+---
+
+# Sessions API
+
+The Sessions API handles voice conversations between users and agents. Sessions provide real-time audio streaming through LiveKit.
+
+---
+
+## Overview
+
+```python
+from vora import VoraClient
+
+client = VoraClient()
+
+# Access sessions methods
+await client.sessions.create(...)
+await client.sessions.get(...)
+await client.sessions.list(...)
+await client.sessions.end(...)
+await client.sessions.get_transcript(...)
+```
+
+---
+
+## Create Session
+
+Create a new voice session:
+
+```python
+session = await client.sessions.create(
+    # Required
+    agent_id="agent_abc123",
+
+    # User identification
+    user_id="user_123",
+
+    # Context variables (available in system prompt)
+    variables={
+        "customer_name": "John Smith",
+        "account_id": "acc_456",
+        "order_history": ["ORD-001", "ORD-002"]
+    },
+
+    # Custom metadata (for your tracking)
+    metadata={
+        "source": "web_widget",
+        "page": "/pricing",
+        "campaign": "spring_promo"
+    },
+
+    # Session options
+    options={
+        "initial_message": "Hello! I see you have questions about pricing.",
+        "skip_greeting": False,
+        "recording_enabled": True
+    }
+)
+
+print(f"Session created: {session.id}")
+print(f"Room URL: {session.room_url}")
+print(f"Token: {session.token}")
+```
+
+### Response
+
+```python
+from vora.types import Session
+
+# Session model fields
+session.id           # str: "sess_xyz789"
+session.agent_id     # str
+session.user_id      # Optional[str]
+session.status       # Literal["created", "connecting", "active", "ending", "completed", "failed"]
+session.token        # str: JWT for LiveKit connection
+session.room_url     # str: WebSocket URL
+session.variables    # Optional[Dict[str, Any]]
+session.metadata     # Optional[Dict[str, Any]]
+session.expires_at   # datetime: Token expiry
+session.created_at   # datetime
+session.ended_at     # Optional[datetime]
+session.duration     # Optional[int]: seconds elapsed
+```
+
+---
+
+## Connect to Session
+
+Use the session credentials to connect via LiveKit Python SDK:
+
+```python
+from livekit import rtc
+
+async def connect_to_session(session):
+    room = rtc.Room()
+
+    # Set up event handlers
+    @room.on("connected")
+    def on_connected():
+        print("Connected to voice session")
+
+    @room.on("disconnected")
+    def on_disconnected():
+        print("Disconnected")
+
+    @room.on("track_subscribed")
+    def on_track_subscribed(track, publication, participant):
+        if track.kind == rtc.TrackKind.KIND_AUDIO:
+            # Handle audio track
+            audio_stream = rtc.AudioStream(track)
+            # Process audio...
+
+    # Connect
+    await room.connect(session.room_url, session.token)
+
+    # Enable microphone
+    await room.local_participant.publish_microphone()
+
+    return room
+```
+
+---
+
+## Get Session
+
+Retrieve session details:
+
+```python
+session = await client.sessions.get("sess_xyz789")
+
+print(session.status)     # "active"
+print(session.duration)   # seconds elapsed
+print(session.created_at) # datetime
+```
+
+### Include Additional Data
+
+```python
+session = await client.sessions.get(
+    "sess_xyz789",
+    include=["transcript", "recording", "analytics"]
+)
+
+print(session.transcript)   # Conversation messages
+print(session.recording)    # Recording URL (if completed)
+print(session.analytics)    # Session metrics
+```
+
+---
+
+## List Sessions
+
+List sessions with filters:
+
+```python
+result = await client.sessions.list(
+    # Pagination
+    limit=50,
+    after="sess_abc123",
+
+    # Filters
+    agent_id="agent_abc123",
+    user_id="user_123",
+    status="completed",
+
+    # Date range
+    start_date="2024-01-01",
+    end_date="2024-01-31",
+
+    # Sorting
+    order_by="created_at",
+    order="desc"
+)
+
+for session in result.data:
+    print(f"{session.id}: {session.status} ({session.duration}s)")
+
+# Check total and pagination
+print(f"Total: {result.total}")
+print(f"Has more: {result.has_more}")
+```
+
+### Active Sessions
+
+```python
+active = await client.sessions.list(
+    status="active",
+    limit=100
+)
+
+print(f"{active.total} active sessions")
+```
+
+---
+
+## Update Session
+
+Update session metadata during the call:
+
+```python
+await client.sessions.update(
+    "sess_xyz789",
+    metadata={
+        "resolution": "ticket_created",
+        "ticket_id": "TKT-123",
+        "satisfaction": 5
+    }
+)
+```
+
+---
+
+## End Session
+
+End a session programmatically:
+
+```python
+await client.sessions.end(
+    "sess_xyz789",
+    reason="user_request",  # or "timeout", "error", "transfer"
+    message="Thank you for calling. Goodbye!"
+)
+```
+
+### Reason Codes
+
+| Reason | Description |
+|--------|-------------|
+| `user_request` | User ended the call |
+| `agent_request` | Agent ended the call |
+| `timeout` | Session timed out |
+| `transfer` | Transferred to human |
+| `error` | Technical error |
+| `admin` | Administrative action |
+
+---
+
+## Session Transcript
+
+Get the conversation transcript:
+
+```python
+transcript = await client.sessions.get_transcript("sess_xyz789")
+
+print(f"Session: {transcript.session_id}")
+print(f"Duration: {transcript.duration}s")
+print(f"Word count: {transcript.word_count}")
+
+for message in transcript.messages:
+    print(f"{message.speaker}: {message.text}")
+    print(f"  Timestamp: {message.timestamp}")
+```
+
+### Format Options
+
+```python
+# Get as plain text
+text = await client.sessions.get_transcript(
+    "sess_xyz789",
+    format="text"
+)
+
+# Get with timestamps
+timestamped = await client.sessions.get_transcript(
+    "sess_xyz789",
+    format="json",
+    include_timestamps=True
+)
+```
+
+---
+
+## Session Recording
+
+Access session recordings (if enabled):
+
+```python
+recording = await client.sessions.get_recording("sess_xyz789")
+
+print(f"URL: {recording.url}")
+print(f"Duration: {recording.duration}s")
+print(f"Format: {recording.format}")
+print(f"Size: {recording.size} bytes")
+print(f"Expires: {recording.expires_at}")
+```
+
+<Note>
+  Recording URLs are temporary and expire after 24 hours. Store the audio file if you need permanent access.
+</Note>
+
+### Download Recording
+
+```python
+import httpx
+
+async def download_recording(recording, output_path: str):
+    async with httpx.AsyncClient() as http:
+        response = await http.get(recording.url)
+        with open(output_path, "wb") as f:
+            f.write(response.content)
+
+await download_recording(recording, "session_recording.mp3")
+```
+
+---
+
+## Session Variables
+
+Pass context to the agent:
+
+```python
+session = await client.sessions.create(
+    agent_id="agent_abc123",
+    variables={
+        # User information
+        "customer_name": "John Smith",
+        "account_tier": "premium",
+
+        # Recent activity
+        "last_order": "ORD-12345",
+        "cart_items": ["Product A", "Product B"],
+
+        # Context
+        "current_page": "/checkout",
+        "referrer": "email_campaign"
+    }
+)
+```
+
+Variables are available in the system prompt:
+
+```
+System: You are helping {{customer_name}}, a {{account_tier}} customer.
+Their last order was {{last_order}}.
+```
+
+---
+
+## Transfer Session
+
+Transfer a voice session to a human agent:
+
+```python
+transfer = await client.sessions.transfer(
+    "sess_xyz789",
+    destination="+15551234567",  # Phone number
+    # Or: destination="agent_human_id"  # Another Vora agent
+
+    context={
+        "summary": "Customer needs help with billing dispute",
+        "sentiment": "frustrated",
+        "prior_conversation": transcript
+    },
+
+    warm_transfer=True,  # Agent stays on briefly
+    whisper_message="Customer is upset about charge on Jan 15th"
+)
+
+print(transfer.status)  # "transferring"
+```
+
+---
+
+## Session Analytics
+
+Get detailed session metrics:
+
+```python
+analytics = await client.sessions.get_analytics("sess_xyz789")
+
+print(f"Duration: {analytics.duration}s")
+print(f"Turns: {analytics.turns}")
+print(f"Avg turn duration: {analytics.avg_turn_duration}s")
+print(f"Latency P50: {analytics.latency.p50}ms")
+print(f"Latency P95: {analytics.latency.p95}ms")
+print(f"Sentiment: {analytics.sentiment}")
+print(f"Topics: {analytics.topics}")
+print(f"Interruptions: {analytics.interruptions}")
+print(f"Silence duration: {analytics.silence_duration}s")
+
+for call in analytics.function_calls:
+    print(f"Function: {call.name}, Result: {call.result}, Latency: {call.latency}ms")
+```
+
+---
+
+## Batch Operations
+
+Work with multiple sessions:
+
+```python
+# End multiple sessions
+await client.sessions.end_many(
+    session_ids=["sess_1", "sess_2", "sess_3"],
+    reason="maintenance"
+)
+
+# Get transcripts for multiple sessions
+import asyncio
+
+async def get_all_transcripts(session_ids):
+    tasks = [
+        client.sessions.get_transcript(sid)
+        for sid in session_ids
+    ]
+    return await asyncio.gather(*tasks)
+
+transcripts = await get_all_transcripts(session_ids)
+```
+
+---
+
+## Real-time Events
+
+Handle session events using LiveKit data channel:
+
+```python
+from livekit import rtc
+import json
+
+async def handle_session_events(room: rtc.Room):
+    @room.on("data_received")
+    def on_data(data: bytes, participant):
+        message = json.loads(data.decode())
+
+        if message["type"] == "transcript":
+            # Real-time transcript
+            print(f"{message['speaker']}: {message['text']}")
+
+        elif message["type"] == "function_call":
+            # Agent called a function
+            print(f"Calling {message['name']} with {message['parameters']}")
+
+        elif message["type"] == "function_result":
+            # Function returned
+            print(f"Result: {message['result']}")
+
+        elif message["type"] == "agent_thinking":
+            # Agent is processing
+            print("Agent is thinking...")
+
+        elif message["type"] == "error":
+            # Session error
+            print(f"Error: {message['error']['code']}")
+```
+
+---
+
+## Error Handling
+
+```python
+from vora.exceptions import (
+    NotFoundError,
+    SessionExpiredError,
+    SessionActiveError
+)
+
+try:
+    session = await client.sessions.get("sess_xyz789")
+except NotFoundError:
+    print("Session not found")
+except SessionExpiredError:
+    print("Session has expired")
+except SessionActiveError as e:
+    print(f"Cannot modify active session: {e.message}")
+```
+
+---
+
+## Type Definitions
+
+```python
+from vora.types import (
+    Session,
+    CreateSessionInput,
+    SessionStatus,
+    Transcript,
+    TranscriptMessage,
+    Recording,
+    SessionAnalytics
+)
+from typing import Literal
+
+# SessionStatus type
+SessionStatus = Literal["created", "connecting", "active", "ending", "completed", "failed"]
+
+# Full type safety
+input_data = CreateSessionInput(
+    agent_id="agent_123",
+    user_id="user_456",
+    variables={"name": "John"}
+)
+
+session: Session = await client.sessions.create(**input_data.model_dump())
+transcript: Transcript = await client.sessions.get_transcript(session.id)
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="LiveKit Integration" icon="microphone" href="/sdks/livekit">
+    Connect to voice sessions
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/developers/webhooks">
+    Receive session events
+  </Card>
+</CardGroup>

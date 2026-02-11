@@ -1,0 +1,522 @@
+---
+title: Agents API
+description: Create and manage voice agents with the Python SDK
+---
+
+# Agents API
+
+The Agents API allows you to create, configure, and manage voice agents programmatically.
+
+---
+
+## Overview
+
+```python
+from vora import VoraClient
+
+client = VoraClient()
+
+# Access agents methods
+await client.agents.create(...)
+await client.agents.get(...)
+await client.agents.update(...)
+await client.agents.list(...)
+await client.agents.delete(...)
+```
+
+---
+
+## Create Agent
+
+Create a new voice agent:
+
+```python
+agent = await client.agents.create(
+    # Required
+    name="Customer Support",
+    system_prompt="""You are a friendly customer support agent.
+
+Your responsibilities:
+- Answer questions about products
+- Help with orders
+- Provide excellent service
+
+Keep responses concise and helpful.""",
+
+    # Voice configuration
+    voice={
+        "provider": "elevenlabs",
+        "voice_id": "EXAVITQu4vr4xnSDxMaL",
+        "model": "eleven_turbo_v2",
+        "stability": 0.5,
+        "similarity_boost": 0.75
+    },
+
+    # Model configuration
+    model={
+        "provider": "openai",
+        "model": "gpt-4-turbo",
+        "temperature": 0.7,
+        "max_tokens": 1024
+    },
+
+    # Optional settings
+    greeting="Hello! How can I help you today?",
+    end_conversation_phrases=["goodbye", "thanks bye", "end call"],
+
+    # Functions (tool calling)
+    functions=[
+        {
+            "name": "get_order_status",
+            "description": "Look up order status by order ID",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "order_id": {
+                        "type": "string",
+                        "description": "The order ID"
+                    }
+                },
+                "required": ["order_id"]
+            },
+            "handler": {
+                "type": "webhook",
+                "url": "https://api.yoursite.com/orders/status"
+            }
+        }
+    ],
+
+    # Metadata
+    metadata={
+        "department": "support",
+        "version": "1.0"
+    }
+)
+
+print(f"Created agent: {agent.id}")
+```
+
+### Response
+
+```python
+from vora.types import Agent
+
+# Agent model fields
+agent.id              # str: "agent_abc123"
+agent.name            # str
+agent.system_prompt   # str
+agent.voice           # Optional[VoiceConfig]
+agent.model           # Optional[ModelConfig]
+agent.greeting        # Optional[str]
+agent.end_conversation_phrases  # Optional[List[str]]
+agent.functions       # Optional[List[FunctionDefinition]]
+agent.knowledge_base  # Optional[KnowledgeBaseConfig]
+agent.status          # Literal["draft", "active", "paused", "archived"]
+agent.metadata        # Optional[Dict[str, Any]]
+agent.created_at      # datetime
+agent.updated_at      # datetime
+```
+
+---
+
+## Get Agent
+
+Retrieve an agent by ID:
+
+```python
+agent = await client.agents.get("agent_abc123")
+
+print(agent.name)    # "Customer Support"
+print(agent.status)  # "active"
+print(agent.voice)   # VoiceConfig(provider="elevenlabs", ...)
+```
+
+### Options
+
+```python
+agent = await client.agents.get(
+    "agent_abc123",
+    include=["functions", "knowledge_base"]  # Include related data
+)
+```
+
+---
+
+## List Agents
+
+List all agents with pagination:
+
+```python
+result = await client.agents.list(
+    limit=20,
+    after="agent_xyz789",    # Cursor for pagination
+    status="active",         # Filter by status
+    order_by="created_at",   # Sort field
+    order="desc"             # Sort direction
+)
+
+print(f"Found {result.total} agents")
+for agent in result.data:
+    print(f"{agent.id}: {agent.name}")
+
+# Check for more pages
+if result.has_more:
+    next_page = await client.agents.list(
+        after=result.data[-1].id
+    )
+```
+
+### Pagination Helper
+
+```python
+async def get_all_agents():
+    """Fetch all agents with automatic pagination."""
+    agents = []
+    cursor = None
+
+    while True:
+        result = await client.agents.list(limit=100, after=cursor)
+        agents.extend(result.data)
+
+        if not result.has_more:
+            break
+        cursor = result.data[-1].id
+
+    return agents
+
+all_agents = await get_all_agents()
+```
+
+---
+
+## Update Agent
+
+Update an existing agent:
+
+```python
+agent = await client.agents.update(
+    "agent_abc123",
+    name="Updated Support Agent",
+    system_prompt="Updated prompt...",
+    voice={
+        "voice_id": "new_voice_id"
+    },
+    model={
+        "temperature": 0.5
+    }
+)
+```
+
+### Partial Updates
+
+Only specified fields are updated:
+
+```python
+# Update just the greeting
+await client.agents.update(
+    "agent_abc123",
+    greeting="Welcome! I'm here to assist you."
+)
+
+# Update just the model temperature
+await client.agents.update(
+    "agent_abc123",
+    model={"temperature": 0.3}
+)
+```
+
+---
+
+## Delete Agent
+
+Delete an agent:
+
+```python
+await client.agents.delete("agent_abc123")
+```
+
+<Warning>
+  Deleting an agent is permanent. Active sessions will continue but no new sessions can be created.
+</Warning>
+
+---
+
+## Agent Status
+
+Manage agent lifecycle:
+
+```python
+# Pause agent (stops new sessions)
+await client.agents.pause("agent_abc123")
+
+# Resume agent
+await client.agents.resume("agent_abc123")
+
+# Archive agent (soft delete)
+await client.agents.archive("agent_abc123")
+```
+
+---
+
+## Voice Configuration
+
+Configure text-to-speech settings:
+
+```python
+from vora.types import VoiceConfig
+
+# ElevenLabs configuration
+voice = VoiceConfig(
+    provider="elevenlabs",
+    voice_id="EXAVITQu4vr4xnSDxMaL",
+    model="eleven_turbo_v2",
+    stability=0.5,           # 0-1
+    similarity_boost=0.75,   # 0-1
+    style=0.5,               # 0-1
+    use_speaker_boost=True
+)
+
+# Cartesia configuration
+voice = VoiceConfig(
+    provider="cartesia",
+    voice_id="a0e99841-438c-4a64-b679-ae501e7d6091",
+    speed=1.0                # 0.5-2.0
+)
+
+# Google configuration
+voice = VoiceConfig(
+    provider="google",
+    language_code="en-US",
+    voice_name="en-US-Neural2-J",
+    speaking_rate=1.0,       # 0.25-4.0
+    pitch=0.0                # -20.0 to 20.0
+)
+```
+
+---
+
+## Model Configuration
+
+Configure the LLM:
+
+```python
+from vora.types import ModelConfig
+
+# OpenAI configuration
+model = ModelConfig(
+    provider="openai",
+    model="gpt-4-turbo",
+    temperature=0.7,
+    max_tokens=1024,
+    top_p=1.0,
+    frequency_penalty=0.0,
+    presence_penalty=0.0
+)
+
+# Anthropic configuration
+model = ModelConfig(
+    provider="anthropic",
+    model="claude-3-sonnet-20240229",
+    temperature=0.7,
+    max_tokens=1024
+)
+
+# Google configuration
+model = ModelConfig(
+    provider="google",
+    model="gemini-1.5-pro",
+    temperature=0.7,
+    max_tokens=1024
+)
+```
+
+---
+
+## Functions (Tool Calling)
+
+Add callable functions to agents:
+
+```python
+functions = [
+    {
+        "name": "get_order_status",
+        "description": "Look up order status by ID",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "Order ID (e.g., ORD-12345)"
+                }
+            },
+            "required": ["order_id"]
+        },
+        "handler": {
+            "type": "webhook",
+            "url": "https://api.yoursite.com/orders/status",
+            "method": "POST",
+            "headers": {
+                "Authorization": "Bearer {{API_KEY}}"
+            }
+        }
+    },
+    {
+        "name": "book_appointment",
+        "description": "Book an appointment",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "date": {"type": "string", "format": "date"},
+                "time": {"type": "string", "format": "time"},
+                "service_type": {
+                    "type": "string",
+                    "enum": ["consultation", "followup"]
+                }
+            },
+            "required": ["date", "time", "service_type"]
+        },
+        "handler": {
+            "type": "webhook",
+            "url": "https://api.yoursite.com/appointments"
+        }
+    }
+]
+
+agent = await client.agents.create(
+    name="Appointment Agent",
+    system_prompt="You help users book appointments.",
+    functions=functions
+)
+```
+
+---
+
+## Knowledge Base
+
+Connect a knowledge base to an agent:
+
+```python
+# Create agent with knowledge base
+agent = await client.agents.create(
+    name="Support Agent",
+    system_prompt="...",
+    knowledge_base={
+        "id": "kb_xyz789",
+        "enabled": True,
+        "top_k": 5,
+        "threshold": 0.7
+    }
+)
+
+# Update knowledge base settings
+await client.agents.update(
+    "agent_abc123",
+    knowledge_base={
+        "id": "kb_xyz789",
+        "enabled": True,
+        "top_k": 10,
+        "threshold": 0.6,
+        "rerank": True
+    }
+)
+```
+
+---
+
+## Clone Agent
+
+Create a copy of an existing agent:
+
+```python
+clone = await client.agents.clone(
+    "agent_abc123",
+    name="Support Agent (Copy)",
+    status="draft"
+)
+
+print(f"Cloned to: {clone.id}")
+```
+
+---
+
+## Test Agent
+
+Test an agent without creating a full session:
+
+```python
+response = await client.agents.test(
+    "agent_abc123",
+    message="What are your store hours?",
+    variables={
+        "customer_name": "Test User"
+    }
+)
+
+print(response.reply)    # Agent's response
+print(response.latency)  # Response time in ms
+```
+
+---
+
+## Usage Statistics
+
+Get agent usage metrics:
+
+```python
+stats = await client.agents.get_stats(
+    "agent_abc123",
+    start_date="2024-01-01",
+    end_date="2024-01-31"
+)
+
+print(f"Total sessions: {stats.total_sessions}")
+print(f"Avg duration: {stats.avg_duration}s")
+print(f"Total minutes: {stats.total_minutes}")
+print(f"Function calls: {stats.function_calls}")
+print(f"Error rate: {stats.error_rate}")
+```
+
+---
+
+## Type Definitions
+
+```python
+from vora.types import (
+    Agent,
+    CreateAgentInput,
+    UpdateAgentInput,
+    VoiceConfig,
+    ModelConfig,
+    FunctionDefinition,
+    AgentStatus
+)
+from typing import Literal
+
+# AgentStatus type
+AgentStatus = Literal["draft", "active", "paused", "archived"]
+
+# Create with full type safety
+input_data = CreateAgentInput(
+    name="Support",
+    system_prompt="...",
+    voice=VoiceConfig(
+        provider="elevenlabs",
+        voice_id="abc123"
+    )
+)
+
+agent: Agent = await client.agents.create(**input_data.model_dump())
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Sessions API" icon="comments" href="/sdks/python/sessions">
+    Create voice sessions
+  </Card>
+  <Card title="Functions Guide" icon="function" href="/developers/concepts/functions">
+    Add agent capabilities
+  </Card>
+</CardGroup>

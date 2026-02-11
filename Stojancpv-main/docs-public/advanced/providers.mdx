@@ -1,0 +1,88 @@
+---
+title: Provider Selection
+description: Configure and manage STT, TTS, and LLM providers with fallback chains
+---
+
+# Provider Selection
+
+Vora's provider selection system lets you choose the best STT, TTS, and LLM providers for each agent. Configure primary providers, fallback chains, and automatic failover.
+
+<Info>
+  Provider selection is available in **Advanced Mode**. In Simple Mode, Vora uses optimized defaults.
+</Info>
+
+---
+
+## How Provider Selection Works
+
+Each agent has a three-part voice pipeline:
+1. **STT** (Speech-to-Text) - Converts caller audio to text
+2. **LLM** (Language Model) - Generates intelligent responses
+3. **TTS** (Text-to-Speech) - Converts response text to speech
+
+You can independently configure each component per agent.
+
+---
+
+## Provider Overview
+
+### Speech-to-Text (STT)
+
+| Provider | Languages | Strengths |
+|----------|-----------|-----------|
+| Deepgram | 30+ | Best accuracy, lowest latency |
+| Google Cloud | 100+ | Widest language coverage |
+| AssemblyAI | 10+ | Strong English, speaker diarization |
+| Soniox | 30+ | Real-time streaming |
+| Azure Speech | 80+ | Enterprise, custom models |
+
+### Text-to-Speech (TTS)
+
+| Provider | Voices | Strengths |
+|----------|--------|-----------|
+| ElevenLabs | 100+ | Most natural voices |
+| Cartesia | Sonic | Ultra-low latency, multilingual |
+| Google Cloud | 200+ | Wide language/voice selection |
+| Azure TTS | 300+ | Enterprise, custom neural voices |
+| PlayHT | Premium | Voice cloning capabilities |
+
+### LLM Providers
+
+| Provider | Models | Strengths |
+|----------|--------|-----------|
+| Google Gemini | Flash 2.0, Pro 1.5 | Speed, multilingual, cost |
+| OpenAI | GPT-4o, GPT-4o-mini | Versatile, strong reasoning |
+| Anthropic | Claude 3.5 Sonnet | Nuanced, safe responses |
+| Groq | Llama 3, Mixtral | Ultra-fast inference |
+| Mistral | Large, Medium | European hosting |
+
+---
+
+## Fallback Chains
+
+Configure automatic failover for each pipeline component:
+
+```
+Primary: Deepgram → Fallback 1: Google STT → Fallback 2: Azure STT
+```
+
+When a provider fails, the next in the chain activates automatically. Configure fallbacks in the [Command Center Advanced Tab](/advanced/command-center/advanced-tab).
+
+---
+
+## Provider Selection Strategies
+
+| Strategy | Description |
+|----------|-------------|
+| **Quality-first** | Choose the highest quality provider regardless of cost |
+| **Latency-first** | Prioritize the lowest-latency provider |
+| **Cost-first** | Minimize per-session costs |
+| **Balanced** | Vora's default, optimizing across all factors |
+
+---
+
+## Per-Language Providers
+
+Different languages may work better with different providers. See the [Language Support](/languages) pages for per-language provider recommendations.
+
+For detailed provider comparisons, see the [Providers](/providers) tab.

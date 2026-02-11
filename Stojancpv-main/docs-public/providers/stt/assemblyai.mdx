@@ -1,0 +1,409 @@
+---
+title: AssemblyAI
+description: High-accuracy speech-to-text with advanced features
+---
+
+# AssemblyAI
+
+AssemblyAI offers industry-leading accuracy with advanced features like speaker diarization, content moderation, and summarization.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `assemblyai` |
+| Default Model | `best` |
+| Streaming | ✅ Real-time support |
+| Latency | ~250-350ms |
+| Languages | 35+ |
+
+---
+
+## Available Models
+
+| Model | Accuracy | Latency | Best For |
+|-------|----------|---------|----------|
+| `best` | 97%+ | ~300ms | Highest accuracy |
+| `nano` | 94% | ~200ms | Speed-focused |
+
+<Note>
+**Recommended**: `best` for quality-critical applications, `nano` for speed.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Accurate Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  stt: {
+    provider: 'assemblyai',
+    model: 'best'
+  }
+});
+```
+
+### Full Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Custom Agent',
+  systemPrompt: 'You are a specialized assistant.',
+  stt: {
+    provider: 'assemblyai',
+    model: 'best',
+    languageCode: 'en_us',
+    punctuate: true,
+    formatText: true,
+    wordBoost: ['product-name', 'technical-term'],
+    filterProfanity: false,
+    redactPii: false,
+    speakerLabels: false
+  }
+});
+```
+
+---
+
+## Why AssemblyAI?
+
+### 1. Industry-Leading Accuracy
+
+AssemblyAI achieves 97%+ accuracy:
+- Consistently outperforms alternatives
+- Strong on accents and dialects
+- Excellent punctuation
+
+### 2. Advanced Features
+
+Unique capabilities:
+
+| Feature | Description |
+|---------|-------------|
+| Speaker Diarization | Identify who said what |
+| Content Moderation | Detect sensitive content |
+| PII Redaction | HIPAA-compliant redaction |
+| Topic Detection | Automatic categorization |
+| Summarization | Generate summaries |
+
+### 3. Word Boost
+
+Dramatically improve domain accuracy:
+
+```typescript
+stt: {
+  provider: 'assemblyai',
+  wordBoost: [
+    'Vora',
+    'LiveKit',
+    'WebRTC',
+    'your-company-name'
+  ],
+  boostParam: 'high'  // low, default, high
+}
+```
+
+### 4. Real-Time Streaming
+
+Purpose-built streaming API:
+- WebSocket-based
+- Partial results
+- End-of-utterance detection
+
+---
+
+## Use Cases
+
+### High-Accuracy Voice AI
+
+```typescript
+stt: {
+  provider: 'assemblyai',
+  model: 'best',
+  punctuate: true,
+  formatText: true
+}
+```
+
+### Medical/Legal Transcription
+
+```typescript
+stt: {
+  provider: 'assemblyai',
+  model: 'best',
+  wordBoost: [
+    'hypertension',
+    'cardiovascular',
+    'plaintiff',
+    'defendant'
+  ],
+  boostParam: 'high',
+  redactPii: true  // HIPAA compliance
+}
+```
+
+### Multi-Speaker Calls
+
+```typescript
+stt: {
+  provider: 'assemblyai',
+  model: 'best',
+  speakerLabels: true,  // Diarization
+  speakersExpected: 2
+}
+```
+
+### Content Moderation
+
+```typescript
+stt: {
+  provider: 'assemblyai',
+  model: 'best',
+  contentSafety: true,  // Detect sensitive content
+  filterProfanity: true
+}
+```
+
+---
+
+## Advanced Features
+
+### Speaker Diarization
+
+Identify speakers in multi-party conversations:
+
+```typescript
+stt: {
+  provider: 'assemblyai',
+  speakerLabels: true,
+  speakersExpected: 2  // Optional hint
+}
+
+// Result:
+// Speaker A: "Hello, how can I help?"
+// Speaker B: "I have a question about..."
+```
+
+### PII Redaction
+
+Automatically redact sensitive information:
+
+```typescript
+stt: {
+  provider: 'assemblyai',
+  redactPii: true,
+  redactPiiPolicies: [
+    'us_social_security_number',
+    'credit_card_number',
+    'phone_number',
+    'email_address'
+  ],
+  redactPiiSub: 'hash'  // or 'entity_name'
+}
+
+// Result:
+// "My SSN is [SSN_HASH_12345]"
+```
+
+### Content Safety
+
+Detect sensitive content:
+
+```typescript
+stt: {
+  provider: 'assemblyai',
+  contentSafety: true
+}
+
+// Returns flags for:
+// - Hate speech
+// - Violence
+// - Profanity
+// - Sensitive topics
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Maximize Accuracy">
+    For best transcription quality:
+
+    ```typescript
+    stt: {
+      provider: 'assemblyai',
+      model: 'best',
+      punctuate: true,
+      formatText: true,
+      wordBoost: ['domain', 'specific', 'terms'],
+      boostParam: 'high'
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Balance Speed & Quality">
+    For real-time voice with good accuracy:
+
+    ```typescript
+    stt: {
+      provider: 'assemblyai',
+      model: 'nano',  // Faster
+      punctuate: true
+    }
+    ```
+
+    Or use `best` with optimized settings:
+
+    ```typescript
+    stt: {
+      provider: 'assemblyai',
+      model: 'best',
+      endUtteranceSilenceThreshold: 500
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Domain Vocabulary">
+    For specialized industries:
+
+    ```typescript
+    // Medical
+    wordBoost: ['diagnosis', 'prescription', 'symptoms']
+
+    // Legal
+    wordBoost: ['plaintiff', 'motion', 'jurisdiction']
+
+    // Tech
+    wordBoost: ['kubernetes', 'microservices', 'deployment']
+    ```
+  </Accordion>
+
+  <Accordion title="HIPAA Compliance">
+    For healthcare applications:
+
+    ```typescript
+    stt: {
+      provider: 'assemblyai',
+      model: 'best',
+      redactPii: true,
+      redactPiiPolicies: [
+        'us_social_security_number',
+        'date_of_birth',
+        'medical_record_number',
+        'person_name'
+      ]
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Language Support
+
+AssemblyAI supports 35+ languages:
+
+| Language | Code | Model |
+|----------|------|-------|
+| English | `en_us`, `en_uk`, `en_au` | best, nano |
+| Spanish | `es` | best |
+| French | `fr` | best |
+| German | `de` | best |
+| Portuguese | `pt` | best |
+| Italian | `it` | best |
+| Dutch | `nl` | best |
+| Hindi | `hi` | best |
+| Japanese | `ja` | best |
+
+Configure language:
+
+```typescript
+stt: {
+  provider: 'assemblyai',
+  languageCode: 'es'  // Spanish
+}
+```
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+ASSEMBLYAI_API_KEY=...
+```
+
+### Get Your Key
+
+1. Go to [AssemblyAI Dashboard](https://www.assemblyai.com/dashboard)
+2. Sign up or sign in
+3. Copy your API key
+4. Add to your Vora environment
+
+---
+
+## Pricing
+
+| Model | Cost per Hour |
+|-------|---------------|
+| best | $0.37 |
+| nano | $0.12 |
+
+Additional features:
+- Speaker diarization: +$0.04/hour
+- PII redaction: +$0.04/hour
+- Content safety: +$0.04/hour
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Accuracy Issues">
+    If transcription quality is low:
+
+    - Use `best` model instead of `nano`
+    - Add word boosts for domain terms
+    - Check audio quality
+    - Verify correct language code
+  </Accordion>
+
+  <Accordion title="Latency Concerns">
+    If responses are too slow:
+
+    - Switch to `nano` model
+    - Lower silence threshold
+    - Check network latency
+    - Consider Deepgram for ultra-low latency
+  </Accordion>
+
+  <Accordion title="Missing Words">
+    If words are dropped:
+
+    - Add to word boost list
+    - Increase boost strength
+    - Check audio clarity
+    - Ensure proper pronunciation in prompts
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare STT" icon="scale-balanced" href="/providers/stt">
+    See all STT options
+  </Card>
+  <Card title="Knowledge Base" icon="book" href="/platform/knowledge-base">
+    Add domain context
+  </Card>
+</CardGroup>

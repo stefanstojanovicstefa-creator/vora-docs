@@ -1,0 +1,348 @@
+---
+title: Support
+description: Get help with Vora
+---
+
+# Support
+
+Get the help you need to succeed with Vora. We offer multiple support channels based on your plan.
+
+---
+
+## Support Channels
+
+### Documentation
+
+Start here for self-service help:
+
+| Resource | Description |
+|----------|-------------|
+| [Platform Guide](/platform) | Complete platform documentation |
+| [API Reference](/api) | API endpoints and SDKs |
+| [Developer Docs](/developers) | Integration guides |
+| [Tutorials](/tutorials) | Step-by-step walkthroughs |
+
+### Community
+
+Connect with other Vora users:
+
+- **Discord** - [discord.gg/vora](https://discord.gg/vora) - Real-time community chat
+- **Forum** - [community.vora.ai](https://community.vora.ai) - Discussions and solutions
+- **GitHub** - [github.com/vora-ai](https://github.com/vora-ai) - SDKs and examples
+
+### Direct Support
+
+| Plan | Email | Chat | Phone | Response Time |
+|------|:-----:|:----:|:-----:|---------------|
+| Starter | ✓ | — | — | 48 hours |
+| Growth | ✓ | ✓ | — | 24 hours |
+| Business | ✓ | ✓ | — | 4 hours |
+| Enterprise | ✓ | ✓ | ✓ | 1 hour |
+
+---
+
+## Contacting Support
+
+### Email Support
+
+Send support requests to: **support@vora.ai**
+
+Include in your email:
+- Account email
+- Agent/session IDs (if applicable)
+- Detailed description of the issue
+- Steps to reproduce
+- Screenshots or recordings
+
+### In-App Support
+
+<Steps>
+  <Step title="Open support panel">
+    Click the **?** icon in the bottom-right corner of the dashboard.
+  </Step>
+  <Step title="Search knowledge base">
+    Type your question to find relevant articles.
+  </Step>
+  <Step title="Start conversation">
+    If self-service doesn't help, click **Contact Support**.
+  </Step>
+  <Step title="Describe your issue">
+    Provide details. Your account context is automatically included.
+  </Step>
+</Steps>
+
+### Live Chat
+
+Available on Growth+ plans:
+
+1. Click the chat icon in the dashboard
+2. Select **Talk to Support**
+3. Describe your issue
+4. Chat with a support agent in real-time
+
+---
+
+## Support Priorities
+
+### Priority Levels
+
+| Priority | Description | Example | Target Response |
+|----------|-------------|---------|-----------------|
+| **P1 - Critical** | Production down | All calls failing | 1 hour |
+| **P2 - High** | Major feature broken | Agent not responding | 4 hours |
+| **P3 - Medium** | Feature impaired | Slow performance | 24 hours |
+| **P4 - Low** | Minor issue/question | UI cosmetic issue | 48 hours |
+
+### Escalation
+
+If you need to escalate an issue:
+
+1. Reply to your existing ticket with **[ESCALATION]** in subject
+2. Explain why escalation is needed
+3. Include business impact
+
+### Emergency Support
+
+For P1 production emergencies:
+
+- **Email**: emergency@vora.ai
+- **Phone** (Enterprise): +1-800-VORA-SOS
+- **Status page**: [status.vora.ai](https://status.vora.ai)
+
+---
+
+## Common Topics
+
+### Account & Billing
+
+- [Resetting password](/platform/support/troubleshooting#password-reset)
+- [Updating payment method](/platform/billing#payment-methods)
+- [Changing plans](/platform/billing/plans#changing-plans)
+- [Invoice questions](/platform/billing#invoices)
+- [Refund requests](/platform/billing#faqs)
+
+### Agents
+
+- [Agent not responding](/platform/support/troubleshooting#agent-issues)
+- [Configuring prompts](/platform/agents/configuration)
+- [Testing agents](/platform/agents/testing)
+- [Deployment issues](/platform/agents/deployment)
+
+### Integrations
+
+- [Connecting HubSpot](/platform/integrations/hubspot)
+- [Google Calendar setup](/platform/integrations/google-calendar)
+- [Webhook troubleshooting](/platform/integrations/webhooks#troubleshooting)
+- [API authentication](/api/authentication)
+
+### Phone Numbers
+
+- [Number not working](/platform/support/troubleshooting#phone-issues)
+- [Porting numbers](/platform/phone-numbers#bring-your-own-number)
+- [Call quality issues](/platform/phone-numbers#call-quality)
+- [Compliance questions](/platform/phone-numbers#compliance)
+
+---
+
+## Best Practices for Getting Help
+
+### Provide Context
+
+Good support requests include:
+
+```markdown
+**Issue**: Agent stops responding mid-conversation
+
+**Account**: user@company.com
+**Agent ID**: agent_abc123
+**Session ID**: sess_xyz789
+
+**Steps to Reproduce**:
+1. Start voice session
+2. Ask "What's my order status?"
+3. Agent responds, then goes silent
+
+**Expected**: Agent continues conversation
+**Actual**: 10-second silence, then disconnect
+
+**When it started**: January 15, 2024
+**Frequency**: 3 out of 10 calls
+
+**Attachments**: [session recording attached]
+```
+
+### What to Include
+
+| Element | Why It Helps |
+|---------|--------------|
+| **IDs** | We can look up exact logs |
+| **Timestamps** | Narrow down in our systems |
+| **Steps** | We can reproduce |
+| **Screenshots** | Visual context |
+| **Recordings** | Hear exactly what happened |
+
+### What to Avoid
+
+- ❌ "It's broken" (too vague)
+- ❌ Multiple issues in one ticket
+- ❌ Duplicate tickets for same issue
+- ❌ Sharing credentials in tickets
+
+---
+
+## Self-Service Tools
+
+### Status Page
+
+Check system status at [status.vora.ai](https://status.vora.ai):
+
+- Current incidents
+- Planned maintenance
+- Historical uptime
+- Subscribe to updates
+
+### Health Check
+
+Run a diagnostic on your account:
+
+1. Go to **Settings** → **Support** → **Health Check**
+2. Click **Run Diagnostics**
+3. Review any warnings or errors
+4. Follow recommended fixes
+
+### Logs & Debugging
+
+Access detailed logs for troubleshooting:
+
+```javascript
+// Enable debug mode for an agent
+await vora.agents.update('agent_abc123', {
+  debug: true,
+  logLevel: 'verbose'
+});
+
+// Then check logs
+const logs = await vora.logs.list({
+  agent: 'agent_abc123',
+  level: 'debug',
+  limit: 100
+});
+```
+
+---
+
+## Enterprise Support
+
+### Technical Account Manager
+
+Enterprise plans include a dedicated TAM who:
+
+- Understands your business context
+- Provides proactive guidance
+- Coordinates complex issues
+- Reviews architecture
+- Conducts quarterly business reviews
+
+### Custom SLAs
+
+Enterprise SLAs include:
+
+| Metric | Standard | Enterprise |
+|--------|----------|------------|
+| Uptime guarantee | 99.9% | 99.99% |
+| P1 response | 4 hours | 15 minutes |
+| P1 resolution | 24 hours | 4 hours |
+| Support hours | Business hours | 24/7/365 |
+
+### Dedicated Support Channel
+
+Enterprise customers get:
+
+- Private Slack/Teams channel
+- Direct phone line
+- Named support engineers
+- Quarterly reviews
+
+---
+
+## Training & Onboarding
+
+### Getting Started
+
+| Resource | Description |
+|----------|-------------|
+| [Quickstart](/quickstart) | 15-minute getting started |
+| [Video tutorials](/tutorials) | Visual walkthroughs |
+| [Sample agents](/templates) | Pre-built examples |
+
+### Live Training
+
+Available for Growth+ plans:
+
+| Session | Duration | For |
+|---------|----------|-----|
+| Platform Walkthrough | 30 min | New users |
+| Agent Building | 60 min | Developers |
+| Best Practices | 45 min | Teams |
+| Advanced Features | 60 min | Power users |
+
+Schedule training at [vora.ai/training](https://vora.ai/training).
+
+### Enterprise Onboarding
+
+Enterprise customers receive:
+
+- Dedicated implementation team
+- Custom integration support
+- Staff training sessions
+- Go-live support
+- 30/60/90 day check-ins
+
+---
+
+## Feedback
+
+### Feature Requests
+
+Submit ideas for new features:
+
+1. Go to [feedback.vora.ai](https://feedback.vora.ai)
+2. Search for existing requests
+3. Vote on ideas you support
+4. Submit new requests
+
+### Bug Reports
+
+Report bugs through:
+
+- In-app support
+- Email to support@vora.ai
+- GitHub issues (for SDK bugs)
+
+### Product Updates
+
+Stay informed about Vora updates:
+
+- [Changelog](/changelog) - Recent releases
+- [Blog](https://vora.ai/blog) - Product news
+- [Newsletter](https://vora.ai/newsletter) - Monthly digest
+- [Twitter](https://twitter.com/voraai) - Quick updates
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Troubleshooting" icon="wrench" href="/platform/support/troubleshooting">
+    Common issues and fixes
+  </Card>
+  <Card title="Status Page" icon="signal" href="https://status.vora.ai">
+    System status
+  </Card>
+  <Card title="Community" icon="users" href="https://discord.gg/vora">
+    Join Discord
+  </Card>
+  <Card title="Documentation" icon="book" href="/platform">
+    Platform guide
+  </Card>
+</CardGroup>

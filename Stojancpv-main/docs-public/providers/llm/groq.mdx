@@ -1,0 +1,325 @@
+---
+title: Groq
+description: Ultra-low latency Llama 3.1 for Vora agents
+---
+
+# Groq
+
+Groq's custom LPU hardware delivers the fastest inference speeds available, making it ideal for real-time voice applications.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `groq` |
+| Default Model | `llama-3.1-70b-versatile` |
+| Context Window | Up to 128K tokens |
+| Streaming | ✅ Supported |
+| Function Calling | ✅ Supported |
+
+---
+
+## Available Models
+
+| Model | Context | Speed | Cost (per 1M tokens) |
+|-------|---------|-------|----------------------|
+| `llama-3.1-70b-versatile` | 128K | Ultra-fast | $0.59 in / $0.79 out |
+| `llama-3.1-8b-instant` | 128K | Fastest | $0.05 in / $0.08 out |
+| `mixtral-8x7b-32768` | 32K | Very fast | $0.24 in / $0.24 out |
+| `gemma2-9b-it` | 8K | Fast | $0.20 in / $0.20 out |
+
+<Note>
+**Recommended**: `llama-3.1-70b-versatile` for best quality/speed balance.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Speed Agent',
+  systemPrompt: 'You are a fast and helpful assistant.',
+  model: {
+    provider: 'groq',
+    model: 'llama-3.1-70b-versatile'
+  }
+});
+```
+
+### Ultra-Fast Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Instant Agent',
+  systemPrompt: 'You are a quick assistant. Keep responses brief.',
+  model: {
+    provider: 'groq',
+    model: 'llama-3.1-8b-instant',
+    temperature: 0.7,
+    maxTokens: 100  // Short responses for speed
+  }
+});
+```
+
+---
+
+## Why Groq for Voice?
+
+### 1. Unmatched Speed
+
+Groq's LPU delivers:
+- **~100ms** first token latency
+- **500+ tokens/second** generation
+- Consistent performance under load
+
+| Metric | Groq | OpenAI | Anthropic |
+|--------|------|--------|-----------|
+| First Token | 100ms | 500ms | 600ms |
+| Tokens/sec | 500+ | 50-80 | 40-60 |
+
+### 2. Natural Conversation Flow
+
+Low latency enables:
+- Near-instant responses
+- Natural back-and-forth
+- Reduced "waiting" feeling
+
+### 3. Cost Effective
+
+At $0.59/M input tokens:
+- 17x cheaper than GPT-4 Turbo
+- 5x cheaper than Claude Sonnet
+- Excellent for high-volume use
+
+---
+
+## Use Cases
+
+### Real-Time Voice
+
+Perfect for applications requiring instant responses:
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Support Agent',
+  systemPrompt: `You are a customer support agent.
+  Keep responses concise and natural for voice.`,
+  model: {
+    provider: 'groq',
+    model: 'llama-3.1-70b-versatile',
+    maxTokens: 150
+  }
+});
+```
+
+### High-Volume Applications
+
+For cost-sensitive, high-traffic scenarios:
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'FAQ Agent',
+  systemPrompt: 'Answer common questions quickly.',
+  model: {
+    provider: 'groq',
+    model: 'llama-3.1-8b-instant',
+    maxTokens: 100
+  }
+});
+```
+
+### Latency Fallback
+
+Use Groq as fallback when primary provider is slow:
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Quality Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  model: {
+    provider: 'openai',
+    model: 'gpt-4o',
+    fallback: {
+      trigger: 'latency',
+      threshold: 1500,  // 1.5 seconds
+      provider: 'groq',
+      model: 'llama-3.1-70b-versatile'
+    }
+  }
+});
+```
+
+---
+
+## Function Calling
+
+Groq supports function calling with Llama models:
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Booking Agent',
+  systemPrompt: 'You help users book appointments.',
+  model: {
+    provider: 'groq',
+    model: 'llama-3.1-70b-versatile'
+  },
+  functions: [
+    {
+      name: 'book_appointment',
+      description: 'Book an appointment',
+      parameters: {
+        type: 'object',
+        properties: {
+          date: { type: 'string', format: 'date' },
+          time: { type: 'string' },
+          service: { type: 'string' }
+        },
+        required: ['date', 'time']
+      },
+      handler: {
+        type: 'webhook',
+        url: 'https://api.example.com/book'
+      }
+    }
+  ]
+});
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize Prompts for Llama">
+    Llama models respond well to:
+    - Clear, structured instructions
+    - Specific formatting requests
+    - Role-based prompts
+
+    ```typescript
+    systemPrompt: `You are CustomerBot, a friendly support agent.
+
+    Rules:
+    1. Keep responses under 2 sentences
+    2. Be helpful and concise
+    3. If unsure, ask clarifying questions
+
+    Respond naturally for voice conversation.`
+    ```
+  </Accordion>
+
+  <Accordion title="Model Selection">
+    | Use Case | Model | Why |
+    |----------|-------|-----|
+    | Quality voice | llama-3.1-70b-versatile | Best reasoning |
+    | High volume | llama-3.1-8b-instant | Lowest cost, fastest |
+    | Coding tasks | llama-3.1-70b-versatile | Code understanding |
+    | Simple Q&A | llama-3.1-8b-instant | Sufficient quality |
+  </Accordion>
+
+  <Accordion title="Handling Limitations">
+    Groq/Llama considerations:
+
+    - Less nuanced than GPT-4 for complex tasks
+    - May need more explicit instructions
+    - Function calling slightly less reliable
+
+    Mitigate with:
+    - Clear, specific prompts
+    - Simpler function definitions
+    - Fallback to GPT-4 for complex cases
+  </Accordion>
+
+  <Accordion title="Cost Optimization">
+    Groq is already cheap, but optimize further:
+
+    - Use `llama-3.1-8b-instant` for simple tasks
+    - Set appropriate `maxTokens` limits
+    - Use shorter system prompts
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+GROQ_API_KEY=gsk_...
+```
+
+### Get Your Key
+
+1. Go to [Groq Console](https://console.groq.com)
+2. Sign up or sign in
+3. Generate an API key
+4. Add to your Vora environment
+
+---
+
+## Latency Benchmarks
+
+Typical response latencies (streaming first token):
+
+| Model | P50 | P95 |
+|-------|-----|-----|
+| llama-3.1-8b-instant | 80ms | 150ms |
+| llama-3.1-70b-versatile | 120ms | 250ms |
+| mixtral-8x7b-32768 | 100ms | 200ms |
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Rate Limits">
+    Groq rate limits vary by model:
+
+    | Model | Requests/min | Tokens/min |
+    |-------|--------------|------------|
+    | llama-3.1-70b | 30 | 14,400 |
+    | llama-3.1-8b | 30 | 14,400 |
+
+    Solutions:
+    - Request rate limit increase
+    - Configure fallback provider
+    - Use request queuing
+  </Accordion>
+
+  <Accordion title="Quality Issues">
+    If Llama responses aren't good enough:
+
+    - Try `llama-3.1-70b-versatile` instead of 8b
+    - Add more specific instructions
+    - Use fallback to GPT-4 for complex queries
+    - Provide few-shot examples
+  </Accordion>
+
+  <Accordion title="Function Calling Errors">
+    If function calls fail:
+
+    - Simplify parameter schemas
+    - Provide clearer descriptions
+    - Use fewer functions (max 3-5)
+    - Add examples in system prompt
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare Providers" icon="scale-balanced" href="/providers/llm">
+    See all LLM options
+  </Card>
+  <Card title="Fallback Config" icon="arrows-rotate" href="/providers#fallback-strategies">
+    Configure provider fallback
+  </Card>
+</CardGroup>

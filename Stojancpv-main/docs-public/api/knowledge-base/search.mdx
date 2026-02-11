@@ -1,0 +1,539 @@
+---
+title: Search
+description: Perform semantic search across knowledge base documents
+api: POST /knowledge-base/:id/search
+---
+
+# Search API
+
+Perform semantic search across your knowledge base to find relevant document chunks for RAG (Retrieval Augmented Generation).
+
+## Request
+
+```
+POST https://api.voicevora.com/v1/knowledge-base/:id/search
+```
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_KEY` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Knowledge base ID |
+
+### Body Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | The search query |
+| `limit` | integer | No | Max results (default: 5, max: 20) |
+| `threshold` | number | No | Minimum similarity score (0-1, default: 0.7) |
+| `filter` | object | No | Metadata filters |
+| `include_metadata` | boolean | No | Include chunk metadata (default: true) |
+
+### Filter Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `document_ids` | array | Limit to specific documents |
+| `metadata` | object | Filter by document metadata |
+
+## Response
+
+<Tabs>
+  <Tab title="Success (200)">
+    ```json
+    {
+      "data": {
+        "query": "How do I reset my password?",
+        "results": [
+          {
+            "id": "chunk_abc123",
+            "document_id": "doc_xyz789",
+            "document_name": "User Guide",
+            "text": "To reset your password, click the 'Forgot Password' link on the login page. Enter your email address and we'll send you a reset link. The link expires after 24 hours.",
+            "score": 0.92,
+            "metadata": {
+              "page": 15,
+              "section": "Account Management"
+            }
+          },
+          {
+            "id": "chunk_def456",
+            "document_id": "doc_xyz789",
+            "document_name": "User Guide",
+            "text": "For security, password reset links can only be used once. If you need another link, return to the login page and request a new one.",
+            "score": 0.87,
+            "metadata": {
+              "page": 15,
+              "section": "Account Management"
+            }
+          },
+          {
+            "id": "chunk_ghi789",
+            "document_id": "doc_abc123",
+            "document_name": "FAQ",
+            "text": "Q: I didn't receive my password reset email. A: Check your spam folder. If still not found, ensure you're using the email associated with your account.",
+            "score": 0.81,
+            "metadata": {
+              "category": "account"
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 12,
+          "total_tokens": 12
+        }
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="No Results (200)">
+    ```json
+    {
+      "data": {
+        "query": "quantum physics equations",
+        "results": [],
+        "usage": {
+          "prompt_tokens": 8,
+          "total_tokens": 8
+        }
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Knowledge Base Not Ready (422)">
+    ```json
+    {
+      "error": {
+        "code": "KNOWLEDGE_BASE_NOT_READY",
+        "message": "Knowledge base is still processing documents",
+        "details": {
+          "status": "processing",
+          "documents_pending": 3,
+          "hint": "Wait for processing to complete before searching"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Search Result Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Chunk ID |
+| `document_id` | string | Source document ID |
+| `document_name` | string | Source document name |
+| `text` | string | Matched text content |
+| `score` | number | Similarity score (0-1) |
+| `metadata` | object | Chunk and document metadata |
+
+## Examples
+
+### Basic Search
+
+<CodeGroup>
+```javascript JavaScript
+const results = await vora.knowledgeBases.search('kb_abc123', {
+  query: 'How do I reset my password?'
+});
+
+console.log(`Found ${results.results.length} results`);
+
+results.results.forEach(result => {
+  console.log(`[${result.score.toFixed(2)}] ${result.document_name}`);
+  console.log(`  ${result.text.substring(0, 100)}...`);
+});
+```
+
+```python Python
+results = vora.knowledge_bases.search(
+    'kb_abc123',
+    query='How do I reset my password?'
+)
+
+print(f"Found {len(results.results)} results")
+
+for result in results.results:
+    print(f"[{result.score:.2f}] {result.document_name}")
+    print(f"  {result.text[:100]}...")
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/knowledge-base/kb_abc123/search \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "How do I reset my password?"}'
+```
+</CodeGroup>
+
+### Search with Filters
+
+<CodeGroup>
+```javascript JavaScript
+// Search only in specific documents
+const results = await vora.knowledgeBases.search('kb_abc123', {
+  query: 'shipping policy',
+  limit: 10,
+  threshold: 0.8,
+  filter: {
+    document_ids: ['doc_xyz789', 'doc_abc123'],
+    metadata: {
+      category: 'policies'
+    }
+  }
+});
+```
+
+```python Python
+results = vora.knowledge_bases.search(
+    'kb_abc123',
+    query='shipping policy',
+    limit=10,
+    threshold=0.8,
+    filter={
+        'document_ids': ['doc_xyz789', 'doc_abc123'],
+        'metadata': {'category': 'policies'}
+    }
+)
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/knowledge-base/kb_abc123/search \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "shipping policy",
+    "limit": 10,
+    "threshold": 0.8,
+    "filter": {
+      "document_ids": ["doc_xyz789", "doc_abc123"],
+      "metadata": {"category": "policies"}
+    }
+  }'
+```
+</CodeGroup>
+
+### Search with High Precision
+
+<CodeGroup>
+```javascript JavaScript
+// Only return highly relevant results
+const results = await vora.knowledgeBases.search('kb_abc123', {
+  query: 'refund policy for damaged items',
+  limit: 3,
+  threshold: 0.9  // High similarity required
+});
+
+if (results.results.length === 0) {
+  console.log('No highly relevant results found');
+
+  // Fall back to lower threshold
+  const fallback = await vora.knowledgeBases.search('kb_abc123', {
+    query: 'refund policy for damaged items',
+    limit: 5,
+    threshold: 0.7
+  });
+}
+```
+
+```python Python
+# Only return highly relevant results
+results = vora.knowledge_bases.search(
+    'kb_abc123',
+    query='refund policy for damaged items',
+    limit=3,
+    threshold=0.9  # High similarity required
+)
+
+if not results.results:
+    print('No highly relevant results found')
+
+    # Fall back to lower threshold
+    fallback = vora.knowledge_bases.search(
+        'kb_abc123',
+        query='refund policy for damaged items',
+        limit=5,
+        threshold=0.7
+    )
+```
+</CodeGroup>
+
+## RAG Integration
+
+Use search results to augment LLM responses:
+
+<CodeGroup>
+```javascript JavaScript
+async function answerWithRAG(kbId, question) {
+  // 1. Search for relevant context
+  const searchResults = await vora.knowledgeBases.search(kbId, {
+    query: question,
+    limit: 5,
+    threshold: 0.75
+  });
+
+  if (searchResults.results.length === 0) {
+    return {
+      answer: "I don't have information about that in my knowledge base.",
+      sources: []
+    };
+  }
+
+  // 2. Build context from results
+  const context = searchResults.results
+    .map((r, i) => `[${i + 1}] ${r.text}`)
+    .join('\n\n');
+
+  // 3. Generate answer with context
+  const prompt = `
+    Based on the following context, answer the question.
+    If the answer isn't in the context, say so.
+
+    Context:
+    ${context}
+
+    Question: ${question}
+
+    Answer:
+  `;
+
+  const response = await llm.complete(prompt);
+
+  // 4. Return answer with sources
+  return {
+    answer: response.text,
+    sources: searchResults.results.map(r => ({
+      document: r.document_name,
+      text: r.text.substring(0, 100) + '...',
+      score: r.score
+    }))
+  };
+}
+
+const result = await answerWithRAG('kb_abc123', 'What is your return policy?');
+console.log(result.answer);
+console.log('Sources:', result.sources);
+```
+
+```python Python
+async def answer_with_rag(kb_id: str, question: str):
+    # 1. Search for relevant context
+    search_results = vora.knowledge_bases.search(
+        kb_id,
+        query=question,
+        limit=5,
+        threshold=0.75
+    )
+
+    if not search_results.results:
+        return {
+            'answer': "I don't have information about that in my knowledge base.",
+            'sources': []
+        }
+
+    # 2. Build context from results
+    context = '\n\n'.join(
+        f"[{i+1}] {r.text}"
+        for i, r in enumerate(search_results.results)
+    )
+
+    # 3. Generate answer with context
+    prompt = f"""
+    Based on the following context, answer the question.
+    If the answer isn't in the context, say so.
+
+    Context:
+    {context}
+
+    Question: {question}
+
+    Answer:
+    """
+
+    response = await llm.complete(prompt)
+
+    # 4. Return answer with sources
+    return {
+        'answer': response.text,
+        'sources': [
+            {
+                'document': r.document_name,
+                'text': r.text[:100] + '...',
+                'score': r.score
+            }
+            for r in search_results.results
+        ]
+    }
+
+result = await answer_with_rag('kb_abc123', 'What is your return policy?')
+print(result['answer'])
+print('Sources:', result['sources'])
+```
+</CodeGroup>
+
+## Multi-Knowledge Base Search
+
+Search across multiple knowledge bases:
+
+<CodeGroup>
+```javascript JavaScript
+async function searchMultipleKBs(kbIds, query) {
+  const allResults = [];
+
+  // Search all knowledge bases in parallel
+  const searches = await Promise.all(
+    kbIds.map(kbId =>
+      vora.knowledgeBases.search(kbId, {
+        query,
+        limit: 5,
+        threshold: 0.7
+      }).then(r => r.results.map(result => ({
+        ...result,
+        knowledge_base_id: kbId
+      })))
+    )
+  );
+
+  // Flatten and sort by score
+  const combined = searches
+    .flat()
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
+
+  return combined;
+}
+
+const results = await searchMultipleKBs(
+  ['kb_products', 'kb_policies', 'kb_faq'],
+  'shipping times'
+);
+```
+
+```python Python
+import asyncio
+
+async def search_multiple_kbs(kb_ids: list, query: str):
+    async def search_kb(kb_id):
+        results = vora.knowledge_bases.search(
+            kb_id,
+            query=query,
+            limit=5,
+            threshold=0.7
+        )
+        return [
+            {**r.__dict__, 'knowledge_base_id': kb_id}
+            for r in results.results
+        ]
+
+    # Search all knowledge bases in parallel
+    searches = await asyncio.gather(
+        *[search_kb(kb_id) for kb_id in kb_ids]
+    )
+
+    # Flatten and sort by score
+    combined = sorted(
+        [r for results in searches for r in results],
+        key=lambda x: x['score'],
+        reverse=True
+    )[:10]
+
+    return combined
+
+results = await search_multiple_kbs(
+    ['kb_products', 'kb_policies', 'kb_faq'],
+    'shipping times'
+)
+```
+</CodeGroup>
+
+## Search Quality Tips
+
+<AccordionGroup>
+  <Accordion title="Optimize query phrasing">
+    Phrase queries as questions or statements, not keywords:
+
+    ```javascript
+    // ✅ Good - Natural language
+    await search(kbId, { query: 'How do I cancel my subscription?' });
+
+    // ❌ Less effective - Keywords only
+    await search(kbId, { query: 'cancel subscription' });
+    ```
+  </Accordion>
+
+  <Accordion title="Adjust threshold based on use case">
+    Different use cases need different thresholds:
+
+    | Use Case | Threshold | Reasoning |
+    |----------|-----------|-----------|
+    | Direct answers | 0.85-0.95 | High precision needed |
+    | Exploratory search | 0.6-0.75 | Cast wider net |
+    | Fallback responses | 0.5-0.65 | Something better than nothing |
+  </Accordion>
+
+  <Accordion title="Use metadata filters">
+    Narrow results with metadata when you know the domain:
+
+    ```javascript
+    // Searching for pricing? Filter to pricing docs
+    await search(kbId, {
+      query: 'enterprise pricing',
+      filter: {
+        metadata: { category: 'pricing' }
+      }
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="Handle empty results gracefully">
+    Always have a fallback for no results:
+
+    ```javascript
+    const results = await search(kbId, { query, threshold: 0.85 });
+
+    if (results.results.length === 0) {
+      // Try with lower threshold
+      const fallback = await search(kbId, { query, threshold: 0.6 });
+
+      if (fallback.results.length === 0) {
+        return "I couldn't find specific information about that.";
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Error Codes
+
+| Code | Description | Resolution |
+|------|-------------|------------|
+| `KNOWLEDGE_BASE_NOT_FOUND` | KB doesn't exist | Verify KB ID |
+| `KNOWLEDGE_BASE_NOT_READY` | Still processing | Wait for processing |
+| `INVALID_QUERY` | Query too short or empty | Provide valid query |
+| `THRESHOLD_OUT_OF_RANGE` | Threshold not 0-1 | Use value between 0 and 1 |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Documents" icon="file" href="/api/knowledge-base/documents">
+    Manage knowledge base documents
+  </Card>
+  <Card title="Agents" icon="robot" href="/api/agents">
+    Attach knowledge bases to agents
+  </Card>
+</CardGroup>

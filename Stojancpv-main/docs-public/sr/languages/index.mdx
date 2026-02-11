@@ -1,0 +1,101 @@
+---
+title: Podrska za jezike
+description: Vora podrzava 100+ jezika kroz vise ASR, TTS i LLM provajdera
+---
+
+# Podrska za jezike
+
+Vora podrzava preko 100 jezika kroz 12 ASR provajdera, 11 TTS provajdera i 15 LLM provajdera. Bilo da vasi korisnici govore arapski, hindi, vijetnamski ili tajlandski - Vora vas pokriva.
+
+<Tabs>
+  <Tab title="Jednostavno">
+    ## Podrzani jezici
+
+    Vora podrzava sve glavne svetske jezike. Evo nasih **17 prioritetnih jezika** sa najboljom pokrivenoscu provajdera:
+
+    | Jezik | Region | Glasovni pozivi | Cet |
+    |-------|--------|:--------------:|:---:|
+    | Arapski | MENA | Da | Da |
+    | Engleski (Indija) | Indija | Da | Da |
+    | Hindi | Indija | Da | Da |
+    | Bengalski | Indija, Banglades | Da | Da |
+    | Tamilski | Indija, Sri Lanka | Da | Da |
+    | Telugu | Indija | Da | Da |
+    | Gudzaratski | Indija | Da | Da |
+    | Kannadski | Indija | Da | Da |
+    | Malajalamski | Indija | Da | Da |
+    | Maratski | Indija | Da | Da |
+    | Pandzabski | Indija, Pakistan | Da | Da |
+    | Odijski | Indija | Da | Da |
+    | Indonezijski | Indonezija | Da | Da |
+    | Vijetnamski | Vijetnam | Da | Da |
+    | Tagalog | Filipini | Da | Da |
+    | Malajski | Malezija, Singapur | Da | Da |
+    | Tajlandski | Tajland | Da | Da |
+
+    Plus **80+ dodatnih jezika** ukljucujuci spanski, francuski, nemacki, portugalski, japanski, korejski, kineski i jos mnogo toga.
+
+    ### Kako podesiti jezik vaseg agenta
+
+    <Steps>
+      <Step title="Otvorite vaseg agenta">
+        Idite na Agente i izaberite vaseg agenta.
+      </Step>
+      <Step title="Izaberite jezik">
+        U glasovnim podesavanjima, izaberite jezik iz padajuceg menija.
+      </Step>
+      <Step title="Sacuvajte">
+        Kliknite Sacuvaj. Vas agent sada razume i govori na izabranom jeziku.
+      </Step>
+    </Steps>
+
+    <Tip>
+      Vecina agenata najbolje funkcionise sa jednim primarnim jezikom. Za visejezicnu podrsku, kontaktirajte nas u vezi konfiguracije visejezicnog agenta.
+    </Tip>
+  </Tab>
+  <Tab title="Napredno">
+    ## Matrica pokrivenosti provajdera
+
+    Vora se integrise sa **12 ASR**, **11 TTS** i **15 LLM** provajdera na 100+ jezika. Svaki jezik ima razlicitu dostupnost i nivo kvaliteta provajdera.
+
+    ### Prioritetni jezici (17)
+
+    Ovi jezici imaju najdublju pokrivenost provajdera i optimizovani su za Vorin glasovni pipeline:
+
+    | Jezik | Kod | Govornika | Najbolji ASR | Najbolji TTS | Najbolji LLM |
+    |-------|-----|-----------|--------------|--------------|--------------|
+    | [Arapski](/languages/arabic) | ar | 400M | Munsit | Munsit | Falcon Arabic |
+    | [Engleski (Indija)](/languages/english-indian) | en-IN | 125M | Deepgram | ElevenLabs | GPT-4o |
+    | [Hindi](/languages/hindi) | hi-IN | 600M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Bengalski](/languages/bengali) | bn-IN | 230M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Tamilski](/languages/tamil) | ta-IN | 80M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Telugu](/languages/telugu) | te-IN | 83M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Gudzaratski](/languages/gujarati) | gu-IN | 56M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Kannadski](/languages/kannada) | kn-IN | 45M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Malajalamski](/languages/malayalam) | ml-IN | 38M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Maratski](/languages/marathi) | mr-IN | 83M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Pandzabski](/languages/punjabi) | pa-IN | 125M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Odijski](/languages/odia) | od-IN | 35M | Sarvam AI | Sarvam AI | Sarvam 2B |
+    | [Indonezijski](/languages/indonesian) | id-ID | 200M | Valsea | Murf AI | Qwen |
+    | [Vijetnamski](/languages/vietnamese) | vi-VN | 85M | Valsea | Murf AI | Qwen |
+    | [Tagalog](/languages/tagalog) | tl-PH | 85M | Deepgram | Murf AI | Gemini |
+    | [Malajski](/languages/malay) | ms-MY | 80M | Valsea | Murf AI | Qwen |
+    | [Tajlandski](/languages/thai) | th-TH | 60M | Valsea | Murf AI | Qwen |
+
+    ### Poredjenje provajdera
+
+    Za detaljno poredjenje provajder po provajder:
+    - [ASR provajderi](/languages/asr-providers) - Poredjenje 12 provajdera za pretvaranje govora u tekst
+    - [TTS provajderi](/languages/tts-providers) - Poredjenje 11 provajdera za pretvaranje teksta u govor
+    - [LLM provajderi](/languages/llm-providers) - Poredjenje 15 provajdera jezickih modela
+
+    ### Konfiguracija
+
+    Podesite jezik po agentu u Komandnom centru:
+    - **Tab Usi** - STT jezik za prepoznavanje govora
+    - **Tab Glas** - TTS jezik za glasovni izlaz
+    - **Tab Mozak** - LLM jezicki kontekst za generisanje odgovora
+
+    Za optimalne rezultate, proverite da sve tri komponente podrzavaju vas ciljni jezik. Proverite pojedinacne stranice jezika za dostupnost provajdera.
+  </Tab>
+</Tabs>

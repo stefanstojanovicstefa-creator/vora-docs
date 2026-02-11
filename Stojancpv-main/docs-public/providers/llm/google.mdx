@@ -1,0 +1,257 @@
+---
+title: Google Gemini
+description: Gemini 2.5 Flash and Pro integration for Vora agents
+---
+
+# Google Gemini
+
+Google's Gemini 2.5 models offer the best combination of speed, cost efficiency, multilingual support, and quality for voice AI agents. **Gemini 2.5 Flash is Vora's default LLM.**
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `google` |
+| Default Model | `gemini-2.5-flash` |
+| Context Window | Up to 1M tokens |
+| Streaming | Supported |
+| Function Calling | Native support |
+| Languages | 100+ |
+
+---
+
+## Available Models
+
+| Model | Context | Best For | Cost (per 1M tokens) |
+|-------|---------|----------|----------------------|
+| `gemini-2.5-flash` | 1M | Voice agents (default) | $0.15 in / $0.60 out |
+| `gemini-2.5-pro` | 1M | Research, complex reasoning | $1.25-$2.50 in / $10-$15 out |
+
+<Note>
+**Recommended**: `gemini-2.5-flash` for voice - fastest response, lowest cost, 100+ languages.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Fast Agent',
+  systemPrompt: 'You are a quick and helpful assistant.',
+  model: {
+    provider: 'google',
+    model: 'gemini-2.5-flash'
+  }
+});
+```
+
+### Advanced Options
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Custom Agent',
+  systemPrompt: 'You are a versatile assistant.',
+  model: {
+    provider: 'google',
+    model: 'gemini-2.5-pro',
+    temperature: 0.7,
+    maxTokens: 1024,
+    topP: 0.9,
+    topK: 40,
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+      }
+    ]
+  }
+});
+```
+
+---
+
+## Strengths
+
+### 1. Fastest Voice AI Response
+
+Gemini 2.5 Flash leads in time-to-first-token:
+
+| Model | TTFT (P50) | TTFT (P95) |
+|-------|------------|------------|
+| Gemini 2.5 Flash | ~100ms | ~200ms |
+| Gemini 2.5 Pro | ~300ms | ~500ms |
+
+### 2. 100+ Language Support
+
+Best multilingual coverage of any LLM:
+- Native support for Arabic, Hindi, Chinese, and more
+- No quality degradation in non-English
+- Ideal for multilingual voice agents
+
+### 3. Cost Efficiency
+
+Gemini 2.5 Flash at $0.15/1M input tokens:
+- Same price as GPT-4o-mini
+- Better multilingual performance
+- Faster response times
+
+### 4. 1M Token Context
+
+Process entire documents without summarization:
+- Extended conversation history
+- Full knowledge base ingestion
+- Complex multi-turn dialogues
+
+---
+
+## Safety Settings
+
+Configure content filtering:
+
+```typescript
+model: {
+  provider: 'google',
+  model: 'gemini-2.5-flash',
+  safetySettings: [
+    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
+  ]
+}
+```
+
+**Threshold Options:**
+- `BLOCK_NONE` - No blocking
+- `BLOCK_LOW_AND_ABOVE` - Strictest
+- `BLOCK_MEDIUM_AND_ABOVE` - Moderate (default)
+- `BLOCK_ONLY_HIGH` - Least strict
+
+---
+
+## Function Calling
+
+Gemini supports native function calling:
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Weather Agent',
+  systemPrompt: 'You help users with weather information.',
+  model: {
+    provider: 'google',
+    model: 'gemini-2.5-flash'
+  },
+  functions: [
+    {
+      name: 'get_weather',
+      description: 'Get current weather for a location',
+      parameters: {
+        type: 'object',
+        properties: {
+          location: { type: 'string', description: 'City name' },
+          units: { type: 'string', enum: ['celsius', 'fahrenheit'] }
+        },
+        required: ['location']
+      },
+      handler: {
+        type: 'webhook',
+        url: 'https://api.example.com/weather'
+      }
+    }
+  ]
+});
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for Voice">
+    ```typescript
+    model: {
+      provider: 'google',
+      model: 'gemini-2.5-flash',
+      maxTokens: 150,
+      temperature: 0.7
+    }
+    ```
+    - ~100ms first token latency
+    - Lowest cost among quality models
+    - Ideal for high-volume applications
+  </Accordion>
+
+  <Accordion title="Multilingual Agents">
+    Gemini excels at multilingual support:
+    ```typescript
+    const agent = await vora.agents.create({
+      name: 'Global Agent',
+      systemPrompt: `You are a multilingual assistant.
+      Respond in the language the user speaks.`,
+      model: {
+        provider: 'google',
+        model: 'gemini-2.5-flash'
+      }
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="Model Selection">
+    | Use Case | Model |
+    |----------|-------|
+    | Voice (speed) | gemini-2.5-flash |
+    | Voice (quality) | gemini-2.5-pro |
+    | Long documents | gemini-2.5-pro |
+    | High volume | gemini-2.5-flash |
+    | Cost-sensitive | gemini-2.5-flash |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+GOOGLE_API_KEY=AIza...
+```
+
+### Get Your Key
+
+1. Go to [Google AI Studio](https://aistudio.google.com)
+2. Create or select a project
+3. Generate an API key
+4. Add to your Vora environment or use [BYOK](/advanced/api-keys)
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Safety Blocks">
+    If responses are blocked, review your prompts for policy compliance and adjust safety thresholds if appropriate.
+  </Accordion>
+
+  <Accordion title="Rate Limits">
+    Gemini has generous rate limits. If hitting limits, request quota increase in Google Cloud Console or configure a fallback provider.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare LLM Providers" icon="scale-balanced" href="/providers/llm">
+    See all 15 LLM options
+  </Card>
+  <Card title="Language Support" icon="globe" href="/languages">
+    Configure multilingual agents
+  </Card>
+</CardGroup>

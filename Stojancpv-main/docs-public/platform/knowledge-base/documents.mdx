@@ -1,0 +1,330 @@
+---
+title: Documents
+description: Upload and manage documents in your knowledge base
+---
+
+# Documents
+
+Upload documents to give your agent access to product manuals, policies, guides, and other content.
+
+---
+
+## Supported Formats
+
+| Format | Extension | Notes |
+|--------|-----------|-------|
+| **PDF** | `.pdf` | Text extracted; images not processed |
+| **Word** | `.docx`, `.doc` | Full formatting preserved |
+| **Text** | `.txt` | Plain text |
+| **Markdown** | `.md` | Formatting preserved |
+| **HTML** | `.html` | Content extracted |
+| **CSV** | `.csv` | Each row becomes a chunk |
+| **JSON** | `.json` | Structured data flattened |
+
+---
+
+## Uploading Documents
+
+<Steps>
+  <Step title="Open Knowledge Base">
+    Go to **Knowledge Bases** → Select your KB → **Sources**.
+  </Step>
+  <Step title="Click Upload">
+    Click **Add Source** → **Upload Documents**.
+  </Step>
+  <Step title="Select Files">
+    Drag and drop files or click to browse. You can upload multiple files at once.
+  </Step>
+  <Step title="Configure Settings">
+    Optionally adjust:
+    - Folder/category for organization
+    - Custom metadata
+    - Processing options
+  </Step>
+  <Step title="Wait for Processing">
+    Files are uploaded, extracted, chunked, and embedded. Progress is shown in real-time.
+  </Step>
+</Steps>
+
+---
+
+## Processing Pipeline
+
+Each document goes through these stages:
+
+```mermaid
+flowchart LR
+    U[Upload] --> E[Extract Text]
+    E --> C[Chunk Content]
+    C --> V[Generate Vectors]
+    V --> I[Index]
+
+    style I fill:#10b981,color:#fff
+```
+
+### 1. Text Extraction
+
+Content is extracted based on file type:
+
+- **PDF**: Text layer extracted; OCR for scanned documents (Enterprise)
+- **Word**: Full text including tables and lists
+- **Markdown/HTML**: Content extracted, formatting preserved where useful
+- **CSV**: Headers become metadata, rows become chunks
+
+### 2. Chunking
+
+Content is split into chunks for retrieval:
+
+| Strategy | Description | Best For |
+|----------|-------------|----------|
+| **Paragraph** | Split on double newlines | General documents |
+| **Sentence** | Split on sentence boundaries | Dense technical content |
+| **Fixed size** | Split at character count | Consistent chunk sizes |
+| **Semantic** | Split by topic changes | Long-form content |
+
+### 3. Embedding
+
+Each chunk is converted to a vector:
+
+```javascript
+// Example chunk
+{
+  "content": "Our return policy allows returns within 30 days...",
+  "metadata": {
+    "source": "policies.pdf",
+    "page": 5,
+    "section": "Returns"
+  },
+  "vector": [0.023, -0.145, 0.892, ...] // 1536 dimensions
+}
+```
+
+### 4. Indexing
+
+Vectors are indexed for fast retrieval:
+
+- Approximate nearest neighbor search
+- Sub-second query times
+- Scales to millions of chunks
+
+---
+
+## Document Settings
+
+### Per-Document Settings
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Title** | Display name | Filename |
+| **Category** | Folder for organization | Root |
+| **Priority** | Weight in search results | Normal |
+| **Enabled** | Include in retrieval | Yes |
+
+### Metadata
+
+Add custom metadata to documents:
+
+```json
+{
+  "product": "Widget Pro",
+  "version": "2.0",
+  "department": "Support",
+  "last_review": "2024-01-15"
+}
+```
+
+Use metadata for:
+- Filtering results by product or category
+- Adding context to retrieved chunks
+- Tracking content freshness
+
+---
+
+## Managing Documents
+
+### Viewing Documents
+
+Go to **Knowledge Base** → **Sources** → **Documents** to see:
+
+| Column | Description |
+|--------|-------------|
+| **Name** | Document title |
+| **Status** | Processing status |
+| **Chunks** | Number of chunks created |
+| **Size** | File size |
+| **Added** | Upload date |
+
+### Document Status
+
+| Status | Meaning |
+|--------|---------|
+| **Processing** | Being extracted and indexed |
+| **Ready** | Available for retrieval |
+| **Error** | Processing failed |
+| **Updating** | Being reprocessed |
+
+### Updating Documents
+
+To update a document's content:
+
+1. Click the document → **Replace**
+2. Upload the new version
+3. Wait for reprocessing
+
+<Note>
+  Replacing a document maintains its ID and metadata. Chunks are regenerated.
+</Note>
+
+### Deleting Documents
+
+1. Select one or more documents
+2. Click **Delete**
+3. Confirm deletion
+
+<Warning>
+  Deleted documents are removed from the index immediately. Agents will no longer retrieve this content.
+</Warning>
+
+---
+
+## Bulk Operations
+
+### Bulk Upload
+
+Upload many documents at once:
+
+1. Create a ZIP file with your documents
+2. Upload the ZIP file
+3. Documents are extracted and processed individually
+
+### Folder Structure
+
+ZIP folder structure becomes categories:
+
+```
+policies.zip
+├── Returns/
+│   ├── standard-returns.pdf
+│   └── warranty-returns.pdf
+├── Shipping/
+│   ├── domestic.pdf
+│   └── international.pdf
+└── general-faq.pdf
+```
+
+### Via API
+
+```javascript
+// Upload document via API
+const document = await vora.knowledgeBase.documents.create(
+  'kb_abc123',
+  {
+    file: fileBuffer,
+    filename: 'product-manual.pdf',
+    metadata: {
+      product: 'Widget Pro',
+      version: '2.0',
+    },
+  }
+);
+
+console.log(`Document created: ${document.id}`);
+console.log(`Chunks: ${document.chunkCount}`);
+```
+
+---
+
+## Chunk Preview
+
+View how a document was chunked:
+
+1. Click on the document
+2. Go to **Chunks** tab
+3. See all chunks with:
+   - Content preview
+   - Metadata
+   - Page/section info
+
+### Example Chunks
+
+| # | Content Preview | Page | Section |
+|---|-----------------|------|---------|
+| 1 | "Welcome to Widget Pro. This manual covers..." | 1 | Introduction |
+| 2 | "To set up your Widget Pro, first ensure..." | 2 | Setup |
+| 3 | "The power button is located on the top..." | 2 | Setup |
+| 4 | "Our return policy allows returns within 30 days..." | 10 | Policies |
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use descriptive filenames">
+    `product-manual-widget-pro-v2.pdf` is better than `manual.pdf`. Filenames become metadata.
+  </Accordion>
+
+  <Accordion title="Keep documents focused">
+    Split large documents by topic. A 100-page document about everything is harder to retrieve from than 10 focused documents.
+  </Accordion>
+
+  <Accordion title="Include context">
+    Documents should be self-contained. Include product names and context that helps the agent understand what the content is about.
+  </Accordion>
+
+  <Accordion title="Update outdated content">
+    Regularly review and update documents. Old information leads to incorrect answers.
+  </Accordion>
+
+  <Accordion title="Use consistent formatting">
+    Clear headings and structure help chunking algorithms split content appropriately.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Troubleshooting
+
+### Document Processing Failed
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| **Extraction failed** | Corrupt file | Re-export the document |
+| **No text found** | Scanned PDF without OCR | Enable OCR (Enterprise) or use text-based PDF |
+| **File too large** | Exceeds size limit | Split into smaller documents |
+| **Unsupported format** | Format not supported | Convert to supported format |
+
+### Poor Chunk Quality
+
+- **Chunks too short**: Increase chunk size
+- **Chunks too long**: Decrease chunk size or change splitting strategy
+- **Missing content**: Check document for encoding issues
+
+---
+
+## Limits
+
+| Limit | Free | Pro | Enterprise |
+|-------|------|-----|------------|
+| **Max file size** | 10 MB | 50 MB | 200 MB |
+| **Files per KB** | 10 | 100 | Unlimited |
+| **Total storage** | 50 MB | 1 GB | Unlimited |
+| **OCR** | No | No | Yes |
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Add URLs" icon="globe" href="/platform/knowledge-base/urls">
+    Sync content from websites
+  </Card>
+  <Card title="Add Text" icon="align-left" href="/platform/knowledge-base/text">
+    Paste content directly
+  </Card>
+  <Card title="Test Retrieval" icon="flask" href="/platform/knowledge-base#testing-your-knowledge-base">
+    Verify documents are being retrieved
+  </Card>
+  <Card title="Connect to Agent" icon="robot" href="/platform/agents/configuration#knowledge-base">
+    Attach KB to your agent
+  </Card>
+</CardGroup>

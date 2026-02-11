@@ -1,0 +1,67 @@
+---
+title: Odia
+description: Odia voice AI support - providers, configuration, and best practices
+---
+
+# Odia
+
+<Tabs>
+  <Tab title="Simple">
+    Vora fully supports **Odia** for voice AI agents. ~35M speakers in India (Odisha).
+
+    ### Setting Up an Odia Agent
+
+    <Steps>
+      <Step title="Create your agent">
+        Use any creation method (Interview, URL Import, etc.)
+      </Step>
+      <Step title="Set language to Odia">
+        In voice settings, select **Odia** from the language dropdown.
+      </Step>
+      <Step title="Choose a voice">
+        Select from available Odia voices in the voice library.
+      </Step>
+      <Step title="Test and deploy">
+        Test with the simulator, then deploy as usual.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For best results with Odia, we recommend Sarvam AI voices for the most natural speech.
+    </Tip>
+  </Tab>
+  <Tab title="Advanced">
+    ## Provider Matrix
+
+    | Detail | Value |
+    |--------|-------|
+    | **Code** | od-IN |
+    | **Region** | India (Odisha) |
+    | **Speakers** | ~35M |
+    | **Best ASR** | Sarvam AI |
+    | **Best TTS** | Sarvam AI |
+    | **Best LLM** | Sarvam 2B |
+
+    ### Available Providers
+
+    | Type | Providers |
+    |------|-----------|
+    | **ASR** | Sarvam AI (Best), Google, Azure, AWS, Soniox |
+    | **TTS** | Sarvam AI (Best), Google, Azure |
+    | **LLM** | Sarvam 2B (Best), GPT-4o, Gemini |
+
+    ### Recommended Stack
+
+    For the best Odia voice experience:
+    - **STT**: Sarvam AI (best accuracy for Odia)
+    - **LLM**: Sarvam 2B (best Odia understanding)
+    - **TTS**: Sarvam AI (most natural Odia speech)
+
+    ### Configuration
+
+    In the Command Center:
+    1. **Ears Tab** → Set STT provider to Sarvam AI, language to `od-IN`
+    2. **Brain Tab** → Set LLM to Sarvam 2B
+    3. **Voice Tab** → Set TTS to Sarvam AI, select an Odia voice
+  </Tab>
+</Tabs>

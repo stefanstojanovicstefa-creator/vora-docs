@@ -1,0 +1,93 @@
+---
+title: Command Center
+description: Full agent configuration with the 9-tab builder
+---
+
+# Command Center
+
+The Command Center is Vora's advanced agent builder, giving you granular control over every aspect of your voice agent. It's available in **Advanced Mode** only.
+
+<Info>
+  Switch to Advanced Mode using the toggle in the sidebar to access the Command Center.
+</Info>
+
+---
+
+## Overview
+
+The Command Center organizes agent configuration into 9 tabs:
+
+| Tab | Purpose |
+|-----|---------|
+| [Brain](/advanced/command-center/brain-tab) | LLM provider, model, system prompt, temperature |
+| [Voice](/advanced/command-center/voice-tab) | TTS provider, voice selection, speed, fallback |
+| [Ears](/advanced/command-center/ears-tab) | STT provider, language, voice activity detection |
+| [Functions](/advanced/command-center/functions-tab) | Attach custom functions and tool calls |
+| [Knowledge](/advanced/command-center/knowledge-tab) | Knowledge base, RAG configuration |
+| [Advanced](/advanced/command-center/advanced-tab) | Fallbacks, circuit breakers, timeouts |
+| [Deploy](/advanced/command-center/deploy-tab) | Phone numbers, web embed, SIP config |
+| [Analytics](/advanced/command-center/analytics-tab) | Per-agent performance metrics |
+| [Testing](/advanced/command-center/testing-tab) | Built-in test call simulator |
+
+---
+
+## Accessing the Command Center
+
+There are two ways to access the Command Center:
+
+1. **Create a new agent** - Select "Command Center" as the creation method from the Agent Creation Hub
+2. **Edit an existing agent** - Click on any agent, then click "Command Center" in the agent detail view
+
+---
+
+## Quick Configuration
+
+For most use cases, you only need to configure three tabs:
+
+<Steps>
+  <Step title="Brain Tab">
+    Choose your LLM provider and write (or paste) your system prompt. This defines what your agent knows and how it behaves.
+  </Step>
+  <Step title="Voice Tab">
+    Select a voice and TTS provider. Preview voices by clicking the play button next to each option.
+  </Step>
+  <Step title="Deploy Tab">
+    Set your greeting message and deployment channel (phone number or web widget).
+  </Step>
+</Steps>
+
+The other tabs use sensible defaults that work well for most agents.
+
+---
+
+## Tab Details
+
+<CardGroup cols={3}>
+  <Card title="Brain" icon="brain" href="/advanced/command-center/brain-tab">
+    AI model and behavior
+  </Card>
+  <Card title="Voice" icon="microphone" href="/advanced/command-center/voice-tab">
+    Speech output settings
+  </Card>
+  <Card title="Ears" icon="ear-listen" href="/advanced/command-center/ears-tab">
+    Speech input settings
+  </Card>
+  <Card title="Functions" icon="code" href="/advanced/command-center/functions-tab">
+    Tool calls and actions
+  </Card>
+  <Card title="Knowledge" icon="database" href="/advanced/command-center/knowledge-tab">
+    Document retrieval
+  </Card>
+  <Card title="Advanced" icon="sliders" href="/advanced/command-center/advanced-tab">
+    Reliability and performance
+  </Card>
+  <Card title="Deploy" icon="rocket" href="/advanced/command-center/deploy-tab">
+    Go live settings
+  </Card>
+  <Card title="Analytics" icon="chart-bar" href="/advanced/command-center/analytics-tab">
+    Performance tracking
+  </Card>
+  <Card title="Testing" icon="flask" href="/advanced/command-center/testing-tab">
+    Test your agent
+  </Card>
+</CardGroup>

@@ -1,0 +1,488 @@
+---
+title: Google Cloud TTS
+description: Text-to-speech with 100+ language support
+---
+
+# Google Cloud TTS
+
+Google Cloud Text-to-Speech offers the widest language coverage with Neural2 and WaveNet voices.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `google` |
+| Default Model | `Neural2` |
+| Streaming | ✅ Supported |
+| Latency | ~300-400ms |
+| Languages | 100+ |
+| Voice Cloning | ❌ Not supported |
+
+---
+
+## Available Voice Types
+
+| Type | Quality | Latency | Cost |
+|------|---------|---------|------|
+| Neural2 | Excellent | ~300ms | $0.000016/char |
+| WaveNet | Very Good | ~350ms | $0.000016/char |
+| Standard | Good | ~250ms | $0.000004/char |
+| Studio | Premium | ~400ms | $0.000160/char |
+
+<Note>
+**Recommended**: Neural2 for voice AI — best quality/latency balance.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Multilingual Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  voice: {
+    provider: 'google',
+    languageCode: 'en-US',
+    name: 'en-US-Neural2-F'
+  }
+});
+```
+
+### Full Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Custom Voice Agent',
+  systemPrompt: 'You are a professional assistant.',
+  voice: {
+    provider: 'google',
+    languageCode: 'en-US',
+    name: 'en-US-Neural2-F',
+    speakingRate: 1.0,
+    pitch: 0.0,
+    volumeGainDb: 0.0,
+    effectsProfileId: ['telephony-class-application']
+  }
+});
+```
+
+---
+
+## Popular Voice Names
+
+### English (US) Neural2
+
+| Voice | Gender | Style |
+|-------|--------|-------|
+| `en-US-Neural2-A` | Male | Standard |
+| `en-US-Neural2-C` | Female | Standard |
+| `en-US-Neural2-D` | Male | Casual |
+| `en-US-Neural2-E` | Female | Warm |
+| `en-US-Neural2-F` | Female | Professional |
+| `en-US-Neural2-G` | Female | Friendly |
+| `en-US-Neural2-H` | Female | Upbeat |
+| `en-US-Neural2-I` | Male | Authoritative |
+| `en-US-Neural2-J` | Male | Calm |
+
+### English (UK) Neural2
+
+| Voice | Gender | Style |
+|-------|--------|-------|
+| `en-GB-Neural2-A` | Female | Standard |
+| `en-GB-Neural2-B` | Male | Standard |
+| `en-GB-Neural2-C` | Female | Professional |
+| `en-GB-Neural2-D` | Male | Formal |
+| `en-GB-Neural2-F` | Female | Warm |
+
+### Other Languages
+
+| Language | Example Voice | Gender |
+|----------|---------------|--------|
+| Spanish (ES) | `es-ES-Neural2-A` | Female |
+| Spanish (MX) | `es-MX-Neural2-A` | Female |
+| French | `fr-FR-Neural2-A` | Female |
+| German | `de-DE-Neural2-A` | Female |
+| Japanese | `ja-JP-Neural2-B` | Female |
+| Portuguese (BR) | `pt-BR-Neural2-A` | Female |
+| Chinese (Mandarin) | `cmn-CN-Neural2-A` | Female |
+| Arabic | `ar-XA-Neural2-A` | Female |
+| Hindi | `hi-IN-Neural2-A` | Female |
+
+---
+
+## Voice Settings
+
+### Speaking Rate
+
+Control speech speed:
+
+```typescript
+voice: {
+  provider: 'google',
+  speakingRate: 1.0  // 0.25 - 4.0
+}
+```
+
+| Value | Effect |
+|-------|--------|
+| 0.5 | Half speed |
+| 0.75 | Slow |
+| 1.0 | Normal |
+| 1.25 | Fast |
+| 1.5 | Very fast |
+
+### Pitch
+
+Adjust voice pitch:
+
+```typescript
+voice: {
+  provider: 'google',
+  pitch: 0.0  // -20.0 to 20.0 semitones
+}
+```
+
+| Value | Effect |
+|-------|--------|
+| -10 | Much lower |
+| -5 | Lower |
+| 0 | Normal |
+| 5 | Higher |
+| 10 | Much higher |
+
+### Volume
+
+Adjust output volume:
+
+```typescript
+voice: {
+  provider: 'google',
+  volumeGainDb: 0.0  // -96.0 to 16.0 dB
+}
+```
+
+### Audio Effects
+
+Optimize for specific playback:
+
+```typescript
+voice: {
+  provider: 'google',
+  effectsProfileId: ['telephony-class-application']
+}
+```
+
+| Profile | Use Case |
+|---------|----------|
+| `telephony-class-application` | Phone systems |
+| `wearable-class-device` | Smartwatches |
+| `headphone-class-device` | Headphones |
+| `small-bluetooth-speaker-class-device` | Bluetooth speakers |
+| `large-home-entertainment-class-device` | Home speakers |
+
+---
+
+## Why Google TTS?
+
+### 1. Unmatched Language Coverage
+
+100+ languages and variants:
+
+| Region | Languages |
+|--------|-----------|
+| Europe | 30+ (all EU languages) |
+| Asia | 25+ (including dialects) |
+| Middle East | 10+ |
+| Americas | 15+ variants |
+| Africa | 5+ |
+
+### 2. Cost-Effective
+
+Most economical TTS option:
+- Neural2: $16 per 1M characters
+- Standard: $4 per 1M characters
+- Compare: ElevenLabs ~$300 per 1M characters
+
+### 3. Enterprise Reliability
+
+Google Cloud infrastructure:
+- 99.9%+ uptime SLA
+- Global data centers
+- SOC 2 / ISO certified
+
+### 4. SSML Support
+
+Fine-grained control:
+
+```typescript
+// Using SSML for precise control
+const ssml = `
+<speak>
+  <prosody rate="slow" pitch="-2st">
+    Welcome to our service.
+  </prosody>
+  <break time="500ms"/>
+  <emphasis level="strong">How can I help you today?</emphasis>
+</speak>
+`;
+```
+
+---
+
+## Use Cases
+
+### Global Customer Support
+
+```typescript
+// Auto-detect and respond in user's language
+voice: {
+  provider: 'google',
+  languageCode: detectedLanguage,
+  name: `${detectedLanguage}-Neural2-A`
+}
+```
+
+### Cost-Sensitive Applications
+
+```typescript
+// Use Standard voices for high-volume
+voice: {
+  provider: 'google',
+  languageCode: 'en-US',
+  name: 'en-US-Standard-C'  // 75% cheaper
+}
+```
+
+### Phone Systems (IVR)
+
+```typescript
+voice: {
+  provider: 'google',
+  languageCode: 'en-US',
+  name: 'en-US-Neural2-F',
+  effectsProfileId: ['telephony-class-application'],
+  speakingRate: 0.95
+}
+```
+
+### Multilingual Agents
+
+```typescript
+// Support multiple languages with one agent
+voice: {
+  provider: 'google',
+  languageCode: userLanguage,
+  name: getVoiceForLanguage(userLanguage)
+}
+
+function getVoiceForLanguage(lang: string) {
+  const voices = {
+    'en-US': 'en-US-Neural2-F',
+    'es-ES': 'es-ES-Neural2-A',
+    'fr-FR': 'fr-FR-Neural2-A',
+    'de-DE': 'de-DE-Neural2-A',
+    'ja-JP': 'ja-JP-Neural2-B'
+  };
+  return voices[lang] || 'en-US-Neural2-F';
+}
+```
+
+---
+
+## Studio Voices
+
+Premium voices for high-quality applications:
+
+| Voice | Language | Style |
+|-------|----------|-------|
+| `en-US-Studio-M` | English (US) | Male, broadcast quality |
+| `en-US-Studio-O` | English (US) | Female, broadcast quality |
+| `en-GB-Studio-B` | English (UK) | Male, broadcast quality |
+| `en-GB-Studio-C` | English (UK) | Female, broadcast quality |
+
+```typescript
+voice: {
+  provider: 'google',
+  languageCode: 'en-US',
+  name: 'en-US-Studio-O'  // Premium female voice
+}
+```
+
+<Warning>
+Studio voices are 10x more expensive than Neural2. Use for premium experiences only.
+</Warning>
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for Voice AI">
+    For conversational applications:
+
+    ```typescript
+    voice: {
+      provider: 'google',
+      languageCode: 'en-US',
+      name: 'en-US-Neural2-F',
+      speakingRate: 1.05,
+      effectsProfileId: ['telephony-class-application']
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Handle Multiple Languages">
+    Create a language-aware voice selector:
+
+    ```typescript
+    const voiceMap = {
+      'en': { name: 'en-US-Neural2-F', code: 'en-US' },
+      'es': { name: 'es-ES-Neural2-A', code: 'es-ES' },
+      'fr': { name: 'fr-FR-Neural2-A', code: 'fr-FR' },
+      // Add more as needed
+    };
+
+    function getVoice(langCode: string) {
+      const lang = langCode.split('-')[0];
+      return voiceMap[lang] || voiceMap['en'];
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Use SSML for Control">
+    For precise pronunciation:
+
+    ```xml
+    <speak>
+      The meeting is at
+      <say-as interpret-as="time" format="hms12">2:30pm</say-as>.
+      Please call
+      <say-as interpret-as="telephone">1-800-555-0123</say-as>.
+    </speak>
+    ```
+  </Accordion>
+
+  <Accordion title="Reduce Costs">
+    For high-volume applications:
+
+    - Use Standard voices for IVR/menus
+    - Cache common phrases
+    - Use shorter, more concise responses
+    - Consider Cartesia as alternative
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Language Support
+
+Google supports 100+ languages. Key examples:
+
+| Language | Codes | Neural2 Voices |
+|----------|-------|----------------|
+| English | `en-US`, `en-GB`, `en-AU`, `en-IN` | 10+ each |
+| Spanish | `es-ES`, `es-MX`, `es-US` | 5+ each |
+| French | `fr-FR`, `fr-CA` | 5+ each |
+| German | `de-DE` | 6+ |
+| Portuguese | `pt-BR`, `pt-PT` | 5+ each |
+| Japanese | `ja-JP` | 4+ |
+| Chinese | `cmn-CN`, `cmn-TW`, `yue-HK` | 4+ each |
+| Arabic | `ar-XA` | 4+ |
+| Hindi | `hi-IN` | 4+ |
+| Korean | `ko-KR` | 4+ |
+
+[Full language list →](https://cloud.google.com/text-to-speech/docs/voices)
+
+---
+
+## API Key Setup
+
+### Service Account (Recommended)
+
+```bash
+# Set path to credentials file
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+```
+
+### Get Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create or select a project
+3. Enable Text-to-Speech API
+4. Create a service account
+5. Download JSON key file
+6. Set environment variable
+
+### Alternative: API Key
+
+For simpler setup (less secure):
+
+```bash
+GOOGLE_API_KEY=AIza...
+```
+
+---
+
+## Pricing
+
+| Voice Type | Cost per 1M Characters |
+|------------|------------------------|
+| Standard | $4.00 |
+| WaveNet | $16.00 |
+| Neural2 | $16.00 |
+| Studio | $160.00 |
+
+<Note>
+First 1M characters free per month for Standard, first 1M free for WaveNet/Neural2.
+</Note>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Authentication Errors">
+    If authentication fails:
+
+    - Verify service account JSON exists
+    - Check GOOGLE_APPLICATION_CREDENTIALS path
+    - Ensure Text-to-Speech API is enabled
+    - Verify project billing is active
+  </Accordion>
+
+  <Accordion title="Voice Not Found">
+    If voice name is invalid:
+
+    - Check exact voice name format
+    - Verify language code matches
+    - Use Neural2 voices (most reliable)
+    - Check voice availability in your region
+  </Accordion>
+
+  <Accordion title="Audio Quality Issues">
+    If audio sounds robotic:
+
+    - Upgrade from Standard to Neural2
+    - Check effectsProfileId matches use case
+    - Adjust speakingRate and pitch
+    - Consider Studio voices for premium quality
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare TTS" icon="scale-balanced" href="/providers/tts">
+    See all TTS options
+  </Card>
+  <Card title="Language Config" icon="globe" href="/platform/voice/languages">
+    Configure multilingual agents
+  </Card>
+</CardGroup>

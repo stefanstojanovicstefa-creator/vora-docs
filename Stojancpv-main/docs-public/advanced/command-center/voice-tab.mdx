@@ -1,0 +1,70 @@
+---
+title: Voice Tab
+description: Configure text-to-speech provider, voice selection, and speech settings
+---
+
+# Voice Tab
+
+The Voice tab controls how your agent sounds - the voice it speaks with, the TTS provider, speed, and fallback options.
+
+---
+
+## TTS Provider
+
+Choose which text-to-speech provider generates your agent's voice.
+
+| Provider | Voices | Best For |
+|----------|--------|----------|
+| **ElevenLabs** | 100+ premium voices | Natural, expressive speech |
+| **Cartesia** | Sonic voices | Ultra-low latency, multilingual |
+| **Google Cloud TTS** | 200+ voices | Wide language coverage, cost-effective |
+| **Azure TTS** | 300+ voices | Enterprise, custom neural voices |
+| **PlayHT** | Premium voices | Voice cloning, custom voices |
+
+<Tip>
+  **Recommended default**: ElevenLabs for English agents, Cartesia for multilingual or latency-sensitive deployments.
+</Tip>
+
+---
+
+## Voice Selection
+
+Browse and preview available voices for your selected provider. Each voice has:
+- **Name** - Voice identifier
+- **Language** - Supported languages
+- **Gender** - Male, Female, or Neutral
+- **Preview** - Click play to hear a sample
+
+Click the play button next to any voice to preview it before selecting.
+
+---
+
+## Speed
+
+Adjust the speaking speed of your agent:
+- **0.8x** - Slower, deliberate speech
+- **1.0x** - Normal speed (default)
+- **1.2x** - Slightly faster, energetic
+- **1.5x** - Fast delivery
+
+<Note>
+  Speed adjustments may affect voice quality depending on the provider. Test with your selected voice before deploying.
+</Note>
+
+---
+
+## Fallback Voice
+
+Configure a backup voice that activates if the primary TTS provider is unavailable:
+- **Fallback provider** - A different TTS provider (e.g., Google as backup for ElevenLabs)
+- **Fallback voice** - The voice to use from the fallback provider
+
+This ensures your agent stays live even during provider outages.
+
+---
+
+## Language
+
+Select the primary language for TTS output. This should match your agent's conversation language.
+
+For multilingual agents, the TTS provider will attempt to match the detected language. See the [Language Support](/languages) page for per-language provider availability.

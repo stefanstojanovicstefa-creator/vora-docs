@@ -1,0 +1,440 @@
+---
+title: Update Agent
+description: Update an existing agent's configuration
+api: PUT /agents/:id
+---
+
+# Update Agent
+
+Update an existing agent's configuration. You can update any field without affecting other fields (partial updates are supported).
+
+<Warning>
+  After updating an agent, you must [redeploy](/api/agents/deploy) for changes to take effect in production.
+</Warning>
+
+## Request
+
+```
+PUT https://api.voicevora.com/v1/agents/:id
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | The agent ID to update |
+
+### Body Parameters
+
+All parameters are optional. Only include fields you want to change.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | string | New display name |
+| `description` | string | New description |
+| `config` | object | Configuration updates (merged with existing) |
+| `knowledge_bases` | array | Replace knowledge base IDs |
+| `functions` | array | Replace function IDs |
+
+### Config Merging
+
+The `config` object is **merged** with the existing configuration, not replaced:
+
+```javascript
+// Existing config
+{
+  "voice_id": "voice_sarah",
+  "llm_provider": "openai",
+  "temperature": 0.7,
+  "greeting": "Hello!"
+}
+
+// Update request
+{
+  "config": {
+    "temperature": 0.5,
+    "greeting": "Hi there!"
+  }
+}
+
+// Result (merged)
+{
+  "voice_id": "voice_sarah",      // unchanged
+  "llm_provider": "openai",        // unchanged
+  "temperature": 0.5,              // updated
+  "greeting": "Hi there!"          // updated
+}
+```
+
+<Tip>
+  To remove a config field, set it to `null` explicitly.
+</Tip>
+
+## Response
+
+<Tabs>
+  <Tab title="Success (200)">
+    ```json
+    {
+      "data": {
+        "id": "agent_abc123xyz",
+        "name": "Updated Support Agent",
+        "description": "Improved customer support",
+        "status": "draft",
+        "config": {
+          "voice_id": "voice_sarah",
+          "llm_provider": "openai",
+          "llm_model": "gpt-4-turbo",
+          "system_prompt": "Updated system prompt...",
+          "temperature": 0.5,
+          "max_tokens": 500,
+          "language": "en",
+          "greeting": "Hi there! How can I assist you?"
+        },
+        "knowledge_bases": ["kb_docs123"],
+        "functions": ["fn_lookup_order", "fn_create_ticket"],
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T16:45:00Z",
+        "deployed_at": "2024-01-15T14:50:00Z",
+        "stats": {
+          "total_calls": 1250,
+          "avg_duration_seconds": 180
+        }
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+
+    <Note>
+      Notice that `status` changed to `draft` after the update, indicating redeployment is needed.
+    </Note>
+  </Tab>
+  <Tab title="Not Found (404)">
+    ```json
+    {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Agent not found",
+        "details": {
+          "resource_type": "agent",
+          "resource_id": "agent_invalid"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Validation Error (422)">
+    ```json
+    {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Invalid parameters",
+        "details": {
+          "errors": [
+            {
+              "field": "config.temperature",
+              "message": "Must be between 0 and 1"
+            }
+          ]
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Examples
+
+### Update Name and Description
+
+<CodeGroup>
+```javascript JavaScript
+const agent = await vora.agents.update('agent_abc123xyz', {
+  name: 'Premium Support Agent',
+  description: 'Dedicated support for premium customers'
+});
+```
+
+```python Python
+agent = vora.agents.update(
+    'agent_abc123xyz',
+    name='Premium Support Agent',
+    description='Dedicated support for premium customers'
+)
+```
+
+```bash cURL
+curl -X PUT https://api.voicevora.com/v1/agents/agent_abc123xyz \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Premium Support Agent",
+    "description": "Dedicated support for premium customers"
+  }'
+```
+</CodeGroup>
+
+### Update System Prompt
+
+<CodeGroup>
+```javascript JavaScript
+const agent = await vora.agents.update('agent_abc123xyz', {
+  config: {
+    system_prompt: `You are a premium customer support agent.
+    Provide personalized, white-glove service.
+    You have access to customer history and can expedite requests.`,
+    greeting: 'Welcome back! As a premium member, how may I assist you today?'
+  }
+});
+
+// Redeploy to make changes live
+await vora.agents.deploy(agent.id);
+```
+
+```python Python
+agent = vora.agents.update(
+    'agent_abc123xyz',
+    config={
+        'system_prompt': '''You are a premium customer support agent.
+        Provide personalized, white-glove service.''',
+        'greeting': 'Welcome back! How may I assist you today?'
+    }
+)
+
+# Redeploy to make changes live
+vora.agents.deploy(agent.id)
+```
+
+```bash cURL
+curl -X PUT https://api.voicevora.com/v1/agents/agent_abc123xyz \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "system_prompt": "You are a premium support agent...",
+      "greeting": "Welcome back! How may I assist you today?"
+    }
+  }'
+```
+</CodeGroup>
+
+### Change LLM Model
+
+<CodeGroup>
+```javascript JavaScript
+// Upgrade to Claude
+const agent = await vora.agents.update('agent_abc123xyz', {
+  config: {
+    llm_provider: 'anthropic',
+    llm_model: 'claude-3-sonnet',
+    temperature: 0.6  // Adjust for new model
+  }
+});
+
+await vora.agents.deploy(agent.id);
+```
+
+```python Python
+agent = vora.agents.update(
+    'agent_abc123xyz',
+    config={
+        'llm_provider': 'anthropic',
+        'llm_model': 'claude-3-sonnet',
+        'temperature': 0.6
+    }
+)
+
+vora.agents.deploy(agent.id)
+```
+</CodeGroup>
+
+### Change Voice
+
+<CodeGroup>
+```javascript JavaScript
+const agent = await vora.agents.update('agent_abc123xyz', {
+  config: {
+    voice_id: 'voice_michael'  // Switch from Sarah to Michael
+  }
+});
+
+await vora.agents.deploy(agent.id);
+```
+
+```python Python
+agent = vora.agents.update(
+    'agent_abc123xyz',
+    config={'voice_id': 'voice_michael'}
+)
+
+vora.agents.deploy(agent.id)
+```
+</CodeGroup>
+
+### Add Knowledge Base
+
+<CodeGroup>
+```javascript JavaScript
+// Get current knowledge bases
+const agent = await vora.agents.get('agent_abc123xyz');
+const currentKBs = agent.knowledge_bases;
+
+// Add new knowledge base
+const updated = await vora.agents.update('agent_abc123xyz', {
+  knowledge_bases: [...currentKBs, 'kb_new456']
+});
+
+await vora.agents.deploy(updated.id);
+```
+
+```python Python
+# Get current knowledge bases
+agent = vora.agents.get('agent_abc123xyz')
+current_kbs = agent.knowledge_bases
+
+# Add new knowledge base
+updated = vora.agents.update(
+    'agent_abc123xyz',
+    knowledge_bases=current_kbs + ['kb_new456']
+)
+
+vora.agents.deploy(updated.id)
+```
+</CodeGroup>
+
+### Replace All Functions
+
+<CodeGroup>
+```javascript JavaScript
+// Replace all functions with a new set
+const agent = await vora.agents.update('agent_abc123xyz', {
+  functions: ['fn_new_function_1', 'fn_new_function_2']
+});
+```
+
+```python Python
+agent = vora.agents.update(
+    'agent_abc123xyz',
+    functions=['fn_new_function_1', 'fn_new_function_2']
+)
+```
+</CodeGroup>
+
+### Remove a Config Field
+
+<CodeGroup>
+```javascript JavaScript
+// Remove the fallback message
+const agent = await vora.agents.update('agent_abc123xyz', {
+  config: {
+    fallback_message: null  // Explicitly set to null to remove
+  }
+});
+```
+
+```python Python
+agent = vora.agents.update(
+    'agent_abc123xyz',
+    config={'fallback_message': None}
+)
+```
+</CodeGroup>
+
+## Update and Deploy Pattern
+
+A common pattern is to update and immediately redeploy:
+
+<CodeGroup>
+```javascript JavaScript
+async function updateAndDeploy(agentId, updates) {
+  // Update configuration
+  const agent = await vora.agents.update(agentId, updates);
+
+  // Deploy changes
+  const deployment = await vora.agents.deploy(agentId);
+
+  // Wait for deployment to complete
+  await waitForDeployment(agentId);
+
+  return agent;
+}
+
+async function waitForDeployment(agentId, timeoutMs = 60000) {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeoutMs) {
+    const agent = await vora.agents.get(agentId);
+
+    if (agent.status === 'deployed') {
+      return agent;
+    }
+
+    if (agent.status === 'error') {
+      throw new Error('Deployment failed');
+    }
+
+    await new Promise(r => setTimeout(r, 2000));
+  }
+
+  throw new Error('Deployment timeout');
+}
+
+// Usage
+await updateAndDeploy('agent_abc123xyz', {
+  config: { temperature: 0.5 }
+});
+```
+
+```python Python
+import time
+
+def update_and_deploy(agent_id: str, updates: dict, timeout: int = 60):
+    # Update configuration
+    agent = vora.agents.update(agent_id, **updates)
+
+    # Deploy changes
+    vora.agents.deploy(agent_id)
+
+    # Wait for deployment
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        agent = vora.agents.get(agent_id)
+
+        if agent.status == 'deployed':
+            return agent
+
+        if agent.status == 'error':
+            raise Exception('Deployment failed')
+
+        time.sleep(2)
+
+    raise Exception('Deployment timeout')
+
+# Usage
+update_and_deploy('agent_abc123xyz', {
+    'config': {'temperature': 0.5}
+})
+```
+</CodeGroup>
+
+## Error Codes
+
+| Code | Description | Resolution |
+|------|-------------|------------|
+| `NOT_FOUND` | Agent doesn't exist | Verify agent ID |
+| `VALIDATION_ERROR` | Invalid parameters | Check the `details.errors` array |
+| `VOICE_NOT_FOUND` | Invalid voice ID | Use `GET /voices` to list available voices |
+| `KNOWLEDGE_BASE_NOT_FOUND` | Invalid KB ID | Verify knowledge base exists |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy Agent" icon="rocket" href="/api/agents/deploy">
+    Make updates live
+  </Card>
+  <Card title="Delete Agent" icon="trash" href="/api/agents/delete">
+    Remove an agent
+  </Card>
+</CardGroup>

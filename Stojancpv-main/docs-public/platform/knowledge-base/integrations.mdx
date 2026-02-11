@@ -1,0 +1,477 @@
+---
+title: Knowledge Base Integrations
+description: Sync content from external platforms
+---
+
+# Knowledge Base Integrations
+
+Connect your knowledge base to external platforms and keep content automatically synchronized.
+
+---
+
+## Available Integrations
+
+| Platform | Sync Direction | Real-time | Notes |
+|----------|----------------|-----------|-------|
+| [**Notion**](#notion) | Pull | Webhooks | Pages, databases |
+| [**Confluence**](#confluence) | Pull | Polling | Spaces, pages |
+| [**Google Drive**](#google-drive) | Pull | Webhooks | Docs, Sheets |
+| [**SharePoint**](#sharepoint) | Pull | Polling | Documents, lists |
+| [**Intercom**](#intercom) | Pull | Webhooks | Articles, FAQs |
+| [**Zendesk**](#zendesk) | Pull | Webhooks | Help center |
+| [**GitHub**](#github) | Pull | Webhooks | Markdown files |
+
+---
+
+## Notion
+
+Sync content from Notion workspaces.
+
+### Setup
+
+<Steps>
+  <Step title="Connect Notion">
+    Go to **Knowledge Base** → **Integrations** → **Notion** → **Connect**.
+  </Step>
+  <Step title="Authorize">
+    Select which pages and databases Vora can access.
+  </Step>
+  <Step title="Configure Sync">
+    Choose what to sync:
+    - Specific pages
+    - Entire databases
+    - Workspaces
+  </Step>
+  <Step title="Set Schedule">
+    Choose sync frequency (real-time via webhooks or scheduled).
+  </Step>
+</Steps>
+
+### What's Synced
+
+| Content Type | Synced | Notes |
+|--------------|--------|-------|
+| Page content | ✓ | Full text including nested blocks |
+| Databases | ✓ | Each row becomes a chunk |
+| Images | ✗ | Not extracted |
+| Embedded content | Partial | Depends on embed type |
+| Comments | ✗ | Not synced |
+
+### Configuration Options
+
+```javascript
+{
+  "notion": {
+    "workspaceId": "workspace_123",
+    "sync": {
+      "pages": ["page_id_1", "page_id_2"],
+      "databases": ["db_id_1"],
+      "includeSubpages": true,
+      "excludePatterns": ["**/Archive/**"]
+    },
+    "schedule": "realtime"
+  }
+}
+```
+
+---
+
+## Confluence
+
+Sync documentation from Atlassian Confluence.
+
+### Setup
+
+<Steps>
+  <Step title="Connect Confluence">
+    Go to **Knowledge Base** → **Integrations** → **Confluence** → **Connect**.
+  </Step>
+  <Step title="Authenticate">
+    Enter your Confluence URL and API token.
+  </Step>
+  <Step title="Select Spaces">
+    Choose which spaces to sync.
+  </Step>
+  <Step title="Configure Options">
+    Set sync frequency and filtering options.
+  </Step>
+</Steps>
+
+### What's Synced
+
+| Content Type | Synced | Notes |
+|--------------|--------|-------|
+| Pages | ✓ | Full content |
+| Blog posts | Optional | Can include or exclude |
+| Attachments | Partial | PDFs and documents extracted |
+| Comments | ✗ | Not synced |
+| Labels | ✓ | Used as metadata |
+
+### Configuration Options
+
+```javascript
+{
+  "confluence": {
+    "siteUrl": "https://yourcompany.atlassian.net",
+    "spaces": ["DOCS", "SUPPORT"],
+    "includeBlogs": false,
+    "labelFilters": ["public", "kb"],
+    "excludeLabels": ["draft", "internal"],
+    "schedule": "daily"
+  }
+}
+```
+
+---
+
+## Google Drive
+
+Sync documents from Google Drive.
+
+### Setup
+
+<Steps>
+  <Step title="Connect Google">
+    Go to **Knowledge Base** → **Integrations** → **Google Drive** → **Connect**.
+  </Step>
+  <Step title="Authorize">
+    Grant Vora access to your Google Drive.
+  </Step>
+  <Step title="Select Folders">
+    Choose specific folders or shared drives to sync.
+  </Step>
+  <Step title="Configure">
+    Set file types and sync schedule.
+  </Step>
+</Steps>
+
+### Supported File Types
+
+| File Type | Synced | Notes |
+|-----------|--------|-------|
+| Google Docs | ✓ | Full content extracted |
+| Google Sheets | ✓ | Converted to structured text |
+| Google Slides | ✓ | Text and speaker notes |
+| PDFs | ✓ | Text extracted |
+| Word/Excel | ✓ | Converted and extracted |
+| Images | ✗ | Not processed |
+
+### Configuration Options
+
+```javascript
+{
+  "googleDrive": {
+    "folders": ["folder_id_1", "folder_id_2"],
+    "sharedDrives": ["drive_id_1"],
+    "includeSubfolders": true,
+    "fileTypes": ["document", "spreadsheet", "pdf"],
+    "excludePatterns": ["**/Archive/**"],
+    "schedule": "weekly"
+  }
+}
+```
+
+---
+
+## SharePoint
+
+Sync content from Microsoft SharePoint.
+
+### Setup
+
+<Steps>
+  <Step title="Connect Microsoft">
+    Go to **Knowledge Base** → **Integrations** → **SharePoint** → **Connect**.
+  </Step>
+  <Step title="Authorize">
+    Sign in with your Microsoft account and grant permissions.
+  </Step>
+  <Step title="Select Sites">
+    Choose SharePoint sites and libraries to sync.
+  </Step>
+  <Step title="Configure">
+    Set sync options and schedule.
+  </Step>
+</Steps>
+
+### What's Synced
+
+| Content Type | Synced | Notes |
+|--------------|--------|-------|
+| Documents | ✓ | Word, PDF, Excel, PowerPoint |
+| Pages | ✓ | Site pages |
+| Lists | ✓ | Converted to structured content |
+| Wiki pages | ✓ | Full content |
+
+### Configuration Options
+
+```javascript
+{
+  "sharepoint": {
+    "sites": ["site_id_1"],
+    "libraries": ["Documents", "Policies"],
+    "lists": ["FAQ", "Products"],
+    "includeVersionHistory": false,
+    "schedule": "daily"
+  }
+}
+```
+
+---
+
+## Intercom
+
+Sync help center articles from Intercom.
+
+### Setup
+
+<Steps>
+  <Step title="Connect Intercom">
+    Go to **Knowledge Base** → **Integrations** → **Intercom** → **Connect**.
+  </Step>
+  <Step title="Authorize">
+    Grant Vora access to your Intercom workspace.
+  </Step>
+  <Step title="Select Collections">
+    Choose which article collections to sync.
+  </Step>
+  <Step title="Enable Webhooks">
+    Enable real-time sync for instant updates.
+  </Step>
+</Steps>
+
+### What's Synced
+
+| Content Type | Synced | Notes |
+|--------------|--------|-------|
+| Articles | ✓ | Full content |
+| Collections | ✓ | Used for organization |
+| Article metadata | ✓ | Author, dates, tags |
+| Translations | Optional | Multi-language support |
+
+### Configuration Options
+
+```javascript
+{
+  "intercom": {
+    "collections": ["collection_id_1", "collection_id_2"],
+    "includeArchived": false,
+    "languages": ["en", "es"],
+    "schedule": "realtime"
+  }
+}
+```
+
+---
+
+## Zendesk
+
+Sync help center content from Zendesk.
+
+### Setup
+
+<Steps>
+  <Step title="Connect Zendesk">
+    Go to **Knowledge Base** → **Integrations** → **Zendesk** → **Connect**.
+  </Step>
+  <Step title="Authenticate">
+    Enter your Zendesk subdomain and API token.
+  </Step>
+  <Step title="Select Brands">
+    Choose which brands/help centers to sync.
+  </Step>
+  <Step title="Configure">
+    Set categories and sync options.
+  </Step>
+</Steps>
+
+### What's Synced
+
+| Content Type | Synced | Notes |
+|--------------|--------|-------|
+| Articles | ✓ | Full content |
+| Sections | ✓ | Used for organization |
+| Categories | ✓ | Used as metadata |
+| Article attachments | Optional | Documents extracted |
+| Community posts | Optional | Q&A content |
+
+### Configuration Options
+
+```javascript
+{
+  "zendesk": {
+    "subdomain": "yourcompany",
+    "brands": ["brand_id_1"],
+    "categories": ["category_id_1", "category_id_2"],
+    "includeAttachments": true,
+    "includeCommunity": false,
+    "locale": "en-us",
+    "schedule": "realtime"
+  }
+}
+```
+
+---
+
+## GitHub
+
+Sync documentation from GitHub repositories.
+
+### Setup
+
+<Steps>
+  <Step title="Connect GitHub">
+    Go to **Knowledge Base** → **Integrations** → **GitHub** → **Connect**.
+  </Step>
+  <Step title="Authorize">
+    Install the Vora GitHub App on your organization.
+  </Step>
+  <Step title="Select Repositories">
+    Choose which repositories to sync.
+  </Step>
+  <Step title="Configure Paths">
+    Specify which files/folders to include.
+  </Step>
+</Steps>
+
+### What's Synced
+
+| Content Type | Synced | Notes |
+|--------------|--------|-------|
+| Markdown files | ✓ | .md, .mdx files |
+| README files | ✓ | Automatically included |
+| Documentation | ✓ | /docs folders |
+| Code files | Optional | With comments |
+| Wiki pages | Optional | Repository wikis |
+
+### Configuration Options
+
+```javascript
+{
+  "github": {
+    "repositories": ["owner/repo1", "owner/repo2"],
+    "branches": ["main", "docs"],
+    "paths": ["docs/**", "*.md"],
+    "excludePaths": ["**/node_modules/**"],
+    "includeCode": false,
+    "includeWiki": true,
+    "schedule": "realtime"
+  }
+}
+```
+
+---
+
+## Sync Management
+
+### Monitoring Syncs
+
+View sync status for all integrations:
+
+| Integration | Status | Last Sync | Items | Next Sync |
+|-------------|--------|-----------|-------|-----------|
+| Notion | ✓ Connected | 5 min ago | 234 | Real-time |
+| Confluence | ✓ Connected | 2 hours ago | 156 | In 4 hours |
+| GitHub | ✓ Connected | 1 min ago | 89 | Real-time |
+
+### Sync History
+
+View detailed sync history:
+
+| Time | Integration | Action | Items Added | Items Updated | Items Removed |
+|------|-------------|--------|-------------|---------------|---------------|
+| 10:30 | Notion | Sync | 5 | 12 | 0 |
+| 10:15 | GitHub | Webhook | 0 | 3 | 0 |
+| 09:00 | Confluence | Scheduled | 2 | 8 | 1 |
+
+### Manual Sync
+
+Trigger a sync immediately:
+
+1. Go to **Knowledge Base** → **Integrations**
+2. Find the integration
+3. Click **Sync Now**
+
+---
+
+## Error Handling
+
+### Common Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| **Auth failed** | Token expired | Reconnect integration |
+| **Permission denied** | Access revoked | Re-authorize with proper scopes |
+| **Rate limited** | Too many requests | Wait and retry |
+| **Content too large** | File size limit | Exclude or split large files |
+| **Not found** | Content deleted | Will be removed on next sync |
+
+### Reconnecting
+
+If an integration disconnects:
+
+1. Go to **Integrations** → Find the integration
+2. Click **Reconnect**
+3. Re-authorize access
+4. Trigger a full sync
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use selective sync">
+    Don't sync everything. Select only content that should be available to your agent.
+  </Accordion>
+
+  <Accordion title="Enable real-time when available">
+    For frequently updated content, use webhooks instead of scheduled syncs.
+  </Accordion>
+
+  <Accordion title="Monitor sync health">
+    Regularly check sync status and address errors promptly.
+  </Accordion>
+
+  <Accordion title="Use labels and metadata">
+    Organize content with labels in your source platform for better filtering.
+  </Accordion>
+
+  <Accordion title="Test after major changes">
+    When you restructure content in the source, test retrieval in your knowledge base.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Enterprise Integrations
+
+Additional integrations available on Enterprise plans:
+
+| Platform | Description |
+|----------|-------------|
+| **Salesforce Knowledge** | Service Cloud knowledge articles |
+| **ServiceNow** | Knowledge management articles |
+| **Box** | Enterprise file storage |
+| **Dropbox** | Cloud storage documents |
+| **Custom APIs** | Connect any API source |
+
+Contact sales for custom integration requirements.
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Add Documents" icon="file-arrow-up" href="/platform/knowledge-base/documents">
+    Upload files directly
+  </Card>
+  <Card title="Add URLs" icon="globe" href="/platform/knowledge-base/urls">
+    Crawl websites
+  </Card>
+  <Card title="Test Retrieval" icon="flask" href="/platform/knowledge-base#testing-your-knowledge-base">
+    Verify sync is working
+  </Card>
+  <Card title="Connect to Agent" icon="robot" href="/platform/agents/configuration#knowledge-base">
+    Use with your agent
+  </Card>
+</CardGroup>

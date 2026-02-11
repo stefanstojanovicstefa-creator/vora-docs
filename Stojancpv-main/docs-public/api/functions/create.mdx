@@ -1,0 +1,548 @@
+---
+title: Create Function
+description: Create a new function for agent tool calling
+api: POST /functions
+---
+
+# Create Function
+
+Create a new function that agents can call during voice sessions.
+
+## Request
+
+```
+POST https://api.voicevora.com/v1/functions
+```
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_KEY` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Body Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Function name (alphanumeric, underscores) |
+| `description` | string | Yes | What the function does |
+| `parameters` | object | Yes | JSON Schema for parameters |
+| `endpoint` | object | Yes | HTTP endpoint configuration |
+| `response_template` | string | No | Template for formatting responses |
+| `timeout_ms` | number | No | Request timeout (default: 5000) |
+| `error_response` | string | No | Fallback message on error |
+| `retry` | object | No | Retry configuration |
+
+### Parameters Schema
+
+The `parameters` field uses [JSON Schema](https://json-schema.org/) to define function inputs:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "param_name": {
+      "type": "string | number | boolean | array | object",
+      "description": "Description for LLM",
+      "enum": ["option1", "option2"],
+      "default": "default_value"
+    }
+  },
+  "required": ["param_name"]
+}
+```
+
+### Endpoint Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes | API URL (supports templates) |
+| `method` | string | Yes | HTTP method |
+| `headers` | object | No | Request headers |
+| `body_template` | string | No | Request body (for POST/PUT) |
+| `query_template` | object | No | Query parameters |
+
+### Retry Configuration
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `max_attempts` | number | 1 | Maximum retry attempts |
+| `delay_ms` | number | 1000 | Delay between retries |
+| `backoff_multiplier` | number | 2 | Exponential backoff multiplier |
+
+## Response
+
+<Tabs>
+  <Tab title="Success (201)">
+    ```json
+    {
+      "data": {
+        "id": "fn_abc123xyz",
+        "name": "get_order_status",
+        "description": "Look up order status by order ID",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "The order ID to look up"
+            }
+          },
+          "required": ["order_id"]
+        },
+        "endpoint": {
+          "url": "https://api.myshop.com/orders/{{order_id}}",
+          "method": "GET",
+          "headers": {
+            "Authorization": "Bearer {{SHOP_API_KEY}}"
+          }
+        },
+        "response_template": "Order {{order_id}} is {{status}}. {{#if shipped_at}}It shipped on {{shipped_at}}.{{/if}}",
+        "timeout_ms": 5000,
+        "error_response": "I couldn't find that order. Please check the order ID.",
+        "agents": [],
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:30:00Z"
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Validation Error (422)">
+    ```json
+    {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Invalid function parameters",
+        "details": {
+          "field": "parameters",
+          "issue": "JSON Schema must have 'type': 'object' at root"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Duplicate Name (409)">
+    ```json
+    {
+      "error": {
+        "code": "DUPLICATE_FUNCTION",
+        "message": "A function with this name already exists",
+        "details": {
+          "name": "get_order_status",
+          "existing_id": "fn_xyz789"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Examples
+
+### Order Lookup Function
+
+<CodeGroup>
+```javascript JavaScript
+const orderFn = await vora.functions.create({
+  name: 'get_order_status',
+  description: 'Look up the current status of an order by its order ID or tracking number',
+  parameters: {
+    type: 'object',
+    properties: {
+      order_id: {
+        type: 'string',
+        description: 'Order ID (e.g., ORD-12345) or tracking number'
+      }
+    },
+    required: ['order_id']
+  },
+  endpoint: {
+    url: 'https://api.myshop.com/orders/{{order_id}}',
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer {{SHOP_API_KEY}}',
+      'Content-Type': 'application/json'
+    }
+  },
+  response_template: `Order {{order_id}} is currently {{status}}.
+{{#if estimated_delivery}}Expected delivery: {{estimated_delivery}}.{{/if}}
+{{#if tracking_url}}You can track it at {{tracking_url}}.{{/if}}`,
+  error_response: "I couldn't find that order. Please verify the order ID and try again.",
+  timeout_ms: 8000
+});
+
+console.log(`Created: ${orderFn.id}`);
+```
+
+```python Python
+order_fn = vora.functions.create(
+    name='get_order_status',
+    description='Look up the current status of an order by its order ID or tracking number',
+    parameters={
+        'type': 'object',
+        'properties': {
+            'order_id': {
+                'type': 'string',
+                'description': 'Order ID (e.g., ORD-12345) or tracking number'
+            }
+        },
+        'required': ['order_id']
+    },
+    endpoint={
+        'url': 'https://api.myshop.com/orders/{{order_id}}',
+        'method': 'GET',
+        'headers': {
+            'Authorization': 'Bearer {{SHOP_API_KEY}}',
+            'Content-Type': 'application/json'
+        }
+    },
+    response_template='''Order {{order_id}} is currently {{status}}.
+{{#if estimated_delivery}}Expected delivery: {{estimated_delivery}}.{{/if}}
+{{#if tracking_url}}You can track it at {{tracking_url}}.{{/if}}''',
+    error_response="I couldn't find that order. Please verify the order ID and try again.",
+    timeout_ms=8000
+)
+
+print(f"Created: {order_fn.id}")
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/functions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "get_order_status",
+    "description": "Look up the current status of an order by its order ID or tracking number",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "order_id": {
+          "type": "string",
+          "description": "Order ID (e.g., ORD-12345) or tracking number"
+        }
+      },
+      "required": ["order_id"]
+    },
+    "endpoint": {
+      "url": "https://api.myshop.com/orders/{{order_id}}",
+      "method": "GET",
+      "headers": {
+        "Authorization": "Bearer {{SHOP_API_KEY}}"
+      }
+    },
+    "error_response": "I could not find that order.",
+    "timeout_ms": 8000
+  }'
+```
+</CodeGroup>
+
+### Appointment Booking Function
+
+<CodeGroup>
+```javascript JavaScript
+const bookingFn = await vora.functions.create({
+  name: 'book_appointment',
+  description: 'Schedule an appointment for a service at a specific date and time',
+  parameters: {
+    type: 'object',
+    properties: {
+      service: {
+        type: 'string',
+        enum: ['consultation', 'follow-up', 'assessment'],
+        description: 'Type of appointment'
+      },
+      date: {
+        type: 'string',
+        format: 'date',
+        description: 'Appointment date (YYYY-MM-DD)'
+      },
+      time: {
+        type: 'string',
+        pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
+        description: 'Appointment time (HH:MM in 24-hour format)'
+      },
+      customer_name: {
+        type: 'string',
+        description: 'Customer full name'
+      },
+      phone: {
+        type: 'string',
+        description: 'Contact phone number'
+      },
+      notes: {
+        type: 'string',
+        description: 'Additional notes or special requests'
+      }
+    },
+    required: ['service', 'date', 'time', 'customer_name', 'phone']
+  },
+  endpoint: {
+    url: 'https://api.mybusiness.com/appointments',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer {{BOOKING_API_KEY}}',
+      'Content-Type': 'application/json'
+    },
+    body_template: JSON.stringify({
+      service_type: '{{service}}',
+      scheduled_date: '{{date}}',
+      scheduled_time: '{{time}}',
+      customer: {
+        name: '{{customer_name}}',
+        phone: '{{phone}}'
+      },
+      notes: '{{notes}}'
+    })
+  },
+  response_template: `Your {{service}} appointment is confirmed for {{date}} at {{time}}.
+Confirmation number: {{confirmation_id}}.
+We'll send a reminder to {{phone}}.`,
+  error_response: "I couldn't book that time slot. It may not be available. Would you like to try a different time?",
+  timeout_ms: 10000
+});
+```
+
+```python Python
+booking_fn = vora.functions.create(
+    name='book_appointment',
+    description='Schedule an appointment for a service at a specific date and time',
+    parameters={
+        'type': 'object',
+        'properties': {
+            'service': {
+                'type': 'string',
+                'enum': ['consultation', 'follow-up', 'assessment'],
+                'description': 'Type of appointment'
+            },
+            'date': {
+                'type': 'string',
+                'format': 'date',
+                'description': 'Appointment date (YYYY-MM-DD)'
+            },
+            'time': {
+                'type': 'string',
+                'pattern': '^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
+                'description': 'Appointment time (HH:MM in 24-hour format)'
+            },
+            'customer_name': {
+                'type': 'string',
+                'description': 'Customer full name'
+            },
+            'phone': {
+                'type': 'string',
+                'description': 'Contact phone number'
+            }
+        },
+        'required': ['service', 'date', 'time', 'customer_name', 'phone']
+    },
+    endpoint={
+        'url': 'https://api.mybusiness.com/appointments',
+        'method': 'POST',
+        'headers': {
+            'Authorization': 'Bearer {{BOOKING_API_KEY}}',
+            'Content-Type': 'application/json'
+        },
+        'body_template': '{"service_type":"{{service}}","scheduled_date":"{{date}}","scheduled_time":"{{time}}","customer":{"name":"{{customer_name}}","phone":"{{phone}}"}}'
+    },
+    response_template='Your {{service}} appointment is confirmed for {{date}} at {{time}}. Confirmation: {{confirmation_id}}.',
+    timeout_ms=10000
+)
+```
+</CodeGroup>
+
+### CRM Lookup Function
+
+<CodeGroup>
+```javascript JavaScript
+const crmFn = await vora.functions.create({
+  name: 'get_customer_info',
+  description: 'Look up customer information by email, phone number, or customer ID',
+  parameters: {
+    type: 'object',
+    properties: {
+      identifier: {
+        type: 'string',
+        description: 'Customer email, phone, or ID'
+      },
+      identifier_type: {
+        type: 'string',
+        enum: ['email', 'phone', 'customer_id'],
+        description: 'Type of identifier provided'
+      }
+    },
+    required: ['identifier', 'identifier_type']
+  },
+  endpoint: {
+    url: 'https://api.salesforce.com/services/data/v55.0/sobjects/Contact',
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer {{SALESFORCE_TOKEN}}'
+    },
+    query_template: {
+      'q': "SELECT Id, Name, Email, Phone, Account.Name FROM Contact WHERE {{identifier_type}} = '{{identifier}}'"
+    }
+  },
+  response_template: `I found {{Name}}'s account. They're with {{Account.Name}}.
+Email: {{Email}}
+Phone: {{Phone}}`,
+  error_response: "I couldn't find a customer with that information. Could you verify and try again?",
+  timeout_ms: 5000
+});
+```
+</CodeGroup>
+
+### Inventory Check Function
+
+<CodeGroup>
+```javascript JavaScript
+const inventoryFn = await vora.functions.create({
+  name: 'check_inventory',
+  description: 'Check if a product is in stock at a specific store location',
+  parameters: {
+    type: 'object',
+    properties: {
+      product_name: {
+        type: 'string',
+        description: 'Name or SKU of the product'
+      },
+      store_location: {
+        type: 'string',
+        description: 'Store name or zip code'
+      }
+    },
+    required: ['product_name']
+  },
+  endpoint: {
+    url: 'https://api.mystore.com/inventory/search',
+    method: 'GET',
+    headers: {
+      'X-API-Key': '{{INVENTORY_API_KEY}}'
+    },
+    query_template: {
+      'product': '{{product_name}}',
+      'location': '{{store_location}}'
+    }
+  },
+  response_template: `{{product_name}} is {{#if in_stock}}in stock{{else}}out of stock{{/if}} at {{store_name}}.
+{{#if in_stock}}{{quantity}} units available.{{else}}Expected restock: {{restock_date}}.{{/if}}`,
+  timeout_ms: 5000
+});
+```
+</CodeGroup>
+
+### Payment Processing Function
+
+<CodeGroup>
+```javascript JavaScript
+const refundFn = await vora.functions.create({
+  name: 'process_refund',
+  description: 'Process a refund for an order. Requires order ID and reason.',
+  parameters: {
+    type: 'object',
+    properties: {
+      order_id: {
+        type: 'string',
+        description: 'Order ID to refund'
+      },
+      reason: {
+        type: 'string',
+        enum: ['damaged', 'wrong_item', 'not_as_described', 'changed_mind', 'other'],
+        description: 'Reason for refund'
+      },
+      amount: {
+        type: 'number',
+        description: 'Refund amount (optional, defaults to full order amount)'
+      },
+      notes: {
+        type: 'string',
+        description: 'Additional notes about the refund'
+      }
+    },
+    required: ['order_id', 'reason']
+  },
+  endpoint: {
+    url: 'https://api.stripe.com/v1/refunds',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer {{STRIPE_SECRET_KEY}}',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body_template: 'payment_intent={{order_id}}&reason={{reason}}{{#if amount}}&amount={{amount}}{{/if}}'
+  },
+  response_template: `Your refund of ${{amount}} has been processed.
+Refund ID: {{id}}.
+Funds will appear in 5-10 business days.`,
+  error_response: "I couldn't process the refund. Please contact support for assistance.",
+  timeout_ms: 15000,
+  retry: {
+    max_attempts: 2,
+    delay_ms: 2000
+  }
+});
+```
+</CodeGroup>
+
+## Testing Functions
+
+Test your function before attaching to agents:
+
+<CodeGroup>
+```javascript JavaScript
+// Test with sample parameters
+const result = await vora.functions.test('fn_abc123xyz', {
+  order_id: 'ORD-12345'
+});
+
+console.log('Success:', result.success);
+console.log('Response:', result.response);
+console.log('Latency:', result.latency_ms);
+console.log('Raw data:', result.raw_response);
+
+if (!result.success) {
+  console.log('Error:', result.error);
+}
+```
+
+```python Python
+# Test with sample parameters
+result = vora.functions.test('fn_abc123xyz', order_id='ORD-12345')
+
+print(f"Success: {result.success}")
+print(f"Response: {result.response}")
+print(f"Latency: {result.latency_ms}")
+
+if not result.success:
+    print(f"Error: {result.error}")
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/functions/fn_abc123xyz/test \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"order_id": "ORD-12345"}'
+```
+</CodeGroup>
+
+## Error Codes
+
+| Code | Description | Resolution |
+|------|-------------|------------|
+| `DUPLICATE_FUNCTION` | Name already exists | Use unique function name |
+| `INVALID_SCHEMA` | Invalid JSON Schema | Fix parameters schema |
+| `INVALID_URL` | Malformed endpoint URL | Check URL format |
+| `MISSING_SECRET` | Referenced secret not found | Create secret first |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Function Templates" icon="copy" href="/api/functions/templates">
+    Pre-built function templates
+  </Card>
+  <Card title="Functions Overview" icon="bolt" href="/api/functions">
+    Back to Functions API
+  </Card>
+</CardGroup>

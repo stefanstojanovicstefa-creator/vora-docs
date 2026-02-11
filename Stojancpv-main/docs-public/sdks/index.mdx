@@ -1,0 +1,59 @@
+---
+title: SDKs & Libraries
+description: Official SDKs and client libraries for the Vora Voice AI platform
+---
+
+# SDKs & Libraries
+
+Official client libraries to help you integrate Vora into your applications.
+
+## Available SDKs
+
+<CardGroup cols={2}>
+  <Card title="JavaScript/TypeScript" icon="js" href="/sdks/javascript">
+    `npm install @vora/sdk`
+  </Card>
+  <Card title="Python" icon="python" href="/sdks/python">
+    `pip install vora-sdk`
+  </Card>
+  <Card title="React Components" icon="react" href="/sdks/react">
+    `npm install @vora/react`
+  </Card>
+  <Card title="LiveKit Integration" icon="video" href="/sdks/livekit">
+    Voice WebRTC components
+  </Card>
+</CardGroup>
+
+## Quick Start
+
+<CodeGroup>
+```typescript JavaScript
+import { VoraClient } from '@vora/sdk';
+
+const vora = new VoraClient({
+  apiKey: 'YOUR_API_KEY'
+});
+
+const agent = await vora.agents.create({
+  name: 'Support Agent',
+  systemPrompt: 'You are a helpful support agent...'
+});
+```
+
+```python Python
+from vora import VoraClient
+
+vora = VoraClient(api_key="YOUR_API_KEY")
+
+agent = vora.agents.create(
+    name="Support Agent",
+    system_prompt="You are a helpful support agent..."
+)
+```
+</CodeGroup>
+
+## Coming Soon
+
+- Detailed SDK documentation
+- Code examples and tutorials
+- Framework-specific integrations

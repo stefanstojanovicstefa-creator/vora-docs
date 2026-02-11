@@ -1,0 +1,71 @@
+---
+title: Knowledge Tab
+description: Configure knowledge base and RAG retrieval for your agent
+---
+
+# Knowledge Tab
+
+The Knowledge tab connects your agent to documents and data sources so it can answer questions using your business information.
+
+---
+
+## How Knowledge Base Works
+
+Vora uses RAG (Retrieval-Augmented Generation):
+1. Your documents are split into chunks and embedded as vectors
+2. During conversations, relevant chunks are retrieved based on semantic similarity
+3. Retrieved context is injected into the LLM prompt
+4. The agent generates responses grounded in your documents
+
+---
+
+## Adding Knowledge Sources
+
+| Source | Description |
+|--------|-------------|
+| **Documents** | Upload PDF, DOCX, TXT, or Markdown files |
+| **URLs** | Crawl and index web pages |
+| **Text** | Paste raw text directly |
+| **Integrations** | Connect external data sources |
+
+<Steps>
+  <Step title="Add a source">
+    Click **Add Knowledge** and choose your source type.
+  </Step>
+  <Step title="Upload or connect">
+    Upload files, enter URLs, or paste text. Vora processes and indexes the content automatically.
+  </Step>
+  <Step title="Verify">
+    Test your agent to confirm it can answer questions from the new content.
+  </Step>
+</Steps>
+
+---
+
+## RAG Settings
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Chunk size** | Size of document chunks for retrieval | 512 tokens |
+| **Chunk overlap** | Overlap between adjacent chunks | 50 tokens |
+| **Top K** | Number of chunks retrieved per query | 5 |
+| **Similarity threshold** | Minimum relevance score for retrieval | 0.7 |
+
+<Tip>
+  For most use cases, the defaults work well. Increase **Top K** if the agent misses relevant information. Decrease **Chunk size** for more precise retrieval.
+</Tip>
+
+---
+
+## Knowledge Base vs. System Prompt
+
+| Use System Prompt For | Use Knowledge Base For |
+|----------------------|----------------------|
+| Agent personality and rules | Large documents (manuals, FAQs) |
+| Short, critical information | Dynamic content that changes |
+| Behavioral instructions | Detailed product/service info |
+| Always-needed context | Contextual, query-dependent info |
+
+<Note>
+  The system prompt is included in every request. Knowledge Base content is only retrieved when relevant to the current question. Use the system prompt for things the agent always needs to know.
+</Note>

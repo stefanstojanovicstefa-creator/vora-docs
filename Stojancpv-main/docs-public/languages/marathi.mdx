@@ -1,0 +1,67 @@
+---
+title: Marathi
+description: Marathi voice AI support - providers, configuration, and best practices
+---
+
+# Marathi
+
+<Tabs>
+  <Tab title="Simple">
+    Vora fully supports **Marathi** for voice AI agents. ~83M speakers in India (Maharashtra).
+
+    ### Setting Up a Marathi Agent
+
+    <Steps>
+      <Step title="Create your agent">
+        Use any creation method (Interview, URL Import, etc.)
+      </Step>
+      <Step title="Set language to Marathi">
+        In voice settings, select **Marathi** from the language dropdown.
+      </Step>
+      <Step title="Choose a voice">
+        Select from available Marathi voices in the voice library.
+      </Step>
+      <Step title="Test and deploy">
+        Test with the simulator, then deploy as usual.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For best results with Marathi, we recommend Sarvam AI voices for the most natural speech.
+    </Tip>
+  </Tab>
+  <Tab title="Advanced">
+    ## Provider Matrix
+
+    | Detail | Value |
+    |--------|-------|
+    | **Code** | mr-IN |
+    | **Region** | India (Maharashtra) |
+    | **Speakers** | ~83M |
+    | **Best ASR** | Sarvam AI |
+    | **Best TTS** | Sarvam AI |
+    | **Best LLM** | Sarvam 2B |
+
+    ### Available Providers
+
+    | Type | Providers |
+    |------|-----------|
+    | **ASR** | Sarvam AI (Best), Google, Azure, AWS, Deepgram, Soniox, Speechmatics |
+    | **TTS** | Sarvam AI (Best), Google, Azure, Murf AI, Speechify |
+    | **LLM** | Sarvam 2B (Best), GPT-4o, Gemini, Claude |
+
+    ### Recommended Stack
+
+    For the best Marathi voice experience:
+    - **STT**: Sarvam AI (best accuracy for Marathi)
+    - **LLM**: Sarvam 2B (best Marathi understanding)
+    - **TTS**: Sarvam AI (most natural Marathi speech)
+
+    ### Configuration
+
+    In the Command Center:
+    1. **Ears Tab** → Set STT provider to Sarvam AI, language to `mr-IN`
+    2. **Brain Tab** → Set LLM to Sarvam 2B
+    3. **Voice Tab** → Set TTS to Sarvam AI, select a Marathi voice
+  </Tab>
+</Tabs>

@@ -1,0 +1,429 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "theme": "mint",
+  "name": "Vora Voice AI",
+  "logo": {
+    "light": "/logo/vora-light.svg",
+    "dark": "/logo/vora-dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4F46E5"
+  },
+  "modeToggle": {
+    "default": "light",
+    "isHidden": false
+  },
+  "feedback": {
+    "thumbsRating": true,
+    "suggestEdit": true,
+    "raiseIssue": true
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/voicevora"
+    },
+    {
+      "name": "Discord",
+      "url": "https://discord.gg/vora"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://app.voicevora.com"
+  },
+  "anchors": [
+    {
+      "name": "API Reference",
+      "icon": "code",
+      "url": "/api"
+    },
+    {
+      "name": "Discord",
+      "icon": "discord",
+      "url": "https://discord.gg/vora"
+    },
+    {
+      "name": "Status",
+      "icon": "signal",
+      "url": "https://status.voicevora.com"
+    }
+  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Getting Started",
+        "groups": [
+          {
+            "group": "Welcome",
+            "pages": [
+              "introduction",
+              "getting-started/modes",
+              "getting-started/concepts"
+            ]
+          },
+          {
+            "group": "Quickstart",
+            "pages": [
+              "platform/quickstart"
+            ]
+          },
+          {
+            "group": "Updates",
+            "pages": [
+              "changelog"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Platform",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "platform/index"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              "platform/agents/index",
+              "platform/agents/interview",
+              "platform/agents/url-import",
+              "platform/agents/prompt-mode",
+              "platform/agents/configuration",
+              "platform/agents/testing",
+              "platform/agents/deployment",
+              "platform/agents/versions"
+            ]
+          },
+          {
+            "group": "Voice",
+            "pages": [
+              "platform/voice/index"
+            ]
+          },
+          {
+            "group": "Knowledge Base",
+            "pages": [
+              "platform/knowledge-base/index",
+              "platform/knowledge-base/documents",
+              "platform/knowledge-base/urls",
+              "platform/knowledge-base/text",
+              "platform/knowledge-base/integrations"
+            ]
+          },
+          {
+            "group": "Sessions",
+            "pages": [
+              "platform/sessions/index",
+              "platform/sessions/transcripts",
+              "platform/sessions/recordings",
+              "platform/sessions/events"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "platform/integrations/index",
+              "platform/integrations/hubspot",
+              "platform/integrations/google-calendar",
+              "platform/integrations/webhooks"
+            ]
+          },
+          {
+            "group": "Functions",
+            "pages": [
+              "platform/functions/index",
+              "platform/functions/built-in",
+              "platform/functions/testing"
+            ]
+          },
+          {
+            "group": "Analytics & Billing",
+            "pages": [
+              "platform/analytics/index",
+              "platform/billing/index",
+              "platform/billing/plans",
+              "platform/billing/usage"
+            ]
+          },
+          {
+            "group": "Settings",
+            "pages": [
+              "platform/account/index",
+              "platform/phone-numbers/index"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "platform/support/index",
+              "platform/support/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Advanced",
+        "groups": [
+          {
+            "group": "Command Center",
+            "pages": [
+              "advanced/command-center/index",
+              "advanced/command-center/brain-tab",
+              "advanced/command-center/voice-tab",
+              "advanced/command-center/ears-tab",
+              "advanced/command-center/functions-tab",
+              "advanced/command-center/knowledge-tab",
+              "advanced/command-center/advanced-tab",
+              "advanced/command-center/deploy-tab",
+              "advanced/command-center/analytics-tab",
+              "advanced/command-center/testing-tab"
+            ]
+          },
+          {
+            "group": "Advanced Features",
+            "pages": [
+              "advanced/custom-functions",
+              "advanced/flow-studio",
+              "advanced/monitoring",
+              "advanced/api-keys",
+              "advanced/providers",
+              "advanced/campaigns",
+              "advanced/webhooks"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API Reference",
+            "pages": [
+              "api/index"
+            ]
+          },
+          {
+            "group": "Fundamentals",
+            "pages": [
+              "api/authentication",
+              "api/errors",
+              "api/rate-limits",
+              "api/pagination"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              "api/agents/index",
+              "api/agents/create",
+              "api/agents/get",
+              "api/agents/update",
+              "api/agents/delete",
+              "api/agents/deploy"
+            ]
+          },
+          {
+            "group": "Sessions",
+            "pages": [
+              "api/sessions/index",
+              "api/sessions/create",
+              "api/sessions/get",
+              "api/sessions/transcripts"
+            ]
+          },
+          {
+            "group": "Knowledge Base",
+            "pages": [
+              "api/knowledge-base/index",
+              "api/knowledge-base/documents",
+              "api/knowledge-base/search"
+            ]
+          },
+          {
+            "group": "Functions",
+            "pages": [
+              "api/functions/index",
+              "api/functions/create",
+              "api/functions/templates"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api/webhooks/index",
+              "api/webhooks/events"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDKs",
+        "groups": [
+          {
+            "group": "SDKs",
+            "pages": [
+              "sdks/index"
+            ]
+          },
+          {
+            "group": "JavaScript",
+            "pages": [
+              "sdks/javascript/index",
+              "sdks/javascript/agents",
+              "sdks/javascript/sessions",
+              "sdks/javascript/voice",
+              "sdks/javascript/reference"
+            ]
+          },
+          {
+            "group": "Python",
+            "pages": [
+              "sdks/python/index",
+              "sdks/python/agents",
+              "sdks/python/sessions",
+              "sdks/python/reference"
+            ]
+          },
+          {
+            "group": "LiveKit Integration",
+            "pages": [
+              "sdks/livekit/index",
+              "sdks/livekit/react",
+              "sdks/livekit/vanilla",
+              "sdks/livekit/react-native"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Providers",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "providers/index"
+            ]
+          },
+          {
+            "group": "Speech-to-Text (STT)",
+            "pages": [
+              "providers/stt/index",
+              "providers/stt/deepgram",
+              "providers/stt/google",
+              "providers/stt/assemblyai",
+              "providers/stt/soniox"
+            ]
+          },
+          {
+            "group": "Text-to-Speech (TTS)",
+            "pages": [
+              "providers/tts/index",
+              "providers/tts/elevenlabs",
+              "providers/tts/google",
+              "providers/tts/cartesia"
+            ]
+          },
+          {
+            "group": "LLM Providers",
+            "pages": [
+              "providers/llm/index",
+              "providers/llm/google",
+              "providers/llm/openai",
+              "providers/llm/anthropic",
+              "providers/llm/groq",
+              "providers/llm/mistral",
+              "providers/llm/cohere"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Languages",
+        "groups": [
+          {
+            "group": "Language Support",
+            "pages": [
+              "languages/index",
+              "languages/arabic",
+              "languages/hindi",
+              "languages/bengali",
+              "languages/tamil",
+              "languages/telugu",
+              "languages/gujarati",
+              "languages/kannada",
+              "languages/malayalam",
+              "languages/marathi",
+              "languages/punjabi",
+              "languages/odia",
+              "languages/indonesian",
+              "languages/vietnamese",
+              "languages/tagalog",
+              "languages/malay",
+              "languages/thai",
+              "languages/english-indian"
+            ]
+          },
+          {
+            "group": "Provider Comparison",
+            "pages": [
+              "languages/asr-providers",
+              "languages/tts-providers",
+              "languages/llm-providers"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Self-Hosting",
+        "groups": [
+          {
+            "group": "Self-Hosting",
+            "pages": [
+              "self-hosting/index",
+              "self-hosting/docker",
+              "self-hosting/fly",
+              "self-hosting/environment",
+              "self-hosting/database",
+              "self-hosting/redis",
+              "self-hosting/monitoring",
+              "self-hosting/scaling"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "analytics": {
+    "posthog": {
+      "apiKey": "phc_PLACEHOLDER"
+    }
+  },
+  "search": {
+    "prompt": "Search Vora documentation..."
+  },
+  "metadata": {
+    "og:site_name": "Vora Documentation"
+  },
+  "footerSocials": {
+    "github": "https://github.com/voicevora",
+    "twitter": "https://twitter.com/voravai",
+    "discord": "https://discord.gg/vora"
+  },
+  "i18n": {
+    "defaultLocale": "en",
+    "languages": [
+      { "locale": "en", "name": "English" },
+      { "locale": "ar", "name": "العربية" },
+      { "locale": "hi", "name": "हिन्दी" },
+      { "locale": "id", "name": "Bahasa Indonesia" },
+      { "locale": "vi", "name": "Tiếng Việt" }
+    ]
+  }
+}

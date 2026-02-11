@@ -1,0 +1,87 @@
+---
+title: Mukhya Concepts
+description: Vora platform ke key building blocks samjhein
+---
+
+# Mukhya Concepts
+
+Apna pehla voice agent banane se pehle, yahan ke key concepts se parichit hon.
+
+---
+
+## Agents
+
+Ek **Agent** ek voice AI assistant hai jo phone calls, web chats, ya in-app voice interactions handle kar sakta hai.
+
+<Tabs>
+  <Tab title="Simple">
+    - **Personality** - Agent kaise sunta hai aur kaise behave karta hai
+    - **Knowledge** - Documents aur information jo agent reference kar sakta hai
+    - **Voice** - Jis voice mein baat karta hai
+    - **Language** - Kaun si bhasha(yein) bolta hai
+    - **Greeting** - Callers ko pehli cheez jo kehta hai
+  </Tab>
+  <Tab title="Advanced">
+    - **System Prompt** - Agent ke behavior define karne wali instructions
+    - **LLM Provider** - Responses power karne wala AI model (Gemini, GPT-4, Claude)
+    - **STT Provider** - Speech-to-text engine (Deepgram, Google, AssemblyAI)
+    - **TTS Provider** - Text-to-speech voice (ElevenLabs, Cartesia, Google)
+    - **Knowledge Base** - RAG-powered document retrieval
+    - **Functions** - Custom tool calls jo agent execute kar sakta hai
+  </Tab>
+</Tabs>
+
+---
+
+## Voice Pipeline
+
+Har voice conversation ek pipeline se guzarti hai:
+
+<Tabs>
+  <Tab title="Simple">
+    ```
+    Caller bolta hai → Vora samajhta hai → AI sochta hai → Vora jawab deta hai
+    ```
+
+    Yeh real-time mein hota hai 500ms se kam latency ke saath.
+  </Tab>
+  <Tab title="Advanced">
+    ```
+    Audio In → STT (Deepgram/Google) → LLM (Gemini/GPT-4) → TTS (ElevenLabs/Cartesia) → Audio Out
+    ```
+
+    Pipeline audio ko real-time mein process karta hai WebRTC ke zariye LiveKit se. Har provider ko har agent ke liye independently configure kiya ja sakta hai.
+  </Tab>
+</Tabs>
+
+---
+
+## Knowledge Base
+
+Knowledge Base aapke agent ko aapke apne documents use karke sawaalon ka jawab dene deta hai.
+
+<Tabs>
+  <Tab title="Simple">
+    Files upload karein (PDF, DOCX, TXT) ya URLs paste karein, aur aapka agent conversations ke dauraan un information ko reference kar sakta hai.
+  </Tab>
+  <Tab title="Advanced">
+    Knowledge Base RAG (Retrieval-Augmented Generation) use karta hai:
+    1. Documents ko chunk karke vector embeddings mein convert kiya jaata hai
+    2. Conversations ke dauraan, relevant chunks semantic similarity ke basis par retrieve hote hain
+    3. Retrieved context LLM prompt mein inject hota hai
+    4. Agent aapke documents par based responses generate karta hai
+  </Tab>
+</Tabs>
+
+---
+
+## Aage ke steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/platform/quickstart">
+    5 minute mein apna pehla agent banayein
+  </Card>
+  <Card title="Simple aur Advanced Mode" icon="toggle-on" href="/getting-started/modes">
+    Do interface modes ke baare mein jaanein
+  </Card>
+</CardGroup>

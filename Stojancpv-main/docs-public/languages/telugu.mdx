@@ -1,0 +1,67 @@
+---
+title: Telugu
+description: Telugu voice AI support - providers, configuration, and best practices
+---
+
+# Telugu
+
+<Tabs>
+  <Tab title="Simple">
+    Vora fully supports **Telugu** for voice AI agents. ~83M speakers in India (Andhra Pradesh / Telangana).
+
+    ### Setting Up a Telugu Agent
+
+    <Steps>
+      <Step title="Create your agent">
+        Use any creation method (Interview, URL Import, etc.)
+      </Step>
+      <Step title="Set language to Telugu">
+        In voice settings, select **Telugu** from the language dropdown.
+      </Step>
+      <Step title="Choose a voice">
+        Select from available Telugu voices in the voice library.
+      </Step>
+      <Step title="Test and deploy">
+        Test with the simulator, then deploy as usual.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For best results with Telugu, we recommend Sarvam AI voices for the most natural speech.
+    </Tip>
+  </Tab>
+  <Tab title="Advanced">
+    ## Provider Matrix
+
+    | Detail | Value |
+    |--------|-------|
+    | **Code** | te-IN |
+    | **Region** | India (Andhra Pradesh / Telangana) |
+    | **Speakers** | ~83M |
+    | **Best ASR** | Sarvam AI |
+    | **Best TTS** | Sarvam AI |
+    | **Best LLM** | Sarvam 2B |
+
+    ### Available Providers
+
+    | Type | Providers |
+    |------|-----------|
+    | **ASR** | Sarvam AI (Best), Google, Azure, AWS, Deepgram, Soniox |
+    | **TTS** | Sarvam AI (Best), Google, Azure, Murf AI, Speechify |
+    | **LLM** | Sarvam 2B (Best), GPT-4o, Gemini, Claude |
+
+    ### Recommended Stack
+
+    For the best Telugu voice experience:
+    - **STT**: Sarvam AI (best accuracy for Telugu)
+    - **LLM**: Sarvam 2B (best Telugu understanding)
+    - **TTS**: Sarvam AI (most natural Telugu speech)
+
+    ### Configuration
+
+    In the Command Center:
+    1. **Ears Tab** → Set STT provider to Sarvam AI, language to `te-IN`
+    2. **Brain Tab** → Set LLM to Sarvam 2B
+    3. **Voice Tab** → Set TTS to Sarvam AI, select a Telugu voice
+  </Tab>
+</Tabs>

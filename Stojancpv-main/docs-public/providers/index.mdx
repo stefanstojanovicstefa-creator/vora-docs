@@ -1,0 +1,161 @@
+---
+title: Providers Overview
+description: 12 ASR, 11 TTS, and 15 LLM providers for voice AI agents
+---
+
+# Providers Overview
+
+Vora integrates with **12 ASR**, **11 TTS**, and **15 LLM** providers. Mix and match to build the optimal voice pipeline for your agents.
+
+---
+
+<Tabs>
+  <Tab title="Simple">
+    ## How Providers Work
+
+    Every voice AI conversation uses three types of providers:
+
+    1. **Speech-to-Text (STT)** - Converts what the caller says into text
+    2. **AI Model (LLM)** - Understands the text and generates a response
+    3. **Text-to-Speech (TTS)** - Converts the response back to speech
+
+    Vora picks the best providers by default - you don't need to configure anything. Just create your agent and go.
+
+    ### Default Providers
+
+    | Component | Default | Why |
+    |-----------|---------|-----|
+    | **STT** | Deepgram | Fast and accurate |
+    | **LLM** | Gemini Flash | Quick responses, 100+ languages |
+    | **TTS** | ElevenLabs | Natural-sounding voices |
+
+    <Tip>
+      The defaults work great for most agents. You only need to change providers if you have specific language or performance requirements.
+    </Tip>
+
+    ### Learn More
+
+    <CardGroup cols={3}>
+      <Card title="STT Providers" icon="microphone" href="/providers/stt">
+        Speech recognition options
+      </Card>
+      <Card title="TTS Providers" icon="volume-high" href="/providers/tts">
+        Voice synthesis options
+      </Card>
+      <Card title="LLM Providers" icon="brain" href="/providers/llm">
+        AI model options
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="Advanced">
+    ## Provider Architecture
+
+    ```mermaid
+    graph LR
+        A[Caller Audio] --> B[STT Provider]
+        B --> C[LLM Provider]
+        C --> D[TTS Provider]
+        D --> E[Agent Audio]
+
+        subgraph "STT (12 providers)"
+            B1[Deepgram]
+            B2[Google]
+            B3[Azure]
+            B4[Sarvam AI]
+            B5[Munsit]
+            B6[Valsea]
+        end
+
+        subgraph "LLM (15 providers)"
+            C1[Gemini]
+            C2[GPT-4o]
+            C3[Claude]
+            C4[Qwen]
+            C5[Sarvam 2B]
+        end
+
+        subgraph "TTS (11 providers)"
+            D1[ElevenLabs]
+            D2[Cartesia]
+            D3[Murf AI]
+            D4[Sarvam AI]
+            D5[Munsit]
+        end
+    ```
+
+    ## Quick Comparison
+
+    ### LLM Providers
+
+    | Provider | Languages | Latency | Cost (per 1M tokens) |
+    |----------|-----------|---------|---------------------|
+    | [Gemini Flash](/providers/llm/google) | 100+ | Very Low | $0.15 / $0.60 |
+    | [GPT-4o](/providers/llm/openai) | 50+ | Low | $5 / $15 |
+    | [Claude Sonnet 4](/providers/llm/anthropic) | 30+ | Medium | $3 / $15 |
+    | [Groq](/providers/llm/groq) | 20+ | Ultra-Low | $0.05 / $0.08 |
+    | [Mistral](/providers/llm/mistral) | 20+ | Low | $2-$6 |
+    | [Cohere](/providers/llm/cohere) | 23 | Medium | $2.50 / $10 |
+    | [Qwen 2.5](/languages/llm-providers) | 100+ | Low | $0.30 / $0.90 |
+    | [Sarvam 2B](/languages/llm-providers) | 11 Indian | Low | ~$0.02/min |
+
+    ### STT Providers
+
+    | Provider | Languages | Latency | Pricing |
+    |----------|-----------|---------|---------|
+    | [Deepgram Nova-3](/providers/stt/deepgram) | 30+ | Very Low | $0.0077/min |
+    | [Google Cloud](/providers/stt/google) | 125+ | Low | $0.016/min |
+    | [AssemblyAI](/providers/stt/assemblyai) | 99+ | Low | $0.15/hr |
+    | [Soniox](/providers/stt/soniox) | 60+ | Very Low | $0.10/hr |
+    | [Sarvam AI](/languages/asr-providers) | 11 Indian | Low | ~$0.35/hr |
+    | [Munsit](/languages/asr-providers) | Arabic | Low | Enterprise |
+
+    ### TTS Providers
+
+    | Provider | Languages | Quality | Pricing |
+    |----------|-----------|---------|---------|
+    | [ElevenLabs](/providers/tts/elevenlabs) | 32+ | Excellent | $0.05-$0.15/min |
+    | [Cartesia](/providers/tts/cartesia) | 15+ | Very Good | Contact |
+    | [Google TTS](/providers/tts/google) | 75+ | Good | $4-$16/1M chars |
+    | [Murf AI](/languages/tts-providers) | 35+ | Very Good | $0.01/min |
+    | [Sarvam AI](/languages/tts-providers) | 11 Indian | Excellent (Indian) | ~$0.35/hr |
+
+    ## Configuring Providers
+
+    Configure per-agent in the [Command Center](/advanced/command-center):
+    - **Ears Tab** → STT provider and language
+    - **Brain Tab** → LLM provider and model
+    - **Voice Tab** → TTS provider and voice
+    - **Advanced Tab** → Fallback chains and circuit breakers
+
+    ## Fallback Strategies
+
+    Configure automatic failover in the [Advanced Tab](/advanced/command-center/advanced-tab):
+
+    ```
+    Primary: Deepgram → Fallback: Google STT → Fallback: Azure STT
+    Primary: Gemini Flash → Fallback: GPT-4o-mini
+    Primary: ElevenLabs → Fallback: Cartesia
+    ```
+
+    ## Bring Your Own Keys
+
+    Use your own provider API keys for higher rate limits and direct billing. See [API Keys](/advanced/api-keys) for setup.
+
+    ## Provider Documentation
+
+    <CardGroup cols={2}>
+      <Card title="STT Providers" icon="microphone" href="/providers/stt">
+        Deepgram, Google, AssemblyAI, Soniox
+      </Card>
+      <Card title="TTS Providers" icon="volume-high" href="/providers/tts">
+        ElevenLabs, Cartesia, Google TTS
+      </Card>
+      <Card title="LLM Providers" icon="brain" href="/providers/llm">
+        Gemini, GPT-4o, Claude, Groq, Mistral, Cohere
+      </Card>
+      <Card title="Language-Specific" icon="globe" href="/languages">
+        Per-language provider recommendations
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>

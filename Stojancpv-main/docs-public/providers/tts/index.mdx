@@ -1,0 +1,214 @@
+---
+title: TTS Providers
+description: 11 text-to-speech providers for Vora voice agents
+---
+
+# TTS Providers
+
+Vora integrates with **11 text-to-speech providers** for natural, expressive agent voices. Choose based on voice quality, latency, language support, and pricing.
+
+---
+
+## Available Providers
+
+<CardGroup cols={3}>
+  <Card title="ElevenLabs" icon="waveform-lines" href="/providers/tts/elevenlabs">
+    Premium quality, voice cloning, 32+ languages
+  </Card>
+  <Card title="Cartesia" icon="bolt" href="/providers/tts/cartesia">
+    Sonic - Ultra-low latency, 15+ languages
+  </Card>
+  <Card title="Google TTS" icon="google" href="/providers/tts/google">
+    WaveNet/Neural2 - 75+ languages, 380+ voices
+  </Card>
+  <Card title="Azure Neural" icon="microsoft" href="/providers/tts/google">
+    140+ languages, 300+ voices, custom voice
+  </Card>
+  <Card title="AWS Polly" icon="aws" href="/providers/tts/google">
+    29 languages, 60+ voices
+  </Card>
+  <Card title="Murf AI Falcon" icon="feather" href="/languages/tts-providers">
+    35+ languages, $0.01/min - cheapest
+  </Card>
+  <Card title="Speechify" icon="headphones" href="/languages/tts-providers">
+    50+ languages, voice cloning
+  </Card>
+  <Card title="Deepgram Aura" icon="microphone" href="/providers/stt/deepgram">
+    20+ languages, optimized for speed
+  </Card>
+  <Card title="Sarvam AI Bulbul" icon="globe" href="/languages/hindi">
+    Best for 11 Indian languages
+  </Card>
+  <Card title="Munsit (CNTXT)" icon="language" href="/languages/arabic">
+    Best for Arabic dialects
+  </Card>
+  <Card title="Inworld TTS" icon="gamepad" href="/languages/tts-providers">
+    15 languages, gaming/interactive
+  </Card>
+</CardGroup>
+
+---
+
+## Comparison Matrix
+
+| Provider | Languages | Voices | Quality | Latency | Pricing |
+|----------|-----------|--------|---------|---------|---------|
+| [ElevenLabs](/providers/tts/elevenlabs) | 32+ | 100+ | Excellent | ~200ms | $0.05-$0.15/min |
+| [Cartesia Sonic](/providers/tts/cartesia) | 15+ | 30+ | Very Good | ~50ms | Contact |
+| [Google TTS](/providers/tts/google) | 75+ | 380+ | Good | ~200-400ms | $4-$16/1M chars |
+| Azure Neural | 140+ | 300+ | Very Good | ~200-400ms | $15/1M chars |
+| AWS Polly | 29 | 60+ | Good | ~200ms | $16/1M chars |
+| Murf AI Falcon | 35+ | 200+ | Very Good | ~80ms | $0.01/min |
+| Speechify | 50+ | 100+ | Good | ~200ms | $10/1M chars |
+| Deepgram Aura | 20+ | 30+ | Good | ~100ms | $0.015-$0.030/1K chars |
+| [Sarvam AI Bulbul](/languages/hindi) | 11 Indian | 20+ | Excellent (Indian) | ~200ms | ~$0.35/hr |
+| [Munsit](/languages/arabic) | Arabic | 10+ | Excellent (Arabic) | ~200ms | Enterprise |
+| Inworld TTS | 15 | 50+ | Good | ~200ms | $5-$15/1M chars |
+
+---
+
+## Choosing a Provider
+
+### By Priority
+
+| Priority | Recommended Provider | Why |
+|----------|---------------------|-----|
+| **Most natural English** | ElevenLabs | Gold standard for naturalness and expression |
+| **Lowest latency** | Cartesia Sonic (~50ms), Murf AI (~80ms) | Ultra-fast first byte |
+| **Widest language coverage** | Google Cloud TTS | 75+ languages, 380+ voices |
+| **Indian languages** | Sarvam AI Bulbul | Purpose-built for 11 Indian languages |
+| **Arabic** | Munsit (CNTXT) | Best Arabic dialect voices |
+| **Lowest cost** | Murf AI Falcon ($0.01/min) | 10x cheaper than ElevenLabs |
+| **Voice cloning** | ElevenLabs, Speechify | Clone any voice |
+| **Enterprise** | Azure Neural TTS | Custom voice models, compliance |
+
+### Voice Quality Rankings (English)
+
+| Rank | Provider | Notes |
+|------|----------|-------|
+| 1 | ElevenLabs | Most natural, expressive |
+| 2 | Cartesia Sonic | Very natural, ultra-low latency |
+| 3 | Azure Neural | High quality, customizable |
+| 4 | Google WaveNet | Good quality, many voices |
+| 5 | Deepgram Aura | Good, optimized for speed |
+
+---
+
+## Key Considerations
+
+### Latency
+
+For real-time voice agents, TTS latency matters:
+
+| Rank | Provider | First Byte Latency |
+|------|----------|--------------------|
+| 1 | Cartesia Sonic | ~50ms |
+| 2 | Murf AI Falcon | ~80ms |
+| 3 | Deepgram Aura | ~100ms |
+| 4 | ElevenLabs | ~200ms |
+| 5 | Google / Azure | ~200-400ms |
+
+### Pricing
+
+Most cost-effective options:
+
+| Rank | Provider | Cost |
+|------|----------|------|
+| 1 | Murf AI Falcon | $0.01/min (cheapest) |
+| 2 | Google Cloud | $4/1M chars (~$0.02/min) |
+| 3 | Deepgram Aura | $0.015/1K chars |
+| 4 | ElevenLabs | $0.05/min (premium quality) |
+
+### Voice Selection
+
+| Provider | Premade Voices | Cloning | Custom Voice |
+|----------|---------------|---------|--------------|
+| ElevenLabs | 100+ | Yes | Yes |
+| Cartesia | 30+ | No | No |
+| Google TTS | 380+ | No | Custom Voice (enterprise) |
+| Azure Neural | 300+ | No | Custom Neural Voice |
+
+---
+
+## Configuration
+
+Configure TTS providers in the Command Center [Voice Tab](/advanced/command-center/voice-tab):
+1. Select your TTS provider
+2. Browse and preview available voices
+3. Set speech speed
+4. Configure a fallback voice in the [Advanced Tab](/advanced/command-center/advanced-tab)
+
+### API Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Voice Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  voice: {
+    provider: 'elevenlabs',
+    voiceId: 'EXAVITQu4vr4xnSDxMaL',
+    model: 'eleven_turbo_v2_5',
+    stability: 0.5,
+    similarityBoost: 0.75,
+    speed: 1.0
+  }
+});
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for Conversation">
+    ```typescript
+    voice: {
+      provider: 'elevenlabs',
+      voiceId: 'EXAVITQu4vr4xnSDxMaL',
+      model: 'eleven_turbo_v2_5',
+      stability: 0.4,
+      speed: 1.05
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Match Voice to Use Case">
+    | Use Case | Voice Style | Provider |
+    |----------|-------------|----------|
+    | Customer support | Calm, professional | ElevenLabs |
+    | Sales | Energetic, confident | ElevenLabs |
+    | Healthcare | Warm, reassuring | Azure Neural |
+    | IVR/Menu | Clear, neutral | Google Neural |
+    | Budget | Natural, cost-effective | Murf AI |
+  </Accordion>
+
+  <Accordion title="Configure Fallbacks">
+    Set up automatic failover:
+    ```
+    Primary: ElevenLabs
+    Fallback: Cartesia Sonic
+    Fallback: Google TTS
+    ```
+    Configure in the [Advanced Tab](/advanced/command-center/advanced-tab).
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Provider Details
+
+<CardGroup cols={3}>
+  <Card title="ElevenLabs" icon="waveform-lines" href="/providers/tts/elevenlabs">
+    Premium voices, cloning
+  </Card>
+  <Card title="Cartesia" icon="bolt" href="/providers/tts/cartesia">
+    Ultra-low latency
+  </Card>
+  <Card title="Google TTS" icon="google" href="/providers/tts/google">
+    75+ languages
+  </Card>
+</CardGroup>
+
+<Tip>
+  For detailed language-specific provider recommendations, see the [TTS Provider Comparison](/languages/tts-providers) page.
+</Tip>

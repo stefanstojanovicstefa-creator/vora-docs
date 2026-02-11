@@ -1,0 +1,579 @@
+---
+title: Troubleshooting
+description: Common issues and how to fix them
+---
+
+# Troubleshooting
+
+Find solutions to common issues with Vora. If you can't find your answer here, [contact support](/platform/support).
+
+---
+
+## Quick Diagnostics
+
+Before diving into specific issues, run these quick checks:
+
+### System Status
+
+Check if there's an ongoing incident:
+- [status.vora.ai](https://status.vora.ai)
+
+### Account Health
+
+Run the built-in health check:
+1. Go to **Settings** → **Support** → **Health Check**
+2. Click **Run Diagnostics**
+3. Address any warnings
+
+### Common Quick Fixes
+
+| Symptom | Try This First |
+|---------|----------------|
+| Agent not responding | Clear browser cache, try incognito |
+| Can't log in | Reset password, check email |
+| API errors | Verify API key is valid |
+| Calls failing | Check phone number status |
+
+---
+
+## Agent Issues
+
+### Agent Not Responding
+
+**Symptoms**: Agent doesn't reply, long silences, session hangs
+
+<AccordionGroup>
+  <Accordion title="Check agent status">
+    1. Go to **Agents** → Select your agent
+    2. Verify status is **Active**
+    3. Check for any error messages
+
+    If status shows errors, check the agent logs.
+  </Accordion>
+
+  <Accordion title="Review LLM configuration">
+    Ensure the LLM is properly configured:
+
+    1. Go to **Agent** → **Configuration** → **LLM**
+    2. Verify a model is selected
+    3. Test with a simpler model if issues persist
+
+    ```javascript
+    // Try fallback to faster model
+    {
+      "model": "gemini-1.5-flash",  // vs gemini-1.5-pro
+      "timeout": 10000
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Check for infinite loops">
+    Your prompt might be causing the agent to loop:
+
+    - Look for contradictory instructions
+    - Simplify the system prompt
+    - Add explicit termination conditions
+
+    Bad:
+    ```
+    Always ask follow-up questions.
+    Never ask more than 2 questions.
+    ```
+
+    Good:
+    ```
+    Ask up to 2 clarifying questions if needed.
+    ```
+  </Accordion>
+
+  <Accordion title="Test in simulator">
+    Use the simulator to isolate the issue:
+
+    1. Go to **Agent** → **Test**
+    2. Start a new session
+    3. Check for errors in the debug panel
+    4. Review the transcript for issues
+  </Accordion>
+</AccordionGroup>
+
+### Agent Gives Wrong Answers
+
+**Symptoms**: Incorrect information, off-topic responses, hallucinations
+
+<AccordionGroup>
+  <Accordion title="Improve knowledge base">
+    Ensure relevant information is in the knowledge base:
+
+    1. Go to **Knowledge Base**
+    2. Search for the topic in question
+    3. Add or update documents as needed
+    4. Wait for reprocessing (few minutes)
+  </Accordion>
+
+  <Accordion title="Refine system prompt">
+    Make instructions more specific:
+
+    Before:
+    ```
+    Help customers with their questions.
+    ```
+
+    After:
+    ```
+    You are a customer support agent for Acme Inc.
+
+    Key policies:
+    - Refunds within 30 days of purchase
+    - Exchanges require original receipt
+    - Warranty is 1 year from purchase date
+
+    If you don't know an answer, say "I'll need to transfer you to a specialist."
+    ```
+  </Accordion>
+
+  <Accordion title="Adjust retrieval settings">
+    Tune knowledge base retrieval:
+
+    ```javascript
+    {
+      "knowledgeBase": {
+        "topK": 5,           // Retrieve more chunks
+        "threshold": 0.7,    // Lower threshold for more results
+        "rerank": true       // Enable reranking
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Agent Speaks Too Fast/Slow
+
+**Symptoms**: Voice speed uncomfortable, hard to understand
+
+<AccordionGroup>
+  <Accordion title="Adjust voice speed">
+    1. Go to **Agent** → **Voice**
+    2. Adjust **Speed** slider (0.5-2.0)
+    3. Test in simulator
+    4. Recommended: 0.9-1.1 for natural speech
+  </Accordion>
+
+  <Accordion title="Add pauses in responses">
+    Use SSML for natural pacing:
+
+    ```xml
+    <speak>
+      Let me check that for you.
+      <break time="500ms"/>
+      I found your order.
+    </speak>
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Phone Issues
+
+### Calls Not Connecting
+
+**Symptoms**: Callers can't reach number, calls fail immediately
+
+<AccordionGroup>
+  <Accordion title="Verify number status">
+    1. Go to **Phone Numbers**
+    2. Check status is **Active**
+    3. Verify agent is assigned
+    4. Check number isn't suspended (billing)
+  </Accordion>
+
+  <Accordion title="Check business hours">
+    Calls outside business hours may be blocked:
+
+    1. Go to **Phone Number** → **Settings**
+    2. Review business hours configuration
+    3. Check after-hours handling
+  </Accordion>
+
+  <Accordion title="Verify routing">
+    Ensure calls route to the right agent:
+
+    1. Go to **Phone Number** → **Routing**
+    2. Confirm agent is selected
+    3. Test with a different number
+  </Accordion>
+</AccordionGroup>
+
+### Poor Call Quality
+
+**Symptoms**: Echo, choppy audio, delays, one-way audio
+
+<AccordionGroup>
+  <Accordion title="Check network requirements">
+    Verify your network meets requirements:
+
+    | Metric | Minimum | Recommended |
+    |--------|---------|-------------|
+    | Bandwidth | 100 Kbps | 256 Kbps |
+    | Latency | < 300ms | < 150ms |
+    | Jitter | < 50ms | < 20ms |
+    | Packet loss | < 3% | < 1% |
+  </Accordion>
+
+  <Accordion title="Check firewall settings">
+    Open required ports:
+
+    - TCP/UDP 443 (HTTPS/WSS)
+    - UDP 10000-60000 (RTP media)
+    - TCP 5060-5061 (SIP signaling)
+
+    Whitelist IPs:
+    ```
+    34.102.136.180
+    35.192.45.67
+    35.224.98.123
+    ```
+  </Accordion>
+
+  <Accordion title="Enable echo cancellation">
+    1. Go to **Phone Number** → **Voice Settings**
+    2. Enable **Echo Cancellation**
+    3. Enable **Noise Reduction**
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Web Widget Issues
+
+### Widget Not Loading
+
+**Symptoms**: Widget doesn't appear, JavaScript errors
+
+<AccordionGroup>
+  <Accordion title="Check script installation">
+    Verify the embed code is correct:
+
+    ```html
+    <!-- Should be before </body> -->
+    <script src="https://widget.vora.ai/v1/widget.js"></script>
+    <script>
+      VoraWidget.init({
+        agentId: 'agent_abc123'  // Verify this ID
+      });
+    </script>
+    ```
+  </Accordion>
+
+  <Accordion title="Check for conflicts">
+    Other scripts might conflict:
+
+    1. Open browser DevTools (F12)
+    2. Check Console for errors
+    3. Look for `VoraWidget` related errors
+    4. Try loading in incognito mode
+  </Accordion>
+
+  <Accordion title="Verify domain whitelist">
+    Your domain must be whitelisted:
+
+    1. Go to **Agent** → **Deployment** → **Web Widget**
+    2. Check **Allowed Domains**
+    3. Add your domain if missing
+    4. Include `localhost` for testing
+  </Accordion>
+</AccordionGroup>
+
+### Microphone Not Working
+
+**Symptoms**: Can hear agent but can't speak, permission denied
+
+<AccordionGroup>
+  <Accordion title="Check browser permissions">
+    1. Click the lock/info icon in address bar
+    2. Check microphone permission
+    3. Set to **Allow**
+    4. Refresh the page
+  </Accordion>
+
+  <Accordion title="Check system settings">
+    **Windows**:
+    Settings → Privacy → Microphone → Allow apps
+
+    **Mac**:
+    System Preferences → Security & Privacy → Microphone
+
+    **Chrome**:
+    chrome://settings/content/microphone
+  </Accordion>
+
+  <Accordion title="Verify HTTPS">
+    Microphone only works over HTTPS:
+
+    - ✓ `https://yoursite.com` - Works
+    - ✓ `http://localhost` - Works (exception)
+    - ✗ `http://yoursite.com` - Won't work
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## API Issues
+
+### Authentication Errors
+
+**Symptoms**: 401 Unauthorized, invalid API key errors
+
+<AccordionGroup>
+  <Accordion title="Verify API key">
+    1. Go to **Settings** → **API Keys**
+    2. Copy the key fresh
+    3. Check it starts with `sk_live_` or `sk_test_`
+    4. Ensure no extra spaces
+  </Accordion>
+
+  <Accordion title="Check header format">
+    ```javascript
+    // Correct
+    headers: {
+      'Authorization': 'Bearer sk_live_xxxxx'
+    }
+
+    // Incorrect
+    headers: {
+      'Authorization': 'sk_live_xxxxx'  // Missing "Bearer "
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Check key permissions">
+    Ensure your key has the required scopes:
+
+    1. Go to **Settings** → **API Keys**
+    2. Check the key's permissions
+    3. Regenerate with correct scopes if needed
+  </Accordion>
+</AccordionGroup>
+
+### Rate Limit Errors
+
+**Symptoms**: 429 Too Many Requests
+
+<AccordionGroup>
+  <Accordion title="Check current limits">
+    View your rate limits:
+
+    ```javascript
+    const limits = await vora.account.rateLimits();
+    console.log(limits);
+    // {
+    //   requests: { limit: 100, remaining: 23, reset: 1705000000 },
+    //   sessions: { limit: 50, remaining: 42, reset: 1705000000 }
+    // }
+    ```
+  </Accordion>
+
+  <Accordion title="Implement backoff">
+    Add exponential backoff to your code:
+
+    ```javascript
+    async function callWithRetry(fn, maxRetries = 3) {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          return await fn();
+        } catch (err) {
+          if (err.status === 429 && i < maxRetries - 1) {
+            const delay = Math.pow(2, i) * 1000;
+            await new Promise(r => setTimeout(r, delay));
+          } else {
+            throw err;
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Request limit increase">
+    Need higher limits? [Contact sales](https://vora.ai/contact-sales) for enterprise options.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Account Issues
+
+### Can't Log In
+
+**Symptoms**: Password not working, locked out
+
+<AccordionGroup>
+  <Accordion title="Reset password">
+    1. Go to [app.vora.ai/forgot-password](https://app.vora.ai/forgot-password)
+    2. Enter your email
+    3. Check email (including spam)
+    4. Click reset link
+    5. Set new password
+  </Accordion>
+
+  <Accordion title="Check for SSO">
+    If your org uses SSO:
+
+    1. Go to [app.vora.ai](https://app.vora.ai)
+    2. Click **Sign in with SSO**
+    3. Enter your work email
+    4. You'll be redirected to your IdP
+  </Accordion>
+
+  <Accordion title="Account locked">
+    After 5 failed attempts, accounts lock for 15 minutes.
+
+    - Wait 15 minutes and try again
+    - Or reset password immediately
+    - Contact support if persistent
+  </Accordion>
+</AccordionGroup>
+
+### Can't Access Features
+
+**Symptoms**: Features grayed out, upgrade prompts
+
+<AccordionGroup>
+  <Accordion title="Check your plan">
+    Some features require higher plans:
+
+    1. Go to **Settings** → **Billing**
+    2. Check your current plan
+    3. Compare to [plans page](/platform/billing/plans)
+    4. Upgrade if needed
+  </Accordion>
+
+  <Accordion title="Check permissions">
+    You may not have permission:
+
+    1. Ask your admin to check your role
+    2. Required roles vary by feature
+    3. Admin can update in **Team** settings
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Integration Issues
+
+### Webhook Not Receiving Events
+
+**Symptoms**: Events not arriving, no HTTP requests
+
+<AccordionGroup>
+  <Accordion title="Verify endpoint URL">
+    1. Go to **Integrations** → **Webhooks**
+    2. Check URL is correct and accessible
+    3. URL must be HTTPS
+    4. Test with a simple endpoint first
+  </Accordion>
+
+  <Accordion title="Check event selection">
+    Ensure you're subscribed to the right events:
+
+    1. Go to webhook settings
+    2. Verify selected events
+    3. Enable relevant event types
+  </Accordion>
+
+  <Accordion title="Check firewall">
+    Whitelist Vora IPs:
+    ```
+    34.102.136.180
+    35.192.45.67
+    35.224.98.123
+    ```
+  </Accordion>
+
+  <Accordion title="Test webhook">
+    Use the test function:
+
+    1. Go to webhook settings
+    2. Click **Send Test**
+    3. Check your endpoint logs
+    4. Verify you receive the test event
+  </Accordion>
+</AccordionGroup>
+
+### CRM Integration Not Syncing
+
+**Symptoms**: Contacts not syncing, data missing
+
+<AccordionGroup>
+  <Accordion title="Reconnect integration">
+    1. Go to **Integrations** → Select integration
+    2. Click **Disconnect**
+    3. Wait 30 seconds
+    4. Click **Connect** again
+    5. Re-authorize
+  </Accordion>
+
+  <Accordion title="Check field mappings">
+    1. Go to integration settings
+    2. Review field mappings
+    3. Ensure required fields are mapped
+    4. Test with a new record
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Getting More Help
+
+### Collect Debug Information
+
+Before contacting support, gather:
+
+```javascript
+// Enable debug logging
+VoraWidget.setDebug(true);
+
+// Get session info
+const session = VoraWidget.getSession();
+console.log('Session ID:', session?.id);
+
+// Check connection state
+console.log('State:', VoraWidget.getConnectionState());
+```
+
+### Information to Provide
+
+| Info | Where to Find |
+|------|---------------|
+| Account email | Top-right menu |
+| Agent ID | Agent settings page |
+| Session ID | Session details or console |
+| Error messages | Browser console (F12) |
+| Timestamps | When the issue occurred |
+
+### Contact Support
+
+If these steps don't resolve your issue:
+
+1. **Email**: support@vora.ai
+2. **In-app**: Click **?** → **Contact Support**
+3. **Enterprise**: Use your dedicated channel
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Support Home" icon="headset" href="/platform/support">
+    All support options
+  </Card>
+  <Card title="Status Page" icon="signal" href="https://status.vora.ai">
+    Check system status
+  </Card>
+  <Card title="Community" icon="users" href="https://discord.gg/vora">
+    Ask the community
+  </Card>
+  <Card title="API Docs" icon="code" href="/api">
+    API reference
+  </Card>
+</CardGroup>

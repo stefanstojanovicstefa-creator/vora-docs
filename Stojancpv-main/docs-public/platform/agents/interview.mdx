@@ -1,0 +1,252 @@
+---
+title: Interview Method
+description: Create agents through a conversational interview process
+---
+
+# Interview Method
+
+The Interview method is the easiest way to create a Vora agent. Simply have a conversation with Vora, and it builds the agent for you.
+
+---
+
+## How It Works
+
+1. **You speak** - Describe what you want your agent to do
+2. **Vora asks questions** - Clarifying questions about your use case
+3. **Agent is built** - Vora generates the system prompt and configuration
+4. **You refine** - Make adjustments as needed
+
+---
+
+## Starting an Interview
+
+<Steps>
+  <Step title="Navigate to Create Agent">
+    Go to **Agents** → **Create Agent** → **Interview**.
+  </Step>
+  <Step title="Allow Microphone">
+    Grant microphone permission when prompted.
+  </Step>
+  <Step title="Start Speaking">
+    Click the microphone button and describe your agent:
+
+    > "I want to create a customer support agent for my e-commerce store. It should be able to help customers track orders, process returns, and answer questions about our products."
+  </Step>
+</Steps>
+
+---
+
+## The Interview Process
+
+Vora will ask you a series of questions to understand your needs:
+
+### 1. Use Case Questions
+
+<Accordion title="What will your agent do?">
+  Describe the primary purpose of your agent.
+
+  **Good answer:**
+  > "Handle customer support calls for our software company. Answer questions about features, help with troubleshooting, and schedule demos with sales."
+
+  **Too vague:**
+  > "Help customers."
+</Accordion>
+
+<Accordion title="What's your business?">
+  Provide context about your company or organization.
+
+  **Good answer:**
+  > "We're a B2B SaaS company that sells project management software to small businesses."
+
+  **Too vague:**
+  > "We sell software."
+</Accordion>
+
+### 2. Personality Questions
+
+<Accordion title="What tone should the agent have?">
+  Describe the personality and communication style.
+
+  **Options:**
+  - Professional and formal
+  - Friendly and casual
+  - Empathetic and supportive
+  - Efficient and direct
+</Accordion>
+
+<Accordion title="Any specific phrases to use or avoid?">
+  Specify language preferences.
+
+  **Example:**
+  > "Always say 'my pleasure' instead of 'no problem'. Never use jargon like 'synergy' or 'leverage'."
+</Accordion>
+
+### 3. Capability Questions
+
+<Accordion title="What information does it need to answer?">
+  Describe what knowledge the agent should have.
+
+  **Example:**
+  > "It needs to know our pricing plans, feature list, common troubleshooting steps, and company policies."
+</Accordion>
+
+<Accordion title="What actions should it take?">
+  Describe what the agent should be able to do.
+
+  **Example:**
+  > "Look up order status, create support tickets, schedule callbacks, and transfer to a human when needed."
+</Accordion>
+
+### 4. Boundary Questions
+
+<Accordion title="What should it NOT do?">
+  Define limitations and restrictions.
+
+  **Example:**
+  > "Never provide refunds directly - always transfer to a human for refund requests. Don't discuss competitor products."
+</Accordion>
+
+<Accordion title="When should it escalate?">
+  Define when to involve humans.
+
+  **Example:**
+  > "Escalate if the customer is frustrated, if it's a billing issue, or if it can't resolve the problem in 3 attempts."
+</Accordion>
+
+---
+
+## Tips for Better Results
+
+<AccordionGroup>
+  <Accordion title="Be specific">
+    **Less effective:**
+    > "Make it friendly"
+
+    **More effective:**
+    > "Use a warm, conversational tone. Address customers by their first name. Use phrases like 'I'd be happy to help with that!'"
+  </Accordion>
+
+  <Accordion title="Give examples">
+    **Less effective:**
+    > "Handle product questions"
+
+    **More effective:**
+    > "When asked about product X, explain that it includes features A, B, and C. When asked about pricing, offer the free trial first."
+  </Accordion>
+
+  <Accordion title="Define boundaries">
+    **Less effective:**
+    > "Be helpful"
+
+    **More effective:**
+    > "Help with support questions but don't provide legal advice, make promises about future features, or discuss competitor comparisons."
+  </Accordion>
+
+  <Accordion title="Describe your audience">
+    **Less effective:**
+    > "Talk to customers"
+
+    **More effective:**
+    > "Our customers are primarily small business owners who aren't very technical. Avoid jargon and explain things simply."
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## After the Interview
+
+Once Vora has gathered enough information, it generates your agent:
+
+### Review the System Prompt
+
+Vora shows you the generated system prompt. Review it to make sure it captures your intent:
+
+```
+You are a friendly customer support agent for TechCorp, a B2B SaaS company selling project management software.
+
+Your personality:
+- Warm and helpful
+- Patient with less technical users
+- Professional but not stiff
+
+Your capabilities:
+- Answer questions about features and pricing
+- Help troubleshoot common issues
+- Schedule demo calls with sales
+- Create support tickets
+
+Your limitations:
+- Do not provide refunds (transfer to human)
+- Do not discuss competitors
+- Escalate if customer is frustrated
+```
+
+### Make Edits
+
+Click **Edit Prompt** to modify the generated prompt directly. You can:
+- Add more details
+- Remove unwanted behaviors
+- Adjust the tone
+- Add specific examples
+
+### Configure Voice
+
+Select a voice that matches the personality:
+- Friendly tone → Warm, expressive voice
+- Professional tone → Clear, authoritative voice
+- Supportive tone → Calm, empathetic voice
+
+---
+
+## Example Interview
+
+Here's a complete example interview:
+
+<Steps>
+  <Step title="User describes the agent">
+    > "I want to build a scheduling assistant for my dental practice. It should help patients book, reschedule, or cancel appointments."
+  </Step>
+  <Step title="Vora asks about the business">
+    > Vora: "What's the name of your dental practice and where is it located?"
+
+    > User: "Smile Dental Clinic in Austin, Texas. We're open Monday through Friday, 9am to 5pm."
+  </Step>
+  <Step title="Vora asks about capabilities">
+    > Vora: "What appointment types should I be able to book?"
+
+    > User: "Regular checkups, cleanings, emergency visits, and consultations. Checkups and cleanings are 30 minutes, emergencies and consultations are an hour."
+  </Step>
+  <Step title="Vora asks about boundaries">
+    > Vora: "Are there any restrictions I should know about?"
+
+    > User: "Don't schedule emergencies more than 24 hours out - they should come in today or tomorrow. Also, we don't accept walk-ins."
+  </Step>
+  <Step title="Agent is generated">
+    Vora creates the agent with:
+    - System prompt for dental scheduling
+    - Google Calendar integration suggested
+    - Appointment type handling rules
+    - Operating hours enforcement
+  </Step>
+</Steps>
+
+---
+
+## Next Steps
+
+After creating your agent via interview:
+
+<CardGroup cols={2}>
+  <Card title="Configure Settings" icon="sliders" href="/platform/agents/configuration">
+    Fine-tune voice, model, and other settings
+  </Card>
+  <Card title="Test Your Agent" icon="flask" href="/platform/agents/testing">
+    Use the simulator to test conversations
+  </Card>
+  <Card title="Add Knowledge Base" icon="database" href="/platform/knowledge-base">
+    Upload documents for more accurate answers
+  </Card>
+  <Card title="Deploy" icon="rocket" href="/platform/agents/deployment">
+    Go live with your agent
+  </Card>
+</CardGroup>

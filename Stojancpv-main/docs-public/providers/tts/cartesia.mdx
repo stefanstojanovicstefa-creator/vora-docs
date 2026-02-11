@@ -1,0 +1,433 @@
+---
+title: Cartesia
+description: Ultra-low latency text-to-speech
+---
+
+# Cartesia
+
+Cartesia offers the fastest TTS with ultra-low latency optimized for real-time voice AI.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `cartesia` |
+| Default Model | `sonic` |
+| Streaming | ✅ Native support |
+| Latency | ~100-150ms |
+| Languages | 10+ |
+| Voice Cloning | ❌ Not supported |
+
+---
+
+## Available Models
+
+| Model | Quality | Latency | Best For |
+|-------|---------|---------|----------|
+| `sonic` | Very Good | ~100ms | Ultra-fast voice AI |
+| `sonic-multilingual` | Good | ~150ms | Non-English languages |
+
+<Note>
+**Recommended**: `sonic` for English voice AI — fastest TTS available.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Fast Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  voice: {
+    provider: 'cartesia',
+    voiceId: 'atlas'
+  }
+});
+```
+
+### Full Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Custom Voice Agent',
+  systemPrompt: 'You are a professional assistant.',
+  voice: {
+    provider: 'cartesia',
+    voiceId: 'atlas',
+    model: 'sonic',
+    speed: 1.0,
+    emotion: 'neutral',
+    outputFormat: 'pcm_16000'
+  }
+});
+```
+
+---
+
+## Available Voices
+
+### Professional Voices
+
+| Voice | ID | Description |
+|-------|-----|-------------|
+| Atlas | `atlas` | Professional male, clear and confident |
+| Luna | `luna` | Friendly female, warm and approachable |
+| Nova | `nova` | Energetic female, enthusiastic |
+| Orion | `orion` | Deep male, authoritative |
+| Aria | `aria` | Calm female, soothing |
+| Echo | `echo` | Neutral, versatile |
+
+### Specialized Voices
+
+| Voice | ID | Best For |
+|-------|-----|----------|
+| Zephyr | `zephyr` | Customer support |
+| Titan | `titan` | Sales and outreach |
+| Aurora | `aurora` | Healthcare |
+| Phoenix | `phoenix` | Technical support |
+
+---
+
+## Voice Settings
+
+### Speed Control
+
+Adjust speaking rate:
+
+```typescript
+voice: {
+  provider: 'cartesia',
+  voiceId: 'atlas',
+  speed: 1.0  // 0.5 - 2.0
+}
+```
+
+| Value | Effect |
+|-------|--------|
+| 0.5 - 0.8 | Slower, more deliberate |
+| 1.0 | Normal speed |
+| 1.1 - 1.3 | Slightly faster |
+| 1.5 - 2.0 | Fast, energetic |
+
+### Emotion Control
+
+Set voice emotion:
+
+```typescript
+voice: {
+  provider: 'cartesia',
+  voiceId: 'luna',
+  emotion: 'friendly'
+}
+```
+
+| Emotion | Effect |
+|---------|--------|
+| `neutral` | Default, balanced |
+| `friendly` | Warm, approachable |
+| `professional` | Clear, business-like |
+| `enthusiastic` | Energetic, excited |
+| `calm` | Relaxed, soothing |
+
+---
+
+## Why Cartesia?
+
+### 1. Ultra-Low Latency
+
+Fastest TTS available:
+- ~100ms first byte latency
+- Optimized for real-time conversation
+- No perceptible delay
+
+### 2. Streaming-First
+
+Purpose-built for streaming:
+
+```typescript
+// Cartesia starts speaking immediately
+// as tokens are generated
+voice: {
+  provider: 'cartesia',
+  streaming: true  // Default
+}
+```
+
+### 3. Consistent Quality
+
+Reliable performance:
+- No quality degradation under load
+- Consistent latency
+- High availability
+
+### 4. Simple API
+
+Easy to configure:
+- Fewer parameters to tune
+- Sensible defaults
+- Predictable behavior
+
+---
+
+## Use Cases
+
+### Real-Time Voice AI
+
+```typescript
+voice: {
+  provider: 'cartesia',
+  voiceId: 'atlas',
+  model: 'sonic',
+  speed: 1.05
+}
+```
+
+Best for: Conversational AI requiring instant responses.
+
+### Customer Support
+
+```typescript
+voice: {
+  provider: 'cartesia',
+  voiceId: 'luna',
+  emotion: 'friendly',
+  speed: 1.0
+}
+```
+
+Best for: Support agents where latency matters.
+
+### IVR Systems
+
+```typescript
+voice: {
+  provider: 'cartesia',
+  voiceId: 'echo',
+  emotion: 'professional',
+  speed: 0.95
+}
+```
+
+Best for: Phone menu systems requiring quick responses.
+
+### Sales Outreach
+
+```typescript
+voice: {
+  provider: 'cartesia',
+  voiceId: 'titan',
+  emotion: 'enthusiastic',
+  speed: 1.1
+}
+```
+
+Best for: Outbound calls where energy matters.
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for Speed">
+    For fastest possible responses:
+
+    ```typescript
+    voice: {
+      provider: 'cartesia',
+      voiceId: 'atlas',
+      model: 'sonic',
+      speed: 1.05,
+      emotion: 'neutral'
+    }
+    ```
+
+    Tips:
+    - Use `sonic` model (fastest)
+    - Keep responses concise
+    - Enable streaming (default)
+  </Accordion>
+
+  <Accordion title="Match Voice to Use Case">
+    | Use Case | Voice | Emotion |
+    |----------|-------|---------|
+    | Support | Luna | Friendly |
+    | Sales | Titan | Enthusiastic |
+    | Healthcare | Aurora | Calm |
+    | Technical | Phoenix | Professional |
+  </Accordion>
+
+  <Accordion title="Handle Long Responses">
+    For longer agent responses:
+
+    - Cartesia excels at streaming long text
+    - First words play while rest generates
+    - No need to chunk manually
+  </Accordion>
+
+  <Accordion title="Fallback Configuration">
+    For reliability:
+
+    ```typescript
+    voice: {
+      provider: 'cartesia',
+      voiceId: 'atlas',
+      fallback: {
+        provider: 'elevenlabs',
+        voiceId: 'EXAVITQu4vr4xnSDxMaL'
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Language Support
+
+Cartesia supports major languages:
+
+| Language | Code | Model |
+|----------|------|-------|
+| English (US) | `en-US` | sonic |
+| English (UK) | `en-GB` | sonic-multilingual |
+| Spanish | `es` | sonic-multilingual |
+| French | `fr` | sonic-multilingual |
+| German | `de` | sonic-multilingual |
+| Portuguese | `pt` | sonic-multilingual |
+| Italian | `it` | sonic-multilingual |
+| Japanese | `ja` | sonic-multilingual |
+| Korean | `ko` | sonic-multilingual |
+| Chinese | `zh` | sonic-multilingual |
+
+<Note>
+Use `sonic` for English (best latency). Use `sonic-multilingual` for other languages.
+</Note>
+
+---
+
+## Output Formats
+
+| Format | Description | Use Case |
+|--------|-------------|----------|
+| `pcm_16000` | 16kHz PCM | Phone/telephony |
+| `pcm_24000` | 24kHz PCM | Web applications |
+| `pcm_44100` | 44.1kHz PCM | High quality |
+| `mp3_128` | 128kbps MP3 | General use |
+| `opus` | Opus codec | Low bandwidth |
+
+Configure format:
+
+```typescript
+voice: {
+  provider: 'cartesia',
+  outputFormat: 'pcm_24000'
+}
+```
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+CARTESIA_API_KEY=...
+```
+
+### Get Your Key
+
+1. Go to [Cartesia Console](https://cartesia.ai)
+2. Sign up or sign in
+3. Go to API Keys
+4. Generate new key
+5. Add to your Vora environment
+
+---
+
+## Pricing
+
+| Plan | Characters/Month | Cost |
+|------|------------------|------|
+| Free | 50,000 | $0 |
+| Starter | 500,000 | $29/mo |
+| Pro | 2,000,000 | $99/mo |
+| Enterprise | Unlimited | Custom |
+
+Pay-as-you-go: ~$0.15 per 1,000 characters
+
+<Note>
+Cartesia is approximately 50% cheaper than ElevenLabs for comparable quality.
+</Note>
+
+---
+
+## Cartesia vs ElevenLabs
+
+| Aspect | Cartesia | ElevenLabs |
+|--------|----------|------------|
+| Latency | ~100ms | ~250ms |
+| Quality | Very Good | Excellent |
+| Voice Cloning | ❌ | ✅ |
+| Languages | 10+ | 30+ |
+| Cost | Lower | Higher |
+| Best For | Speed-critical | Quality-critical |
+
+**Choose Cartesia when:**
+- Latency is the top priority
+- You don't need voice cloning
+- English is the primary language
+- Cost optimization matters
+
+**Choose ElevenLabs when:**
+- Voice quality is paramount
+- You need voice cloning
+- Wide language support needed
+- Expressiveness is important
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Voice Sounds Flat">
+    If voice lacks emotion:
+
+    - Set `emotion` parameter explicitly
+    - Try different voice IDs
+    - Consider ElevenLabs for more expressive needs
+  </Accordion>
+
+  <Accordion title="Wrong Language Accent">
+    If accent doesn't match:
+
+    - Use `sonic-multilingual` model
+    - Set explicit language code
+    - Try different voices for that language
+  </Accordion>
+
+  <Accordion title="Audio Quality Issues">
+    If audio sounds distorted:
+
+    - Check output format matches your use case
+    - Use PCM for lowest latency
+    - Verify network connectivity
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare TTS" icon="scale-balanced" href="/providers/tts">
+    See all TTS options
+  </Card>
+  <Card title="Latency Optimization" icon="bolt" href="/platform/voice/latency">
+    Reduce response time
+  </Card>
+</CardGroup>

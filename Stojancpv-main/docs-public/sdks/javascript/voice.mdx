@@ -1,0 +1,580 @@
+---
+title: Voice Components
+description: React components for voice integration
+---
+
+# Voice Components
+
+React components and hooks for building voice interfaces with Vora. Built on top of LiveKit's React SDK with Vora-specific enhancements.
+
+---
+
+## Installation
+
+```bash
+npm install @vora-ai/sdk @livekit/components-react livekit-client
+```
+
+---
+
+## Quick Start
+
+```tsx
+import { VoraRoom, VoiceAssistant, AudioRenderer } from '@vora-ai/react';
+
+function VoiceChat({ session }) {
+  return (
+    <VoraRoom
+      token={session.token}
+      serverUrl={session.roomUrl}
+    >
+      <VoiceAssistant />
+      <AudioRenderer />
+    </VoraRoom>
+  );
+}
+```
+
+---
+
+## VoraRoom
+
+The main container component for voice sessions:
+
+```tsx
+import { VoraRoom } from '@vora-ai/react';
+
+function App() {
+  const [session, setSession] = useState(null);
+
+  return (
+    <VoraRoom
+      token={session?.token}
+      serverUrl={session?.roomUrl}
+      connect={!!session}            // Auto-connect when session available
+      audio={true}                   // Enable audio
+      video={false}                  // Disable video
+      onConnected={() => console.log('Connected')}
+      onDisconnected={(reason) => console.log('Disconnected:', reason)}
+      onError={(error) => console.error('Error:', error)}
+    >
+      {/* Voice UI components */}
+    </VoraRoom>
+  );
+}
+```
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `token` | `string` | Session JWT token |
+| `serverUrl` | `string` | LiveKit server URL |
+| `connect` | `boolean` | Auto-connect on mount |
+| `audio` | `boolean` | Enable audio tracks |
+| `video` | `boolean` | Enable video tracks |
+| `onConnected` | `() => void` | Connection callback |
+| `onDisconnected` | `(reason) => void` | Disconnect callback |
+| `onError` | `(error) => void` | Error callback |
+
+---
+
+## VoiceAssistant
+
+The main voice assistant UI component:
+
+```tsx
+import { VoiceAssistant } from '@vora-ai/react';
+
+function VoiceUI() {
+  return (
+    <VoiceAssistant
+      // Visual options
+      showVisualizer={true}
+      showTranscript={true}
+      showControls={true}
+
+      // Styling
+      className="my-voice-assistant"
+      visualizerType="bars"        // 'bars' | 'waveform' | 'orb'
+      visualizerColor="#0066FF"
+
+      // Behavior
+      autoStartMic={false}
+      onTranscript={(message) => console.log(message)}
+      onStateChange={(state) => console.log('State:', state)}
+    />
+  );
+}
+```
+
+### Assistant States
+
+| State | Description |
+|-------|-------------|
+| `idle` | Waiting for input |
+| `listening` | User is speaking |
+| `thinking` | Agent is processing |
+| `speaking` | Agent is responding |
+| `disconnected` | Session ended |
+
+---
+
+## useVoiceAssistant Hook
+
+Access voice assistant state and controls:
+
+```tsx
+import { useVoiceAssistant } from '@vora-ai/react';
+
+function CustomVoiceUI() {
+  const {
+    state,              // 'idle' | 'listening' | 'thinking' | 'speaking'
+    audioTrack,         // Current audio track
+    isMuted,            // Microphone muted
+    isConnected,        // Connection status
+    transcript,         // Conversation messages
+    toggleMute,         // Toggle microphone
+    disconnect,         // End session
+  } = useVoiceAssistant();
+
+  return (
+    <div className="voice-ui">
+      <div className="status">{state}</div>
+
+      <button onClick={toggleMute}>
+        {isMuted ? 'Unmute' : 'Mute'}
+      </button>
+
+      <button onClick={disconnect}>
+        End Call
+      </button>
+
+      <div className="transcript">
+        {transcript.map((msg, i) => (
+          <div key={i} className={msg.speaker}>
+            {msg.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## Visualizers
+
+### Bar Visualizer
+
+```tsx
+import { BarVisualizer } from '@vora-ai/react';
+
+function AudioBars() {
+  const { state, audioTrack } = useVoiceAssistant();
+
+  return (
+    <BarVisualizer
+      state={state}
+      trackRef={audioTrack}
+      barCount={5}
+      options={{
+        minHeight: 20,
+        maxHeight: 100,
+        gap: 4
+      }}
+    />
+  );
+}
+```
+
+### Waveform Visualizer
+
+```tsx
+import { WaveformVisualizer } from '@vora-ai/react';
+
+function AudioWave() {
+  const { state, audioTrack } = useVoiceAssistant();
+
+  return (
+    <WaveformVisualizer
+      state={state}
+      trackRef={audioTrack}
+      width={300}
+      height={100}
+      lineWidth={2}
+      lineColor="#0066FF"
+    />
+  );
+}
+```
+
+### Orb Visualizer
+
+```tsx
+import { OrbVisualizer } from '@vora-ai/react';
+
+function AudioOrb() {
+  const { state, audioTrack } = useVoiceAssistant();
+
+  return (
+    <OrbVisualizer
+      state={state}
+      trackRef={audioTrack}
+      size={120}
+      colors={{
+        idle: '#666',
+        listening: '#0066FF',
+        thinking: '#FFB800',
+        speaking: '#00CC88'
+      }}
+    />
+  );
+}
+```
+
+---
+
+## Transcript Components
+
+### TranscriptView
+
+Display the conversation:
+
+```tsx
+import { TranscriptView } from '@vora-ai/react';
+
+function Conversation() {
+  return (
+    <TranscriptView
+      showTimestamps={true}
+      autoScroll={true}
+      maxMessages={50}
+      renderMessage={(message) => (
+        <div className={`message ${message.speaker}`}>
+          <span className="text">{message.text}</span>
+          <span className="time">{formatTime(message.timestamp)}</span>
+        </div>
+      )}
+    />
+  );
+}
+```
+
+### useTranscript Hook
+
+Access transcript data:
+
+```tsx
+import { useTranscript } from '@vora-ai/react';
+
+function TranscriptLogger() {
+  const { messages, lastMessage, isTyping } = useTranscript();
+
+  useEffect(() => {
+    if (lastMessage) {
+      console.log('New message:', lastMessage);
+    }
+  }, [lastMessage]);
+
+  return (
+    <div>
+      {messages.map((msg, i) => (
+        <p key={i}>{msg.speaker}: {msg.text}</p>
+      ))}
+      {isTyping && <p>Agent is typing...</p>}
+    </div>
+  );
+}
+```
+
+---
+
+## Control Components
+
+### MicrophoneButton
+
+```tsx
+import { MicrophoneButton } from '@vora-ai/react';
+
+function Controls() {
+  return (
+    <MicrophoneButton
+      size={48}
+      activeColor="#00CC88"
+      mutedColor="#FF4444"
+      showRipple={true}
+    />
+  );
+}
+```
+
+### EndCallButton
+
+```tsx
+import { EndCallButton } from '@vora-ai/react';
+
+function Controls() {
+  return (
+    <EndCallButton
+      onEnd={(session) => {
+        console.log('Session ended:', session.id);
+        navigate('/feedback');
+      }}
+      confirmText="End this call?"
+    />
+  );
+}
+```
+
+### VolumeSlider
+
+```tsx
+import { VolumeSlider } from '@vora-ai/react';
+
+function Controls() {
+  return (
+    <VolumeSlider
+      defaultValue={0.8}
+      onChange={(volume) => console.log('Volume:', volume)}
+    />
+  );
+}
+```
+
+---
+
+## Connection Status
+
+### ConnectionIndicator
+
+```tsx
+import { ConnectionIndicator } from '@vora-ai/react';
+
+function Header() {
+  return (
+    <div className="header">
+      <ConnectionIndicator
+        showLabel={true}
+        labels={{
+          connected: 'Connected',
+          connecting: 'Connecting...',
+          disconnected: 'Disconnected',
+          reconnecting: 'Reconnecting...'
+        }}
+      />
+    </div>
+  );
+}
+```
+
+### useConnection Hook
+
+```tsx
+import { useConnection } from '@vora-ai/react';
+
+function ConnectionManager() {
+  const {
+    status,           // 'connected' | 'connecting' | 'disconnected' | 'reconnecting'
+    quality,          // 'excellent' | 'good' | 'poor'
+    latency,          // ms
+    reconnect,        // Manual reconnection
+    disconnect        // End connection
+  } = useConnection();
+
+  return (
+    <div>
+      <span>Status: {status}</span>
+      <span>Quality: {quality}</span>
+      <span>Latency: {latency}ms</span>
+    </div>
+  );
+}
+```
+
+---
+
+## Audio Rendering
+
+### AudioRenderer
+
+Automatically handles agent audio playback:
+
+```tsx
+import { AudioRenderer } from '@vora-ai/react';
+
+function App() {
+  return (
+    <VoraRoom token={token} serverUrl={url}>
+      {/* Renders audio elements for all remote tracks */}
+      <AudioRenderer />
+    </VoraRoom>
+  );
+}
+```
+
+### Custom Audio Handling
+
+```tsx
+import { useRemoteAudioTrack } from '@vora-ai/react';
+
+function CustomAudioPlayer() {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const { track } = useRemoteAudioTrack('agent');
+
+  useEffect(() => {
+    if (track && audioRef.current) {
+      track.attach(audioRef.current);
+      return () => track.detach(audioRef.current!);
+    }
+  }, [track]);
+
+  return <audio ref={audioRef} autoPlay />;
+}
+```
+
+---
+
+## Full Example
+
+Complete voice chat component:
+
+```tsx
+import React, { useState, useEffect } from 'react';
+import {
+  VoraRoom,
+  VoiceAssistant,
+  AudioRenderer,
+  TranscriptView,
+  MicrophoneButton,
+  EndCallButton,
+  ConnectionIndicator,
+  useVoiceAssistant
+} from '@vora-ai/react';
+
+function VoiceChat({ agentId }) {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function startSession() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/voice-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId })
+      });
+      setSession(await res.json());
+    } catch (error) {
+      console.error('Failed to start session:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!session) {
+    return (
+      <button onClick={startSession} disabled={loading}>
+        {loading ? 'Connecting...' : 'Start Voice Chat'}
+      </button>
+    );
+  }
+
+  return (
+    <VoraRoom
+      token={session.token}
+      serverUrl={session.roomUrl}
+      connect={true}
+      audio={true}
+    >
+      <VoiceChatUI onEnd={() => setSession(null)} />
+      <AudioRenderer />
+    </VoraRoom>
+  );
+}
+
+function VoiceChatUI({ onEnd }) {
+  const { state, isConnected } = useVoiceAssistant();
+
+  return (
+    <div className="voice-chat">
+      <header>
+        <ConnectionIndicator showLabel />
+        <span className="state">{state}</span>
+      </header>
+
+      <main>
+        <VoiceAssistant
+          visualizerType="orb"
+          showTranscript={false}
+        />
+
+        <TranscriptView
+          autoScroll
+          showTimestamps
+        />
+      </main>
+
+      <footer>
+        <MicrophoneButton size={56} />
+        <EndCallButton
+          onEnd={(session) => {
+            console.log('Session ended:', session.id);
+            onEnd();
+          }}
+        />
+      </footer>
+    </div>
+  );
+}
+
+export default VoiceChat;
+```
+
+---
+
+## Styling
+
+### CSS Variables
+
+```css
+:root {
+  --vora-primary: #0066FF;
+  --vora-success: #00CC88;
+  --vora-warning: #FFB800;
+  --vora-error: #FF4444;
+  --vora-bg: #FFFFFF;
+  --vora-text: #1A1A1A;
+  --vora-border: #E5E5E5;
+  --vora-radius: 8px;
+}
+```
+
+### Component Classes
+
+```css
+.vora-room { /* Room container */ }
+.vora-voice-assistant { /* Main assistant UI */ }
+.vora-visualizer { /* Audio visualizer */ }
+.vora-transcript { /* Transcript container */ }
+.vora-message { /* Individual message */ }
+.vora-message--agent { /* Agent message */ }
+.vora-message--user { /* User message */ }
+.vora-controls { /* Control buttons */ }
+.vora-mic-button { /* Microphone button */ }
+.vora-end-button { /* End call button */ }
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="JavaScript SDK" icon="js" href="/sdks/javascript">
+    Full SDK documentation
+  </Card>
+  <Card title="Sessions API" icon="comments" href="/sdks/javascript/sessions">
+    Session management
+  </Card>
+</CardGroup>

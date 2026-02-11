@@ -1,0 +1,68 @@
+---
+title: Khai niem co ban
+description: Hieu cac khoi xay dung chinh cua nen tang Vora
+---
+
+# Khai niem co ban
+
+Truoc khi tao agent giong noi dau tien, hay lam quen voi cac khai niem chinh.
+
+---
+
+## Agent
+
+**Agent** la tro ly AI giong noi co the xu ly cuoc goi dien thoai, tro chuyen web hoac tuong tac giong noi trong ung dung.
+
+<Tabs>
+  <Tab title="Don gian">
+    - **Tinh cach** - Agent nghe nhu the nao va cu xu ra sao
+    - **Kien thuc** - Tai lieu va thong tin ma agent co the tham khao
+    - **Giong noi** - Giong noi ma no su dung
+    - **Ngon ngu** - Ngon ngu no noi
+    - **Loi chao** - Dieu dau tien no noi voi nguoi goi
+  </Tab>
+  <Tab title="Nang cao">
+    - **Prompt he thong** - Huong dan dinh nghia hanh vi agent
+    - **Nha cung cap LLM** - Mo hinh AI cung cap phan hoi (Gemini, GPT-4, Claude)
+    - **Nha cung cap STT** - Cong cu chuyen giong noi thanh van ban (Deepgram, Google)
+    - **Nha cung cap TTS** - Giong noi chuyen van ban thanh giong noi (ElevenLabs, Cartesia)
+    - **Co so kien thuc** - Truy xuat tai lieu dua tren RAG
+    - **Chuc nang** - Cac loi goi cong cu tuy chinh agent co the thuc thi
+  </Tab>
+</Tabs>
+
+---
+
+## Pipeline giong noi
+
+Moi cuoc hoi thoai giong noi di qua mot pipeline:
+
+<Tabs>
+  <Tab title="Don gian">
+    ```
+    Nguoi goi noi → Vora hieu → AI suy nghi → Vora tra loi
+    ```
+
+    Xay ra thoi gian thuc voi do tre duoi 500ms.
+  </Tab>
+  <Tab title="Nang cao">
+    ```
+    Am thanh vao → STT (Deepgram/Google) → LLM (Gemini/GPT-4) → TTS (ElevenLabs/Cartesia) → Am thanh ra
+    ```
+
+    Pipeline xu ly am thanh thoi gian thuc su dung WebRTC qua LiveKit. Moi nha cung cap co the cau hinh doc lap cho tung agent.
+  </Tab>
+</Tabs>
+
+---
+
+## Buoc tiep theo
+
+<CardGroup cols={2}>
+  <Card title="Bat dau nhanh" icon="rocket" href="/platform/quickstart">
+    Tao agent dau tien trong 5 phut
+  </Card>
+  <Card title="Che do Don gian & Nang cao" icon="toggle-on" href="/getting-started/modes">
+    Tim hieu ve hai che do giao dien
+  </Card>
+</CardGroup>

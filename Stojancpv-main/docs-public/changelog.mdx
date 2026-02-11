@@ -1,0 +1,462 @@
+---
+title: Changelog
+description: Release notes and version history for the Vora platform
+---
+
+# Changelog
+
+All notable changes to the Vora platform are documented here.
+
+---
+
+## [4.0.0] - 2026-02-01
+
+### Added
+
+**Two-Layer Documentation System**
+- Simple and Advanced mode toggle on every documentation page
+- Simple mode for non-technical users (Mom Mode in dashboard)
+- Advanced mode for developers (God Mode in dashboard)
+- All content available in both modes with appropriate depth
+
+**Language Expansion**
+- 17 priority language documentation pages with provider recommendations
+- ASR, TTS, and LLM provider comparison matrices per language
+- Language-specific configuration guides
+- Expanded to 100+ language support across providers
+
+**Advanced Documentation**
+- Complete Command Center documentation (9 tabs)
+- Custom Functions builder guide
+- Flow Studio visual builder guide
+- Monitoring dashboard documentation
+- Campaign system documentation
+- Webhook configuration and payload reference
+
+### Changed
+
+- Restructured documentation navigation (8 tabs)
+- Updated all provider information to current pricing and models
+- Removed all placeholder video embeds
+- Updated quickstart with dual-mode content
+
+---
+
+## [3.5.0] - 2025-12-15
+
+### Added
+
+**Campaign System**
+- Outbound voice campaigns with CSV contact import
+- Campaign scheduling and throttling
+- Real-time campaign analytics
+- Contact variable injection in agent prompts
+- TCPA/GDPR compliance controls
+
+**Provider Selection System**
+- Automatic provider selection based on language and quality
+- Fallback chains with circuit breakers
+- Cost-optimized routing for budget plans
+- Provider health monitoring dashboard
+
+### Changed
+
+- Expanded LLM support to 15 providers
+- Added Qwen 2.5, Falcon Arabic, DeepSeek, Grok 3
+- Improved provider fallback reliability
+- Enhanced circuit breaker recovery logic
+
+---
+
+## [3.4.0] - 2025-10-20
+
+### Added
+
+**Flow Studio**
+- Visual conversation flow builder
+- Drag-and-drop node editor
+- 7 node types: Start, Message, Question, Condition, Function, Transfer, End
+- Flow versioning and rollback
+- Test flows before deployment
+
+**Custom Functions v2**
+- Visual function builder with parameter editor
+- 15+ built-in function templates
+- Function analytics and performance tracking
+- Webhook function type for external integrations
+- Function versioning
+
+### Changed
+
+- Upgraded LiveKit SDK to v2.x
+- Improved voice pipeline latency by 40%
+- Enhanced knowledge base chunking algorithm
+
+### Fixed
+
+- Memory leak in long-running voice sessions
+- Function execution timeout handling
+- Flow Studio undo/redo edge cases
+
+---
+
+## [3.3.0] - 2025-08-15
+
+### Added
+
+**Monitoring Dashboard**
+- Real-time active sessions view
+- Provider health indicators
+- Alert system with email/webhook notifications
+- Cost breakdown by provider
+- Session recording playback
+
+**BYOK (Bring Your Own Keys)**
+- Support for custom provider API keys
+- Per-provider key management
+- Key rotation without downtime
+- Usage tracking per key
+
+### Changed
+
+- Improved dashboard performance (50% faster load times)
+- Enhanced error messages across all API endpoints
+- Better handling of concurrent voice sessions
+
+### Fixed
+
+- Dashboard timezone handling
+- API key permission scope validation
+- Session cleanup on unexpected disconnect
+
+---
+
+## [3.2.0] - 2025-06-10
+
+### Added
+
+**Regional Provider Support**
+- Sarvam AI integration for 11 Indian languages
+- Munsit (CNTXT) integration for Arabic (25+ dialects)
+- Valsea integration for 7 SEA languages
+- iFLYTEK integration for Chinese/Asian languages
+
+**Provider Fallbacks**
+- Automatic failover between STT, TTS, and LLM providers
+- Configurable fallback chains per agent
+- Circuit breaker pattern for provider outages
+- Latency-based automatic switching
+
+### Changed
+
+- Expanded ASR support to 12 providers
+- Expanded TTS support to 11 providers
+- Improved multilingual voice quality
+- Enhanced provider health monitoring
+
+---
+
+## [3.1.0] - 2025-04-20
+
+### Added
+
+**Knowledge Base v2**
+- Hierarchical RAG with multi-level retrieval
+- Support for PDF, DOCX, Markdown, and web URLs
+- Automatic knowledge refresh scheduling
+- Knowledge base analytics and usage tracking
+- Semantic search improvements
+
+**Agent Forge**
+- AI-powered agent creation from URL analysis
+- Brand voice extraction from website content
+- Automatic system prompt generation
+- One-click agent deployment
+
+### Changed
+
+- Upgraded Deepgram to Nova-3 model
+- Improved RAG retrieval accuracy by 25%
+- Enhanced agent template library
+- Better mobile responsive dashboard
+
+### Fixed
+
+- Knowledge base file upload for large documents
+- RAG chunk overlap calculation
+- Agent cloning with knowledge base
+
+---
+
+## [3.0.0] - 2025-02-15
+
+### Added
+
+**Command Center**
+- 9-tab agent configuration interface
+- Brain Tab: LLM provider, model, temperature, system prompt
+- Voice Tab: TTS provider, voice selection, speed
+- Ears Tab: STT provider, language, VAD settings
+- Functions Tab: Custom function management
+- Knowledge Tab: Knowledge base and RAG configuration
+- Advanced Tab: Fallbacks, circuit breakers, timeouts
+- Deploy Tab: Deployment channels, embed code, webhooks
+- Analytics Tab: Per-agent performance metrics
+- Testing Tab: Built-in test call interface
+
+**Mom Mode / God Mode**
+- Two-layer dashboard UX system
+- Mom Mode: Simplified interface for non-technical users
+- God Mode: Full developer controls and configuration
+- Persistent mode toggle in dashboard header
+- Mode-specific navigation and feature visibility
+
+**Interview Agent Creation**
+- Conversational agent setup through AI interview
+- Automatic provider selection based on use case
+- Smart defaults for common scenarios
+
+### Changed
+
+- Complete dashboard redesign
+- Migrated from single agent form to Command Center
+- Improved agent creation flow with multiple methods
+- Enhanced analytics with real-time data
+
+### Breaking Changes
+
+- Legacy agent configuration format deprecated
+- Old `/v1/agents` endpoint restructured
+- Dashboard routes restructured for mode system
+
+---
+
+## [2.5.0] - 2024-11-10
+
+### Added
+
+**Cartesia TTS Integration**
+- Ultra-low latency TTS (~50ms first byte)
+- 15+ language support
+- 30+ natural voices
+- Streaming audio output
+
+**Murf AI Integration**
+- 35+ languages, 200+ voices
+- $0.01/min pricing (most affordable TTS)
+- Very low latency (~80ms)
+
+**Enhanced Analytics**
+- Session duration and engagement metrics
+- Cost breakdown per agent and provider
+- Call quality scoring
+- Export analytics data
+
+### Changed
+
+- Improved voice pipeline with streaming optimization
+- Better error handling for provider failures
+- Enhanced webhook delivery reliability
+- Updated pricing tiers
+
+### Fixed
+
+- Audio quality degradation in long sessions
+- Webhook retry exponential backoff
+- Session history pagination
+
+---
+
+## [2.3.0] - 2024-08-20
+
+### Added
+
+**Custom Functions**
+- Agent function calling for external API integration
+- Built-in functions: transfer_call, end_call, book_appointment
+- Custom function builder with parameter schema
+- Function testing sandbox
+
+**Webhooks v2**
+- 10 event types (session.started, session.ended, message.received, etc.)
+- Signature verification with HMAC-SHA256
+- Retry policy with exponential backoff (5 attempts)
+- Webhook testing interface
+
+### Changed
+
+- Upgraded Gemini integration to latest models
+- Improved knowledge base indexing
+- Enhanced real-time transcription accuracy
+- Better handling of multilingual conversations
+
+### Fixed
+
+- Function call timeout handling
+- Webhook delivery deduplication
+- Agent status synchronization
+
+---
+
+## [2.1.0] - 2024-05-15
+
+### Added
+
+**Multi-Language Expansion**
+- 100+ language support across providers
+- Automatic language detection
+- Per-agent language configuration
+- Language-specific voice recommendations
+
+**API Keys Management**
+- Generate and manage Vora API keys
+- Granular permission scoping
+- Key rotation support
+- Usage tracking per key
+
+### Changed
+
+- Improved onboarding flow with guided wizard
+- Enhanced voice quality for TTS providers
+- Better handling of concurrent sessions
+- Updated React SDK to v2.0
+
+### Fixed
+
+- Dashboard loading performance
+- Agent cloning with all configurations
+- Rate limiting edge cases
+- Mobile Safari audio issues
+
+---
+
+## [2.0.0] - 2024-01-26
+
+### Added
+
+**Documentation Platform**
+- Complete documentation system
+- Interactive API reference with playground
+- Mintlify-powered documentation with modern UX
+
+**Developer Experience**
+- Comprehensive SDK documentation for React, Node.js, Python
+- Self-hosting guides with Docker and Kubernetes
+- Webhook event reference with examples
+
+### Changed
+
+- Migrated documentation platform to Mintlify
+- Reorganized documentation structure
+- Updated all code examples to latest API version
+
+---
+
+## [1.5.0] - 2024-01-15
+
+### Added
+
+- **RLM Prototype** - Response Latency Manager for optimized voice interactions
+- **Voice Persistence** - Session history persists across browser refreshes
+- **Agent Templates** - Pre-built agent configurations for common use cases
+
+### Changed
+
+- Improved voice pipeline latency by 30%
+- Enhanced error messages for API responses
+- Updated Gemini model integration
+
+### Fixed
+
+- Session timeout handling edge cases
+- Memory leak in long-running voice sessions
+- Authentication token refresh race condition
+
+---
+
+## [1.4.0] - 2024-01-08
+
+### Added
+
+- **Knowledge Base Improvements**: PDF, DOCX, Markdown support with automatic chunking
+- **Voice Features**: Echo cancellation, noise suppression, custom wake word (beta)
+
+### Changed
+
+- Upgraded LiveKit SDK to v1.4
+- Improved RAG retrieval accuracy
+
+### Fixed
+
+- File upload progress indicator
+- Mobile Safari audio issues
+- Rate limiting edge cases
+
+---
+
+## [1.3.0] - 2024-01-01
+
+### Added
+
+- **Multi-language Support**: Spanish, French, German, Portuguese voice recognition
+- **Analytics Dashboard**: Session duration, engagement tracking, cost breakdown
+
+### Changed
+
+- Simplified agent creation wizard
+- Improved voice quality for TTS
+
+### Fixed
+
+- Dashboard loading performance
+- Agent cloning functionality
+- Webhook retry logic
+
+---
+
+## [1.2.0] - 2023-12-15
+
+### Added
+
+- **Function Calling**: Custom tools, calendar/weather/calculator built-ins, OpenAPI import
+- **Conversation Memory**: Configurable context window, summary generation, persistence
+
+### Changed
+
+- Improved latency for first response
+- Enhanced error recovery during calls
+
+---
+
+## [1.1.0] - 2023-12-01
+
+### Added
+
+- **Embed Widget**: Script tag integration, customizable appearance, mobile-responsive
+- **Webhooks**: Session start/end events, message events, error events with retry
+
+---
+
+## [1.0.0] - 2023-11-15
+
+### Initial Release
+
+- Voice agent creation and management
+- Real-time voice conversations via WebRTC (LiveKit)
+- Multiple LLM provider support (OpenAI, Gemini)
+- Speech-to-text (Deepgram) and text-to-speech (ElevenLabs)
+- Knowledge base with RAG retrieval
+- User authentication via Clerk
+- Usage tracking and billing
+- RESTful API, React SDK, WebSocket support
+- Agent management dashboard
+
+---
+
+## Versioning
+
+Vora follows [Semantic Versioning](https://semver.org/):
+
+- **MAJOR** version for incompatible API changes
+- **MINOR** version for backward-compatible functionality
+- **PATCH** version for backward-compatible bug fixes

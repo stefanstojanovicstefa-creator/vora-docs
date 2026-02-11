@@ -1,0 +1,362 @@
+---
+title: Deploying Agents
+description: Go live with your voice agent
+---
+
+# Deploying Agents
+
+Once you've tested your agent, it's time to deploy it to handle real conversations.
+
+---
+
+## Deployment Checklist
+
+Before deploying, ensure you've completed these steps:
+
+<Steps>
+  <Step title="Test thoroughly">
+    Run through your [test scripts](/platform/agents/testing) and verify all scenarios work correctly.
+  </Step>
+  <Step title="Configure production settings">
+    Review [agent configuration](/platform/agents/configuration) for production-appropriate values.
+  </Step>
+  <Step title="Set up monitoring">
+    Configure [webhooks](/api/webhooks) and [analytics](/platform/analytics) to track performance.
+  </Step>
+  <Step title="Connect phone numbers">
+    If using phone calls, [connect your phone numbers](/platform/phone-numbers).
+  </Step>
+  <Step title="Review billing">
+    Ensure your [billing settings](/platform/billing) are configured for expected usage.
+  </Step>
+</Steps>
+
+---
+
+## Deployment Methods
+
+### Web Widget
+
+Embed the agent on your website:
+
+<Steps>
+  <Step title="Get the embed code">
+    Go to **Agent** → **Deploy** → **Web Widget**.
+  </Step>
+  <Step title="Copy the snippet">
+    Copy the provided JavaScript snippet:
+
+    ```html
+    <script src="https://widget.vora.ai/v1/widget.js"></script>
+    <script>
+      VoraWidget.init({
+        agentId: 'agent_abc123',
+        position: 'bottom-right',
+        theme: 'light',
+      });
+    </script>
+    ```
+  </Step>
+  <Step title="Add to your site">
+    Paste the snippet before the closing `</body>` tag on your website.
+  </Step>
+</Steps>
+
+#### Widget Configuration
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `agentId` | string | Your agent's ID (required) |
+| `position` | string | Widget position: `bottom-right`, `bottom-left` |
+| `theme` | string | Color theme: `light`, `dark`, `auto` |
+| `primaryColor` | string | Hex color for branding |
+| `greeting` | string | Custom greeting message |
+| `autoOpen` | boolean | Auto-open widget on load |
+
+### Phone Numbers
+
+Connect phone numbers for inbound calls:
+
+<Steps>
+  <Step title="Get a phone number">
+    Go to **Phone Numbers** → **Get Number** or bring your own via Twilio/Vonage.
+  </Step>
+  <Step title="Assign to agent">
+    Go to **Agent** → **Deploy** → **Phone** and select the number.
+  </Step>
+  <Step title="Configure call settings">
+    Set voicemail, business hours, and overflow behavior.
+  </Step>
+</Steps>
+
+See [Phone Numbers](/platform/phone-numbers) for detailed setup.
+
+### API Integration
+
+Start sessions programmatically:
+
+```javascript
+const session = await vora.sessions.create({
+  agentId: 'agent_abc123',
+  participant: {
+    name: 'John Doe',
+    phone: '+1234567890',
+  },
+  variables: {
+    // Custom context
+    account_id: 'acc_123',
+    tier: 'premium',
+  },
+});
+
+// Connect via WebRTC
+const room = await vora.rooms.connect(session.roomUrl, session.token);
+```
+
+See [Sessions API](/api/sessions) for full documentation.
+
+### Mobile SDK
+
+Integrate voice into mobile apps:
+
+<Tabs>
+  <Tab title="React Native">
+    ```bash
+    npm install @vora/react-native-sdk
+    ```
+
+    ```javascript
+    import { VoraSession } from '@vora/react-native-sdk';
+
+    function VoiceScreen() {
+      return (
+        <VoraSession
+          agentId="agent_abc123"
+          participant={{ name: 'User' }}
+          onSessionEnd={(result) => console.log(result)}
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="iOS (Swift)">
+    ```swift
+    import VoraSDK
+
+    let session = try await Vora.createSession(
+        agentId: "agent_abc123",
+        participant: Participant(name: "User")
+    )
+
+    await session.connect()
+    ```
+  </Tab>
+  <Tab title="Android (Kotlin)">
+    ```kotlin
+    val session = Vora.createSession(
+        agentId = "agent_abc123",
+        participant = Participant(name = "User")
+    )
+
+    session.connect()
+    ```
+  </Tab>
+</Tabs>
+
+See [SDK Documentation](/sdk) for detailed guides.
+
+---
+
+## Production Configuration
+
+### Recommended Settings
+
+| Setting | Development | Production |
+|---------|-------------|------------|
+| **Recording** | Optional | Enabled (compliance) |
+| **Logging** | Verbose | Standard |
+| **Rate limiting** | Disabled | Enabled |
+| **Webhooks** | Optional | Required |
+| **Fallback** | None | Human transfer |
+
+### High Availability
+
+For production workloads:
+
+<AccordionGroup>
+  <Accordion title="Automatic failover">
+    Vora automatically fails over to backup providers if the primary is unavailable. Configure fallback providers in **Settings** → **Reliability**.
+  </Accordion>
+
+  <Accordion title="Geographic distribution">
+    Deploy agents in multiple regions for lower latency. Available on Enterprise plans.
+  </Accordion>
+
+  <Accordion title="Load balancing">
+    For high-volume deployments, Vora automatically distributes calls across available capacity.
+  </Accordion>
+</AccordionGroup>
+
+### Security Checklist
+
+Before going live:
+
+- [ ] API keys are stored securely (not in client-side code)
+- [ ] Webhook endpoints use HTTPS
+- [ ] Authentication is configured for protected actions
+- [ ] Rate limiting is enabled
+- [ ] Recording consent is handled appropriately
+
+---
+
+## Monitoring Your Deployment
+
+### Real-time Dashboard
+
+Monitor live calls in the dashboard:
+
+1. Go to **Analytics** → **Live**
+2. View active sessions, current callers, and agent status
+3. Listen in to calls (if enabled)
+
+### Alerts
+
+Set up alerts for important events:
+
+| Alert Type | Trigger | Action |
+|------------|---------|--------|
+| **Error rate** | >5% failures | Email + Slack |
+| **Latency** | >2s response time | Slack |
+| **Volume** | Unusual spike/drop | Email |
+| **Escalation** | Transfer to human | Webhook |
+
+Configure alerts in **Settings** → **Alerts**.
+
+### Webhooks for Monitoring
+
+Subscribe to events for external monitoring:
+
+```javascript
+// Example webhook payload
+{
+  "event": "session.completed",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "sessionId": "sess_abc123",
+    "duration": 245,
+    "outcome": "resolved",
+    "sentiment": "positive"
+  }
+}
+```
+
+See [Webhooks](/api/webhooks) for all available events.
+
+---
+
+## Rollout Strategies
+
+### Gradual Rollout
+
+Start with a subset of traffic:
+
+<Steps>
+  <Step title="Start with internal testing">
+    Route only internal team calls to the agent.
+  </Step>
+  <Step title="Expand to pilot users">
+    Select a small group of real customers for initial testing.
+  </Step>
+  <Step title="Percentage rollout">
+    Gradually increase the percentage of calls handled by the agent.
+  </Step>
+  <Step title="Full deployment">
+    Once confident, route all eligible calls to the agent.
+  </Step>
+</Steps>
+
+### A/B Testing in Production
+
+Compare agent configurations:
+
+1. Create two agent versions
+2. Configure traffic split (e.g., 50/50)
+3. Monitor metrics for each variant
+4. Choose the winner based on data
+
+See [Testing](/platform/agents/testing#ab-testing) for setup details.
+
+---
+
+## Going Live Checklist
+
+<AccordionGroup>
+  <Accordion title="Agent Configuration">
+    - [ ] System prompt is finalized
+    - [ ] Voice matches brand
+    - [ ] Functions are connected and tested
+    - [ ] Knowledge base is up to date
+    - [ ] Fallback messages are appropriate
+  </Accordion>
+
+  <Accordion title="Integrations">
+    - [ ] CRM integration tested
+    - [ ] Calendar booking works
+    - [ ] Webhooks are receiving events
+    - [ ] Human escalation path is configured
+  </Accordion>
+
+  <Accordion title="Compliance">
+    - [ ] Recording disclosure is configured
+    - [ ] Data retention policies are set
+    - [ ] Privacy policy is updated
+    - [ ] Regional compliance is verified
+  </Accordion>
+
+  <Accordion title="Operations">
+    - [ ] Team is trained on monitoring
+    - [ ] Escalation procedures are documented
+    - [ ] Alerts are configured
+    - [ ] Support contact is available
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Troubleshooting Deployments
+
+### Common Issues
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Widget not loading | Script blocked | Check CSP headers |
+| Calls not connecting | Firewall blocking WebRTC | Whitelist ports |
+| High latency | Geographic distance | Use regional deployment |
+| Dropped calls | Network issues | Enable reconnection |
+
+### Getting Help
+
+If you encounter issues:
+
+1. Check the [status page](https://status.vora.ai)
+2. Review [troubleshooting guides](/support/troubleshooting)
+3. Contact [support](/support)
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Monitor Performance" icon="chart-line" href="/platform/analytics">
+    Track your agent's performance
+  </Card>
+  <Card title="Version Control" icon="code-branch" href="/platform/agents/versions">
+    Manage agent versions
+  </Card>
+  <Card title="Phone Numbers" icon="phone" href="/platform/phone-numbers">
+    Set up phone integration
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/api/webhooks">
+    Configure event notifications
+  </Card>
+</CardGroup>

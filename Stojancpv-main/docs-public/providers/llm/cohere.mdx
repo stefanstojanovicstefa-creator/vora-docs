@@ -1,0 +1,363 @@
+---
+title: Cohere
+description: Command R+ integration for enterprise RAG workflows
+---
+
+# Cohere
+
+Cohere's Command R+ is optimized for retrieval-augmented generation (RAG) and enterprise applications.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `cohere` |
+| Default Model | `command-r-plus` |
+| Context Window | 128K tokens |
+| Streaming | ✅ Supported |
+| Function Calling | ✅ Supported |
+| RAG Optimization | ✅ Native |
+
+---
+
+## Available Models
+
+| Model | Context | Best For | Cost (per 1M tokens) |
+|-------|---------|----------|----------------------|
+| `command-r-plus` | 128K | Enterprise RAG | $3 in / $15 out |
+| `command-r` | 128K | General RAG | $0.50 in / $1.50 out |
+| `command-light` | 4K | Fast queries | $0.30 in / $0.60 out |
+
+<Note>
+**Recommended**: `command-r-plus` for RAG-heavy applications with knowledge bases.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Knowledge Agent',
+  systemPrompt: 'You are an expert assistant with access to company knowledge.',
+  model: {
+    provider: 'cohere',
+    model: 'command-r-plus'
+  }
+});
+```
+
+### With Knowledge Base
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Support Agent',
+  systemPrompt: 'Answer questions using the knowledge base.',
+  model: {
+    provider: 'cohere',
+    model: 'command-r-plus',
+    temperature: 0.3  // Lower for factual responses
+  },
+  knowledgeBase: {
+    id: 'kb_support_docs',
+    searchLimit: 5,
+    minRelevance: 0.7
+  }
+});
+```
+
+---
+
+## RAG Excellence
+
+### Why Cohere for RAG?
+
+Command R+ is purpose-built for RAG:
+
+1. **Citation Generation**: Automatic source attribution
+2. **Grounded Responses**: Stays faithful to retrieved content
+3. **Long Context**: 128K tokens for extensive documents
+4. **Efficient Retrieval**: Optimized for search integration
+
+### RAG Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Documentation Agent',
+  systemPrompt: `You answer questions about our products.
+  Always cite your sources.
+  If information isn't in the knowledge base, say so.`,
+  model: {
+    provider: 'cohere',
+    model: 'command-r-plus',
+    preamble: 'You have access to company documentation.',
+    citationQuality: 'accurate',
+    connectors: [
+      {
+        id: 'web-search',
+        options: { site: 'docs.example.com' }
+      }
+    ]
+  },
+  knowledgeBase: {
+    id: 'kb_product_docs'
+  }
+});
+```
+
+### Citation Example
+
+User: "What's the return policy?"
+
+Agent: "Our return policy allows returns within 30 days of purchase [1]. Items must be in original condition [2]. Digital products are non-refundable [1]."
+
+Citations:
+- [1] return-policy.md
+- [2] terms-of-service.md
+
+---
+
+## Enterprise Features
+
+### 1. Data Security
+
+Cohere offers:
+- SOC 2 Type II certified
+- GDPR compliant options
+- Data processing agreements (DPA)
+
+### 2. Deployment Options
+
+| Option | Description |
+|--------|-------------|
+| Cohere Cloud | Managed API |
+| AWS Marketplace | Deploy in your AWS |
+| Azure/GCP | Enterprise deployments |
+| Private Cloud | On-premise option |
+
+### 3. Fine-Tuning
+
+Custom model training for your domain:
+
+```typescript
+model: {
+  provider: 'cohere',
+  model: 'command-r-plus-ft-your-model'  // Fine-tuned variant
+}
+```
+
+---
+
+## Use Cases
+
+### Customer Support with KB
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Support Bot',
+  systemPrompt: `You are a tier-1 support agent.
+  Answer from the knowledge base.
+  Escalate complex issues to human agents.`,
+  model: {
+    provider: 'cohere',
+    model: 'command-r-plus'
+  },
+  knowledgeBase: {
+    id: 'kb_support'
+  },
+  functions: [
+    {
+      name: 'escalate_ticket',
+      description: 'Escalate to human support',
+      parameters: {
+        type: 'object',
+        properties: {
+          reason: { type: 'string' },
+          priority: { type: 'string', enum: ['low', 'medium', 'high'] }
+        }
+      },
+      handler: { type: 'webhook', url: 'https://api.example.com/escalate' }
+    }
+  ]
+});
+```
+
+### Internal Q&A
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'HR Assistant',
+  systemPrompt: `You answer employee questions about policies.
+  Reference specific policy documents.
+  Don't make up information.`,
+  model: {
+    provider: 'cohere',
+    model: 'command-r-plus',
+    temperature: 0.1  // Factual mode
+  },
+  knowledgeBase: {
+    id: 'kb_hr_policies'
+  }
+});
+```
+
+### Research Assistant
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Research Bot',
+  systemPrompt: `You help researchers find information.
+  Synthesize from multiple sources.
+  Always cite sources.`,
+  model: {
+    provider: 'cohere',
+    model: 'command-r-plus'
+  },
+  knowledgeBase: {
+    id: 'kb_research_papers'
+  }
+});
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for RAG">
+    Configure for best retrieval results:
+
+    ```typescript
+    model: {
+      provider: 'cohere',
+      model: 'command-r-plus',
+      temperature: 0.3,     // Lower for accuracy
+      maxTokens: 500        // Room for citations
+    },
+    knowledgeBase: {
+      id: 'kb_docs',
+      searchLimit: 10,      // More context
+      minRelevance: 0.75    // Quality threshold
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Voice Optimization">
+    For voice applications with knowledge:
+
+    ```typescript
+    model: {
+      provider: 'cohere',
+      model: 'command-r',  // Faster variant
+      maxTokens: 150
+    }
+    ```
+
+    Tips:
+    - Keep responses concise
+    - Summarize citations verbally
+    - Use follow-up for details
+  </Accordion>
+
+  <Accordion title="Grounding Responses">
+    Ensure responses stay grounded:
+
+    ```typescript
+    systemPrompt: `You answer questions from the knowledge base ONLY.
+
+    Rules:
+    1. Only use information from provided documents
+    2. If not found, say "I don't have information about that"
+    3. Never hallucinate or invent facts
+    4. Cite your sources`
+    ```
+  </Accordion>
+
+  <Accordion title="Model Selection">
+    | Use Case | Model | Why |
+    |----------|-------|-----|
+    | Enterprise RAG | command-r-plus | Best quality |
+    | General RAG | command-r | Cost-effective |
+    | Simple Q&A | command-light | Fastest |
+    | Voice + KB | command-r | Balanced |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+COHERE_API_KEY=...
+```
+
+### Get Your Key
+
+1. Go to [Cohere Dashboard](https://dashboard.cohere.com)
+2. Sign up or sign in
+3. Generate an API key
+4. Add to your Vora environment
+
+---
+
+## Latency Benchmarks
+
+Typical response latencies (streaming first token):
+
+| Model | P50 | P95 |
+|-------|-----|-----|
+| command-light | 250ms | 500ms |
+| command-r | 400ms | 800ms |
+| command-r-plus | 500ms | 1000ms |
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Poor RAG Results">
+    If retrieved content isn't relevant:
+
+    - Increase `searchLimit` for more candidates
+    - Lower `minRelevance` threshold
+    - Improve knowledge base content quality
+    - Add more specific search queries
+  </Accordion>
+
+  <Accordion title="Hallucinations">
+    If model invents information:
+
+    - Lower temperature (0.1-0.3)
+    - Strengthen grounding in system prompt
+    - Use citations to verify sources
+    - Reduce knowledge base noise
+  </Accordion>
+
+  <Accordion title="Rate Limits">
+    Cohere limits vary by plan:
+
+    - Free: 100 calls/minute
+    - Production: Higher limits
+
+    Request increases for production workloads.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Knowledge Bases" icon="book" href="/platform/knowledge-base">
+    Set up RAG with Vora
+  </Card>
+  <Card title="Compare Providers" icon="scale-balanced" href="/providers/llm">
+    See all LLM options
+  </Card>
+</CardGroup>

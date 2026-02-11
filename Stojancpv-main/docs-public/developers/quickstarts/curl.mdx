@@ -1,0 +1,479 @@
+---
+title: cURL/REST API Quickstart
+description: Use the Vora API directly with cURL or any HTTP client
+---
+
+# cURL/REST API Quickstart
+
+Use the Vora REST API directly from cURL, Postman, or any HTTP client. This quickstart shows you how to create agents and sessions using raw API calls.
+
+---
+
+## Prerequisites
+
+- A Vora account with API key
+- cURL or any HTTP client
+- Terminal or command prompt
+
+---
+
+## Authentication
+
+All API requests require an API key in the Authorization header:
+
+```bash
+Authorization: Bearer sk_live_your_api_key_here
+```
+
+<Warning>
+  Keep your API key secret. Never expose it in client-side code or version control.
+</Warning>
+
+---
+
+## API Base URL
+
+```
+https://api.vora.ai/v1
+```
+
+---
+
+## Step 1: Create an Agent
+
+Create a voice agent with a system prompt:
+
+```bash
+curl -X POST https://api.vora.ai/v1/agents \
+  -H "Authorization: Bearer sk_live_your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Customer Support Agent",
+    "systemPrompt": "You are a friendly customer support agent for Acme Corp.\n\nYour responsibilities:\n- Answer questions about our products and services\n- Help customers with their orders\n- Provide a positive experience\n\nKeep responses concise and conversational.",
+    "voice": {
+      "provider": "elevenlabs",
+      "voiceId": "EXAVITQu4vr4xnSDxMaL"
+    },
+    "model": {
+      "provider": "openai",
+      "model": "gpt-4-turbo",
+      "temperature": 0.7
+    }
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "id": "agent_abc123",
+  "name": "Customer Support Agent",
+  "systemPrompt": "You are a friendly customer support agent...",
+  "voice": {
+    "provider": "elevenlabs",
+    "voiceId": "EXAVITQu4vr4xnSDxMaL"
+  },
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4-turbo",
+    "temperature": 0.7
+  },
+  "status": "active",
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+Save the `id` value - you'll need it to create sessions.
+
+---
+
+## Step 2: Create a Voice Session
+
+Create a session to connect to your agent:
+
+```bash
+curl -X POST https://api.vora.ai/v1/sessions \
+  -H "Authorization: Bearer sk_live_your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentId": "agent_abc123",
+    "userId": "user_123",
+    "variables": {
+      "customerName": "John",
+      "accountType": "premium"
+    }
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "id": "sess_xyz789",
+  "agentId": "agent_abc123",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "roomUrl": "wss://livekit.vora.ai",
+  "status": "created",
+  "expiresAt": "2024-01-15T11:00:00Z"
+}
+```
+
+Use the `token` and `roomUrl` to connect via a LiveKit client.
+
+---
+
+## Step 3: List Your Agents
+
+Retrieve all agents in your account:
+
+```bash
+curl -X GET "https://api.vora.ai/v1/agents?limit=10" \
+  -H "Authorization: Bearer sk_live_your_api_key_here"
+```
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": "agent_abc123",
+      "name": "Customer Support Agent",
+      "status": "active",
+      "createdAt": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "agent_def456",
+      "name": "Sales Assistant",
+      "status": "active",
+      "createdAt": "2024-01-14T15:00:00Z"
+    }
+  ],
+  "hasMore": false,
+  "total": 2
+}
+```
+
+---
+
+## Step 4: Get Session Details
+
+Check the status of a session:
+
+```bash
+curl -X GET https://api.vora.ai/v1/sessions/sess_xyz789 \
+  -H "Authorization: Bearer sk_live_your_api_key_here"
+```
+
+**Response:**
+
+```json
+{
+  "id": "sess_xyz789",
+  "agentId": "agent_abc123",
+  "userId": "user_123",
+  "status": "completed",
+  "duration": 180,
+  "createdAt": "2024-01-15T10:35:00Z",
+  "endedAt": "2024-01-15T10:38:00Z"
+}
+```
+
+---
+
+## Step 5: Get Transcript
+
+Retrieve the conversation transcript:
+
+```bash
+curl -X GET https://api.vora.ai/v1/sessions/sess_xyz789/transcript \
+  -H "Authorization: Bearer sk_live_your_api_key_here"
+```
+
+**Response:**
+
+```json
+{
+  "sessionId": "sess_xyz789",
+  "messages": [
+    {
+      "speaker": "agent",
+      "text": "Hello! How can I help you today?",
+      "timestamp": "2024-01-15T10:35:05Z"
+    },
+    {
+      "speaker": "user",
+      "text": "I need to check my order status.",
+      "timestamp": "2024-01-15T10:35:12Z"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'd be happy to help you with that. Could you please provide your order number?",
+      "timestamp": "2024-01-15T10:35:15Z"
+    }
+  ],
+  "duration": 180,
+  "wordCount": 45
+}
+```
+
+---
+
+## Common Operations
+
+### Update an Agent
+
+```bash
+curl -X PATCH https://api.vora.ai/v1/agents/agent_abc123 \
+  -H "Authorization: Bearer sk_live_your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "systemPrompt": "You are an updated support agent...",
+    "model": {
+      "temperature": 0.5
+    }
+  }'
+```
+
+### Delete an Agent
+
+```bash
+curl -X DELETE https://api.vora.ai/v1/agents/agent_abc123 \
+  -H "Authorization: Bearer sk_live_your_api_key_here"
+```
+
+### End a Session
+
+```bash
+curl -X POST https://api.vora.ai/v1/sessions/sess_xyz789/end \
+  -H "Authorization: Bearer sk_live_your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "user_request"
+  }'
+```
+
+---
+
+## Adding Functions
+
+Create an agent with callable functions:
+
+```bash
+curl -X POST https://api.vora.ai/v1/agents \
+  -H "Authorization: Bearer sk_live_your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Order Support Agent",
+    "systemPrompt": "You help customers check and manage their orders.",
+    "voice": {
+      "provider": "elevenlabs",
+      "voiceId": "EXAVITQu4vr4xnSDxMaL"
+    },
+    "functions": [
+      {
+        "name": "get_order_status",
+        "description": "Look up the status of a customer order by order ID",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "orderId": {
+              "type": "string",
+              "description": "The order ID to look up (e.g., ORD-12345)"
+            }
+          },
+          "required": ["orderId"]
+        },
+        "handler": {
+          "type": "webhook",
+          "url": "https://api.yoursite.com/orders/status",
+          "method": "POST",
+          "headers": {
+            "Authorization": "Bearer your_api_key"
+          }
+        }
+      }
+    ]
+  }'
+```
+
+---
+
+## Error Handling
+
+The API uses standard HTTP status codes:
+
+| Status | Meaning |
+|--------|---------|
+| `200` | Success |
+| `201` | Created |
+| `400` | Bad Request - Invalid parameters |
+| `401` | Unauthorized - Invalid API key |
+| `404` | Not Found - Resource doesn't exist |
+| `429` | Rate Limited - Too many requests |
+| `500` | Server Error |
+
+**Error Response Format:**
+
+```json
+{
+  "error": {
+    "code": "INVALID_AGENT_ID",
+    "message": "Agent agent_invalid not found",
+    "details": {
+      "agentId": "agent_invalid"
+    }
+  }
+}
+```
+
+### Rate Limit Headers
+
+```
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1705320000
+```
+
+When rate limited:
+
+```bash
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+```
+
+---
+
+## Pagination
+
+List endpoints support pagination:
+
+```bash
+# First page
+curl -X GET "https://api.vora.ai/v1/agents?limit=10" \
+  -H "Authorization: Bearer sk_live_your_api_key_here"
+
+# Next page with cursor
+curl -X GET "https://api.vora.ai/v1/agents?limit=10&after=agent_xyz" \
+  -H "Authorization: Bearer sk_live_your_api_key_here"
+```
+
+**Response:**
+
+```json
+{
+  "data": [...],
+  "hasMore": true,
+  "nextCursor": "agent_abc123"
+}
+```
+
+---
+
+## Using with Other Tools
+
+### HTTPie
+
+```bash
+http POST https://api.vora.ai/v1/agents \
+  Authorization:"Bearer sk_live_your_api_key_here" \
+  name="My Agent" \
+  systemPrompt="You are helpful."
+```
+
+### Postman
+
+1. Set Authorization to Bearer Token
+2. Enter your API key
+3. Set Content-Type to `application/json`
+4. Import our [Postman Collection](/api/postman)
+
+### Insomnia
+
+Import the OpenAPI spec from `/api/openapi.json` for auto-generated requests.
+
+---
+
+## Environment Variables
+
+Store your API key securely:
+
+```bash
+# ~/.bashrc or ~/.zshrc
+export VORA_API_KEY="sk_live_your_api_key_here"
+```
+
+Then use in requests:
+
+```bash
+curl -X GET https://api.vora.ai/v1/agents \
+  -H "Authorization: Bearer $VORA_API_KEY"
+```
+
+---
+
+## Shell Script Example
+
+Create a reusable script for common operations:
+
+```bash
+#!/bin/bash
+# vora.sh - Vora API helper script
+
+API_KEY="${VORA_API_KEY:-}"
+BASE_URL="https://api.vora.ai/v1"
+
+if [ -z "$API_KEY" ]; then
+  echo "Error: VORA_API_KEY not set"
+  exit 1
+fi
+
+case "$1" in
+  list-agents)
+    curl -s "$BASE_URL/agents" \
+      -H "Authorization: Bearer $API_KEY" | jq
+    ;;
+  create-session)
+    curl -s -X POST "$BASE_URL/sessions" \
+      -H "Authorization: Bearer $API_KEY" \
+      -H "Content-Type: application/json" \
+      -d "{\"agentId\": \"$2\"}" | jq
+    ;;
+  get-transcript)
+    curl -s "$BASE_URL/sessions/$2/transcript" \
+      -H "Authorization: Bearer $API_KEY" | jq
+    ;;
+  *)
+    echo "Usage: $0 {list-agents|create-session <agent_id>|get-transcript <session_id>}"
+    exit 1
+    ;;
+esac
+```
+
+Usage:
+
+```bash
+chmod +x vora.sh
+./vora.sh list-agents
+./vora.sh create-session agent_abc123
+./vora.sh get-transcript sess_xyz789
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="code" href="/api">
+    Complete API documentation
+  </Card>
+  <Card title="JavaScript SDK" icon="js" href="/developers/quickstarts/javascript">
+    Use the official SDK
+  </Card>
+  <Card title="Python SDK" icon="python" href="/developers/quickstarts/python">
+    Python integration
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/developers/webhooks">
+    Receive events
+  </Card>
+</CardGroup>

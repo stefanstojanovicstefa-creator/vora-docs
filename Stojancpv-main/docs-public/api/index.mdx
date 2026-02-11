@@ -1,0 +1,165 @@
+---
+title: API Reference
+description: Complete API documentation for the Vora Voice AI platform
+---
+
+# API Reference
+
+The Vora API gives you programmatic access to create, configure, and manage voice AI agents. Build powerful voice experiences with our RESTful API.
+
+<Info>
+  **Base URL:** `https://api.voicevora.com/v1`
+
+  All endpoints require authentication. See the [Authentication Guide](/api/authentication) to get started.
+</Info>
+
+## Getting Started
+
+<Steps>
+  <Step title="Get Your API Key">
+    Sign up at [app.voicevora.com](https://app.voicevora.com) and generate an API key from Settings → API Keys.
+  </Step>
+  <Step title="Make Your First Request">
+    Test your connection by listing your agents:
+    ```bash
+    curl https://api.voicevora.com/v1/agents \
+      -H "Authorization: Bearer YOUR_API_KEY"
+    ```
+  </Step>
+  <Step title="Create an Agent">
+    Create your first voice agent with a simple POST request. See the [Agents API](/api/agents) for details.
+  </Step>
+</Steps>
+
+## API Fundamentals
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/api/authentication">
+    API keys and Clerk JWT authentication
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/api/errors">
+    Error codes and troubleshooting
+  </Card>
+  <Card title="Rate Limits" icon="gauge-high" href="/api/rate-limits">
+    Request limits and best practices
+  </Card>
+  <Card title="Pagination" icon="file-lines" href="/api/pagination">
+    Navigate through large datasets
+  </Card>
+</CardGroup>
+
+## API Domains
+
+### Core Resources
+
+<CardGroup cols={2}>
+  <Card title="Agents" icon="robot" href="/api/agents">
+    Create and manage voice AI agents
+  </Card>
+  <Card title="Sessions" icon="phone" href="/api/sessions">
+    Voice call sessions and transcripts
+  </Card>
+</CardGroup>
+
+### Advanced Features
+
+<CardGroup cols={2}>
+  <Card title="Knowledge Base" icon="database" href="/api/knowledge-base">
+    RAG-powered document search
+  </Card>
+  <Card title="Custom Functions" icon="code" href="/api/functions">
+    Extend agent capabilities
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/api/webhooks">
+    Real-time event notifications
+  </Card>
+</CardGroup>
+
+## Quick Reference
+
+### HTTP Methods
+
+| Method | Description |
+|--------|-------------|
+| `GET` | Retrieve resources |
+| `POST` | Create new resources |
+| `PUT` | Update existing resources |
+| `DELETE` | Remove resources |
+
+### Common Headers
+
+| Header | Value | Description |
+|--------|-------|-------------|
+| `Authorization` | `Bearer YOUR_API_KEY` | Required for authentication |
+| `Content-Type` | `application/json` | Required for POST/PUT requests |
+| `Accept` | `application/json` | Response format |
+
+### Response Format
+
+All responses follow a consistent JSON structure:
+
+```json
+// Success response
+{
+  "data": { ... },
+  "meta": {
+    "request_id": "req_abc123"
+  }
+}
+
+// List response
+{
+  "data": [ ... ],
+  "pagination": {
+    "has_more": true,
+    "next_cursor": "xyz789",
+    "total": 47
+  }
+}
+
+// Error response
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid parameters",
+    "details": { ... }
+  }
+}
+```
+
+## Rate Limits by Plan
+
+| Plan | Requests/min | Concurrent Calls |
+|------|--------------|------------------|
+| Free | 60 | 2 |
+| Pro | 300 | 10 |
+| Enterprise | Custom | Custom |
+
+[View detailed rate limits →](/api/rate-limits)
+
+## SDKs & Libraries
+
+We provide official SDKs to make integration easier:
+
+<CardGroup cols={3}>
+  <Card title="JavaScript/TypeScript" icon="js" href="/sdks/javascript">
+    npm package for Node.js and browsers
+  </Card>
+  <Card title="Python" icon="python" href="/sdks/python">
+    PyPI package for Python applications
+  </Card>
+  <Card title="React" icon="react" href="/sdks/react">
+    Hooks and components for React apps
+  </Card>
+</CardGroup>
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Discord Community" icon="discord" href="https://discord.gg/voicevora">
+    Get help from the community
+  </Card>
+  <Card title="Support" icon="headset" href="mailto:support@voicevora.com">
+    Contact our support team
+  </Card>
+</CardGroup>

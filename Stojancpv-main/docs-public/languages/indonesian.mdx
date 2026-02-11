@@ -1,0 +1,67 @@
+---
+title: Indonesian
+description: Indonesian voice AI support - providers, configuration, and best practices
+---
+
+# Indonesian
+
+<Tabs>
+  <Tab title="Simple">
+    Vora fully supports **Indonesian** for voice AI agents. ~200M speakers in Indonesia.
+
+    ### Setting Up an Indonesian Agent
+
+    <Steps>
+      <Step title="Create your agent">
+        Use any creation method (Interview, URL Import, etc.)
+      </Step>
+      <Step title="Set language to Indonesian">
+        In voice settings, select **Indonesian** from the language dropdown.
+      </Step>
+      <Step title="Choose a voice">
+        Select from available Indonesian voices in the voice library.
+      </Step>
+      <Step title="Test and deploy">
+        Test with the simulator, then deploy as usual.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For best results with Indonesian, we recommend Murf AI voices for the most natural speech.
+    </Tip>
+  </Tab>
+  <Tab title="Advanced">
+    ## Provider Matrix
+
+    | Detail | Value |
+    |--------|-------|
+    | **Code** | id-ID |
+    | **Region** | Indonesia |
+    | **Speakers** | ~200M |
+    | **Best ASR** | Valsea / Deepgram |
+    | **Best TTS** | Murf AI |
+    | **Best LLM** | Qwen |
+
+    ### Available Providers
+
+    | Type | Providers |
+    |------|-----------|
+    | **ASR** | Valsea (SEA-optimized), Google, Azure, AWS, Deepgram, Soniox, AssemblyAI, ElevenLabs, Speechmatics, iFLYTEK |
+    | **TTS** | Google, Azure, AWS Polly, ElevenLabs, Murf AI, Speechify |
+    | **LLM** | Qwen (Best), GPT-4o, Gemini, Claude, Cohere Aya |
+
+    ### Recommended Stack
+
+    For the best Indonesian voice experience:
+    - **STT**: Valsea / Deepgram (best accuracy for Indonesian)
+    - **LLM**: Qwen (best Indonesian understanding)
+    - **TTS**: Murf AI (most natural Indonesian speech)
+
+    ### Configuration
+
+    In the Command Center:
+    1. **Ears Tab** → Set STT provider to Valsea or Deepgram, language to `id-ID`
+    2. **Brain Tab** → Set LLM to Qwen
+    3. **Voice Tab** → Set TTS to Murf AI, select an Indonesian voice
+  </Tab>
+</Tabs>

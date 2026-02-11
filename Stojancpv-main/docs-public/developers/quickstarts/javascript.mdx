@@ -1,0 +1,398 @@
+---
+title: JavaScript Quickstart
+description: Build your first voice agent with Node.js or browser JavaScript
+---
+
+# JavaScript Quickstart
+
+Build a voice agent in JavaScript using the official Vora SDK. This guide covers both Node.js backend integration and browser-based voice connections.
+
+---
+
+## Prerequisites
+
+- Node.js 18 or later
+- A Vora account with API key
+- npm or yarn package manager
+
+---
+
+## Installation
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @vora-ai/sdk @livekit/components-react livekit-client
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @vora-ai/sdk @livekit/components-react livekit-client
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @vora-ai/sdk @livekit/components-react livekit-client
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Step 1: Initialize the SDK
+
+Create a new file and initialize the Vora client:
+
+```javascript
+// vora-client.js
+import { VoraClient } from '@vora-ai/sdk';
+
+const vora = new VoraClient({
+  apiKey: process.env.VORA_API_KEY
+});
+
+export default vora;
+```
+
+<Warning>
+  Never expose your API key in client-side code. Use environment variables and a backend proxy for production.
+</Warning>
+
+---
+
+## Step 2: Create an Agent
+
+Define a voice agent with a system prompt:
+
+```javascript
+// create-agent.js
+import vora from './vora-client.js';
+
+async function createAgent() {
+  const agent = await vora.agents.create({
+    name: 'Customer Support Agent',
+    systemPrompt: `You are a friendly customer support agent for Acme Corp.
+
+Your responsibilities:
+- Answer questions about our products and services
+- Help customers with their orders
+- Provide a positive experience
+
+Keep responses concise and conversational. Ask clarifying questions when needed.`,
+    voice: {
+      provider: 'elevenlabs',
+      voiceId: 'EXAVITQu4vr4xnSDxMaL'  // Sarah voice
+    },
+    model: {
+      provider: 'openai',
+      model: 'gpt-4-turbo',
+      temperature: 0.7
+    }
+  });
+
+  console.log('Agent created:', agent.id);
+  return agent;
+}
+
+createAgent();
+```
+
+---
+
+## Step 3: Create a Voice Session
+
+Generate a session token for voice connection:
+
+```javascript
+// create-session.js
+import vora from './vora-client.js';
+
+async function createSession(agentId) {
+  const session = await vora.sessions.create({
+    agentId: agentId,
+    userId: 'user_123',           // Your user identifier
+    variables: {                  // Context for the agent
+      customerName: 'John',
+      accountType: 'premium'
+    }
+  });
+
+  console.log('Session created:', session.id);
+  console.log('Room URL:', session.roomUrl);
+  console.log('Token:', session.token);
+
+  return session;
+}
+
+export { createSession };
+```
+
+---
+
+## Step 4: Connect to Voice (Browser)
+
+Create a React component to handle voice connection:
+
+```jsx
+// VoiceChat.jsx
+import React, { useState, useCallback } from 'react';
+import {
+  LiveKitRoom,
+  RoomAudioRenderer,
+  useVoiceAssistant,
+  BarVisualizer
+} from '@livekit/components-react';
+import '@livekit/components-styles';
+
+function VoiceChat({ session }) {
+  const [isConnected, setIsConnected] = useState(false);
+
+  return (
+    <LiveKitRoom
+      token={session.token}
+      serverUrl={session.roomUrl}
+      connect={true}
+      audio={true}
+      onConnected={() => setIsConnected(true)}
+      onDisconnected={() => setIsConnected(false)}
+    >
+      <VoiceAssistantUI isConnected={isConnected} />
+      <RoomAudioRenderer />
+    </LiveKitRoom>
+  );
+}
+
+function VoiceAssistantUI({ isConnected }) {
+  const { state, audioTrack } = useVoiceAssistant();
+
+  return (
+    <div className="voice-chat">
+      <div className="status">
+        {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+      </div>
+
+      <div className="visualizer">
+        <BarVisualizer
+          state={state}
+          barCount={5}
+          trackRef={audioTrack}
+        />
+      </div>
+
+      <div className="state">
+        Agent: {state}
+      </div>
+    </div>
+  );
+}
+
+export default VoiceChat;
+```
+
+---
+
+## Step 5: Full Application
+
+Here's a complete example combining everything:
+
+```jsx
+// App.jsx
+import React, { useState, useEffect } from 'react';
+import VoiceChat from './VoiceChat';
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function startConversation() {
+    setLoading(true);
+    try {
+      // Call your backend to create a session
+      const response = await fetch('/api/voice-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId: 'agent_abc123'  // Your agent ID
+        })
+      });
+
+      const session = await response.json();
+      setSession(session);
+    } catch (error) {
+      console.error('Failed to start session:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="app">
+      <h1>Voice Assistant</h1>
+
+      {!session ? (
+        <button onClick={startConversation} disabled={loading}>
+          {loading ? 'Connecting...' : 'Start Conversation'}
+        </button>
+      ) : (
+        <VoiceChat session={session} />
+      )}
+    </div>
+  );
+}
+
+export default App;
+```
+
+---
+
+## Backend API Route
+
+Create an API route to securely create sessions:
+
+```javascript
+// api/voice-session.js (Express)
+import express from 'express';
+import vora from '../vora-client.js';
+
+const router = express.Router();
+
+router.post('/voice-session', async (req, res) => {
+  try {
+    const { agentId } = req.body;
+    const userId = req.user?.id || 'anonymous';  // From your auth
+
+    const session = await vora.sessions.create({
+      agentId,
+      userId,
+      variables: {
+        customerName: req.user?.name || 'Guest'
+      }
+    });
+
+    res.json({
+      token: session.token,
+      roomUrl: session.roomUrl,
+      sessionId: session.id
+    });
+  } catch (error) {
+    console.error('Session creation failed:', error);
+    res.status(500).json({ error: 'Failed to create session' });
+  }
+});
+
+export default router;
+```
+
+---
+
+## Handling Events
+
+Listen for session events to track conversation progress:
+
+```javascript
+// Using the LiveKit client directly
+import { Room, RoomEvent } from 'livekit-client';
+
+const room = new Room();
+
+// Agent speaking state
+room.on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
+  const agentSpeaking = speakers.some(s => s.identity.startsWith('agent_'));
+  console.log('Agent speaking:', agentSpeaking);
+});
+
+// Transcripts
+room.on(RoomEvent.DataReceived, (data, participant) => {
+  const message = JSON.parse(new TextDecoder().decode(data));
+
+  if (message.type === 'transcript') {
+    console.log(`${message.speaker}: ${message.text}`);
+  }
+});
+
+// Connect
+await room.connect(session.roomUrl, session.token);
+await room.localParticipant.setMicrophoneEnabled(true);
+```
+
+---
+
+## Error Handling
+
+Implement robust error handling:
+
+```javascript
+import { VoraError, RateLimitError, AuthenticationError } from '@vora-ai/sdk';
+
+async function createSessionWithRetry(agentId, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await vora.sessions.create({ agentId });
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        // Wait and retry
+        const delay = error.retryAfter * 1000 || 1000 * (i + 1);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+
+      if (error instanceof AuthenticationError) {
+        // Don't retry auth errors
+        throw new Error('Invalid API key');
+      }
+
+      // Log and rethrow
+      console.error('Session error:', error);
+      throw error;
+    }
+  }
+  throw new Error('Failed after retries');
+}
+```
+
+---
+
+## TypeScript Support
+
+The SDK includes full TypeScript definitions:
+
+```typescript
+import { VoraClient, Agent, Session, VoiceConfig } from '@vora-ai/sdk';
+
+const vora = new VoraClient({
+  apiKey: process.env.VORA_API_KEY!
+});
+
+interface CreateAgentOptions {
+  name: string;
+  systemPrompt: string;
+  voice?: VoiceConfig;
+}
+
+async function createAgent(options: CreateAgentOptions): Promise<Agent> {
+  return await vora.agents.create(options);
+}
+
+async function createSession(agentId: string): Promise<Session> {
+  return await vora.sessions.create({ agentId });
+}
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="SDK Reference" icon="book" href="/sdks/javascript">
+    Complete JavaScript SDK documentation
+  </Card>
+  <Card title="Add Functions" icon="function" href="/developers/concepts/functions">
+    Enable agent actions
+  </Card>
+  <Card title="Knowledge Base" icon="database" href="/developers/concepts/knowledge-base">
+    Add RAG for document retrieval
+  </Card>
+  <Card title="Deploy Widget" icon="window" href="/developers/concepts/deployments">
+    Embed on your website
+  </Card>
+</CardGroup>

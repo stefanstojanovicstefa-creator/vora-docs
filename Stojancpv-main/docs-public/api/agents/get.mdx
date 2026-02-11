@@ -1,0 +1,366 @@
+---
+title: Get Agents
+description: Retrieve agent details or list all agents
+api: GET /agents
+---
+
+# Get Agents
+
+Retrieve information about a specific agent or list all agents in your organization.
+
+## Get a Specific Agent
+
+Retrieve detailed information about a single agent by ID.
+
+```
+GET https://api.voicevora.com/v1/agents/:id
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | The agent ID (e.g., `agent_abc123`) |
+
+### Response
+
+<Tabs>
+  <Tab title="Success (200)">
+    ```json
+    {
+      "data": {
+        "id": "agent_abc123xyz",
+        "name": "Customer Support Agent",
+        "description": "Handles customer inquiries and support requests",
+        "status": "deployed",
+        "config": {
+          "voice_id": "voice_sarah",
+          "llm_provider": "openai",
+          "llm_model": "gpt-4-turbo",
+          "system_prompt": "You are a helpful customer support agent...",
+          "temperature": 0.7,
+          "max_tokens": 500,
+          "language": "en",
+          "interruption_threshold": 0.5,
+          "silence_timeout_ms": 5000,
+          "greeting": "Hello! How can I help you today?",
+          "fallback_message": "I'm sorry, I didn't understand that."
+        },
+        "knowledge_bases": ["kb_docs123"],
+        "functions": ["fn_lookup_order"],
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T14:45:00Z",
+        "deployed_at": "2024-01-15T14:50:00Z",
+        "stats": {
+          "total_calls": 1250,
+          "avg_duration_seconds": 180,
+          "last_call_at": "2024-01-15T18:30:00Z"
+        }
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Not Found (404)">
+    ```json
+    {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Agent not found",
+        "details": {
+          "resource_type": "agent",
+          "resource_id": "agent_invalid"
+        },
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Example
+
+<CodeGroup>
+```javascript JavaScript
+const agent = await vora.agents.get('agent_abc123xyz');
+
+console.log(`Agent: ${agent.name}`);
+console.log(`Status: ${agent.status}`);
+console.log(`Total calls: ${agent.stats.total_calls}`);
+```
+
+```python Python
+agent = vora.agents.get('agent_abc123xyz')
+
+print(f"Agent: {agent.name}")
+print(f"Status: {agent.status}")
+print(f"Total calls: {agent.stats['total_calls']}")
+```
+
+```bash cURL
+curl https://api.voicevora.com/v1/agents/agent_abc123xyz \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+---
+
+## List All Agents
+
+Retrieve a paginated list of all agents in your organization.
+
+```
+GET https://api.voicevora.com/v1/agents
+```
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | integer | `20` | Number of agents per page (max: 100) |
+| `cursor` | string | - | Pagination cursor from previous response |
+| `status` | string | - | Filter by status: `draft`, `deploying`, `deployed`, `error` |
+| `order` | string | `desc` | Sort order: `asc` or `desc` |
+| `order_by` | string | `created_at` | Sort field: `created_at`, `updated_at`, `name` |
+| `search` | string | - | Search by name (partial match) |
+
+### Response
+
+<Tabs>
+  <Tab title="Success (200)">
+    ```json
+    {
+      "data": [
+        {
+          "id": "agent_abc123xyz",
+          "name": "Customer Support Agent",
+          "description": "Handles customer inquiries",
+          "status": "deployed",
+          "config": {
+            "voice_id": "voice_sarah",
+            "llm_provider": "openai",
+            "llm_model": "gpt-4-turbo"
+          },
+          "created_at": "2024-01-15T10:30:00Z",
+          "updated_at": "2024-01-15T14:45:00Z",
+          "deployed_at": "2024-01-15T14:50:00Z",
+          "stats": {
+            "total_calls": 1250,
+            "avg_duration_seconds": 180
+          }
+        },
+        {
+          "id": "agent_def456uvw",
+          "name": "Sales Assistant",
+          "description": "Helps with product inquiries",
+          "status": "deployed",
+          "config": {
+            "voice_id": "voice_michael",
+            "llm_provider": "anthropic",
+            "llm_model": "claude-3-sonnet"
+          },
+          "created_at": "2024-01-14T09:00:00Z",
+          "updated_at": "2024-01-14T11:30:00Z",
+          "deployed_at": "2024-01-14T11:35:00Z",
+          "stats": {
+            "total_calls": 850,
+            "avg_duration_seconds": 240
+          }
+        }
+      ],
+      "pagination": {
+        "has_more": true,
+        "next_cursor": "eyJpZCI6ImFnZW50X2RlZjQ1NiJ9",
+        "prev_cursor": null,
+        "total": 47
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Examples
+
+#### List All Agents
+
+<CodeGroup>
+```javascript JavaScript
+const { data: agents, pagination } = await vora.agents.list();
+
+console.log(`Found ${pagination.total} agents`);
+agents.forEach(agent => {
+  console.log(`- ${agent.name} (${agent.status})`);
+});
+```
+
+```python Python
+result = vora.agents.list()
+
+print(f"Found {result.pagination.total} agents")
+for agent in result.data:
+    print(f"- {agent.name} ({agent.status})")
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/agents" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+#### Filter by Status
+
+<CodeGroup>
+```javascript JavaScript
+// Get only deployed agents
+const { data: activeAgents } = await vora.agents.list({
+  status: 'deployed'
+});
+
+// Get draft agents
+const { data: draftAgents } = await vora.agents.list({
+  status: 'draft'
+});
+```
+
+```python Python
+# Get only deployed agents
+active = vora.agents.list(status='deployed')
+
+# Get draft agents
+drafts = vora.agents.list(status='draft')
+```
+
+```bash cURL
+# Get only deployed agents
+curl "https://api.voicevora.com/v1/agents?status=deployed" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+#### Search Agents
+
+<CodeGroup>
+```javascript JavaScript
+const { data: results } = await vora.agents.list({
+  search: 'support'
+});
+
+console.log(`Found ${results.length} agents matching "support"`);
+```
+
+```python Python
+results = vora.agents.list(search='support')
+print(f"Found {len(results.data)} agents matching 'support'")
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/agents?search=support" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+#### Paginate Through All Agents
+
+<CodeGroup>
+```javascript JavaScript
+async function* getAllAgents() {
+  let cursor = null;
+
+  do {
+    const response = await vora.agents.list({
+      limit: 50,
+      cursor
+    });
+
+    for (const agent of response.data) {
+      yield agent;
+    }
+
+    cursor = response.pagination.next_cursor;
+  } while (cursor);
+}
+
+// Process all agents
+for await (const agent of getAllAgents()) {
+  console.log(`Processing: ${agent.name}`);
+}
+```
+
+```python Python
+def get_all_agents():
+    cursor = None
+
+    while True:
+        response = vora.agents.list(limit=50, cursor=cursor)
+
+        for agent in response.data:
+            yield agent
+
+        cursor = response.pagination.next_cursor
+        if not cursor:
+            break
+
+# Process all agents
+for agent in get_all_agents():
+    print(f"Processing: {agent.name}")
+```
+</CodeGroup>
+
+#### Sort Agents
+
+<CodeGroup>
+```javascript JavaScript
+// Most recently updated first
+const { data: recentlyUpdated } = await vora.agents.list({
+  order_by: 'updated_at',
+  order: 'desc'
+});
+
+// Alphabetically by name
+const { data: alphabetical } = await vora.agents.list({
+  order_by: 'name',
+  order: 'asc'
+});
+```
+
+```python Python
+# Most recently updated first
+recent = vora.agents.list(order_by='updated_at', order='desc')
+
+# Alphabetically by name
+alpha = vora.agents.list(order_by='name', order='asc')
+```
+
+```bash cURL
+# Most recently updated first
+curl "https://api.voicevora.com/v1/agents?order_by=updated_at&order=desc" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+## Response Fields
+
+### Compact vs Full Response
+
+When listing agents, a compact response is returned with essential fields only. Use `GET /agents/:id` for the full agent object including the complete `config` and `stats`.
+
+| Endpoint | Config Fields | Stats Fields |
+|----------|---------------|--------------|
+| List (`GET /agents`) | `voice_id`, `llm_provider`, `llm_model` | `total_calls`, `avg_duration_seconds` |
+| Get (`GET /agents/:id`) | All fields | All fields including `last_call_at` |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Update Agent" icon="pen" href="/api/agents/update">
+    Modify agent configuration
+  </Card>
+  <Card title="Deploy Agent" icon="rocket" href="/api/agents/deploy">
+    Make changes live
+  </Card>
+</CardGroup>

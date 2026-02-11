@@ -1,0 +1,368 @@
+---
+title: Rate Limits
+description: Understanding and working with Vora API rate limits
+---
+
+# Rate Limits
+
+The Vora API implements rate limiting to ensure fair usage and maintain service quality for all users. This guide explains how rate limits work and how to handle them gracefully.
+
+## Rate Limit Overview
+
+Rate limits are applied **per API key** or **per user** (for Clerk JWT authentication) and vary by subscription tier.
+
+| Plan | Requests/minute | Burst Limit | Concurrent Calls |
+|------|-----------------|-------------|------------------|
+| Free | 60 | 100 | 2 |
+| Pro | 300 | 500 | 10 |
+| Enterprise | Custom | Custom | Custom |
+
+<Info>
+  **Burst limit** allows short spikes above the standard rate. Sustained usage above the base limit will trigger rate limiting.
+</Info>
+
+## Rate Limit Headers
+
+Every API response includes headers to help you track your rate limit status:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `X-RateLimit-Limit` | Maximum requests per window | `100` |
+| `X-RateLimit-Remaining` | Requests remaining in window | `87` |
+| `X-RateLimit-Reset` | Unix timestamp when limit resets | `1705312200` |
+| `Retry-After` | Seconds to wait (only on 429) | `45` |
+
+### Reading Rate Limit Headers
+
+<CodeGroup>
+```javascript JavaScript
+const response = await fetch('https://api.voicevora.com/v1/agents', {
+  headers: { 'Authorization': `Bearer ${apiKey}` }
+});
+
+const rateLimit = {
+  limit: parseInt(response.headers.get('X-RateLimit-Limit')),
+  remaining: parseInt(response.headers.get('X-RateLimit-Remaining')),
+  resetAt: new Date(parseInt(response.headers.get('X-RateLimit-Reset')) * 1000)
+};
+
+console.log(`${rateLimit.remaining}/${rateLimit.limit} requests remaining`);
+console.log(`Resets at: ${rateLimit.resetAt.toISOString()}`);
+
+// Proactively slow down when running low
+if (rateLimit.remaining < 10) {
+  console.warn('Approaching rate limit, slowing down...');
+}
+```
+
+```python Python
+import requests
+from datetime import datetime
+
+response = requests.get(
+    'https://api.voicevora.com/v1/agents',
+    headers={'Authorization': f'Bearer {api_key}'}
+)
+
+rate_limit = {
+    'limit': int(response.headers.get('X-RateLimit-Limit', 0)),
+    'remaining': int(response.headers.get('X-RateLimit-Remaining', 0)),
+    'reset_at': datetime.fromtimestamp(
+        int(response.headers.get('X-RateLimit-Reset', 0))
+    )
+}
+
+print(f"{rate_limit['remaining']}/{rate_limit['limit']} requests remaining")
+print(f"Resets at: {rate_limit['reset_at'].isoformat()}")
+
+# Proactively slow down when running low
+if rate_limit['remaining'] < 10:
+    print('Warning: Approaching rate limit')
+```
+</CodeGroup>
+
+## Handling Rate Limits
+
+When you exceed the rate limit, you'll receive a `429 Too Many Requests` response:
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Rate limit exceeded. Please retry after 45 seconds.",
+    "details": {
+      "limit": 100,
+      "remaining": 0,
+      "reset_at": "2024-01-15T10:30:00Z",
+      "retry_after": 45
+    }
+  }
+}
+```
+
+### Implementing Exponential Backoff
+
+The recommended approach is exponential backoff with jitter:
+
+<CodeGroup>
+```javascript JavaScript
+class RateLimitHandler {
+  constructor(maxRetries = 5) {
+    this.maxRetries = maxRetries;
+  }
+
+  async fetch(url, options) {
+    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+      const response = await fetch(url, options);
+
+      if (response.status !== 429) {
+        return response;
+      }
+
+      // Get retry delay from header or calculate
+      const retryAfter = response.headers.get('Retry-After');
+      const delay = retryAfter
+        ? parseInt(retryAfter) * 1000
+        : this.calculateBackoff(attempt);
+
+      console.log(`Rate limited. Retrying in ${delay}ms...`);
+      await this.sleep(delay);
+    }
+
+    throw new Error('Max retries exceeded');
+  }
+
+  calculateBackoff(attempt) {
+    // Exponential backoff with jitter
+    const baseDelay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s, 8s, 16s
+    const jitter = Math.random() * 1000; // 0-1 second random jitter
+    return Math.min(baseDelay + jitter, 60000); // Max 60 seconds
+  }
+
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+// Usage
+const handler = new RateLimitHandler();
+const response = await handler.fetch('https://api.voicevora.com/v1/agents', {
+  headers: { 'Authorization': `Bearer ${apiKey}` }
+});
+```
+
+```python Python
+import time
+import random
+import requests
+
+class RateLimitHandler:
+    def __init__(self, max_retries: int = 5):
+        self.max_retries = max_retries
+
+    def fetch(self, method: str, url: str, **kwargs) -> requests.Response:
+        for attempt in range(self.max_retries):
+            response = requests.request(method, url, **kwargs)
+
+            if response.status_code != 429:
+                return response
+
+            # Get retry delay from header or calculate
+            retry_after = response.headers.get('Retry-After')
+            delay = (
+                int(retry_after)
+                if retry_after
+                else self.calculate_backoff(attempt)
+            )
+
+            print(f'Rate limited. Retrying in {delay}s...')
+            time.sleep(delay)
+
+        raise Exception('Max retries exceeded')
+
+    def calculate_backoff(self, attempt: int) -> float:
+        # Exponential backoff with jitter
+        base_delay = (2 ** attempt)  # 1s, 2s, 4s, 8s, 16s
+        jitter = random.uniform(0, 1)  # 0-1 second random jitter
+        return min(base_delay + jitter, 60)  # Max 60 seconds
+
+# Usage
+handler = RateLimitHandler()
+response = handler.fetch(
+    'GET',
+    'https://api.voicevora.com/v1/agents',
+    headers={'Authorization': f'Bearer {api_key}'}
+)
+```
+</CodeGroup>
+
+## Endpoint-Specific Limits
+
+Some endpoints have additional rate limits beyond the account-wide limit:
+
+| Endpoint | Additional Limit | Reason |
+|----------|------------------|--------|
+| `POST /agents/:id/deploy` | 10/hour | Deployment resources |
+| `POST /sessions` | 20/minute | Voice infrastructure |
+| `POST /knowledge-base/:id/documents` | 50/hour | Processing overhead |
+| `POST /knowledge-base/:id/search` | 100/minute | RAG computation |
+
+<Warning>
+  Endpoint-specific limits are separate from account-wide limits. You may hit an endpoint limit while still having account-wide quota remaining.
+</Warning>
+
+## Best Practices
+
+### 1. Implement Proactive Rate Limiting
+
+Don't wait for 429 errors. Monitor your usage and slow down proactively:
+
+```javascript
+class ProactiveRateLimiter {
+  constructor(requestsPerMinute) {
+    this.interval = 60000 / requestsPerMinute; // ms between requests
+    this.lastRequest = 0;
+  }
+
+  async throttle() {
+    const now = Date.now();
+    const elapsed = now - this.lastRequest;
+
+    if (elapsed < this.interval) {
+      await this.sleep(this.interval - elapsed);
+    }
+
+    this.lastRequest = Date.now();
+  }
+
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+// Usage: Stay well under the 100/min limit
+const limiter = new ProactiveRateLimiter(80); // 80 requests/min
+
+for (const agentId of agentIds) {
+  await limiter.throttle();
+  await fetchAgent(agentId);
+}
+```
+
+### 2. Batch Operations When Possible
+
+Reduce API calls by using batch endpoints:
+
+```javascript
+// ❌ Inefficient: One request per agent
+for (const agentId of agentIds) {
+  const agent = await vora.agents.get(agentId);
+  processAgent(agent);
+}
+
+// ✅ Efficient: Single request for all agents
+const agents = await vora.agents.list({
+  ids: agentIds.join(',')
+});
+agents.forEach(processAgent);
+```
+
+### 3. Cache Responses
+
+Cache data that doesn't change frequently:
+
+```javascript
+const cache = new Map();
+const CACHE_TTL = 60000; // 1 minute
+
+async function getAgentCached(agentId) {
+  const cached = cache.get(agentId);
+
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
+  const agent = await vora.agents.get(agentId);
+
+  cache.set(agentId, {
+    data: agent,
+    timestamp: Date.now()
+  });
+
+  return agent;
+}
+```
+
+### 4. Use Webhooks for Real-time Updates
+
+Instead of polling, use webhooks to receive updates:
+
+```javascript
+// ❌ Inefficient: Polling every 5 seconds
+setInterval(async () => {
+  const sessions = await vora.sessions.list({ status: 'active' });
+  updateDashboard(sessions);
+}, 5000);
+
+// ✅ Efficient: Webhook notifications
+// Configure webhook at: POST /webhooks
+// Listen for session.started, session.ended events
+```
+
+### 5. Distribute Load Across Time
+
+For bulk operations, spread requests over time:
+
+```javascript
+async function processInBatches(items, batchSize, delayMs) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+
+    await Promise.all(batch.map(item => processItem(item)));
+
+    // Wait between batches
+    if (i + batchSize < items.length) {
+      await sleep(delayMs);
+    }
+  }
+}
+
+// Process 10 items at a time, wait 1 second between batches
+await processInBatches(allItems, 10, 1000);
+```
+
+## Increasing Your Limits
+
+### Upgrade Your Plan
+
+Higher tiers come with increased rate limits:
+
+| Plan | Upgrade Path |
+|------|--------------|
+| Free → Pro | [app.voicevora.com/billing](https://app.voicevora.com/billing) |
+| Pro → Enterprise | [Contact sales](mailto:sales@voicevora.com) |
+
+### Request a Temporary Increase
+
+For specific events (product launches, migrations), you can request a temporary limit increase:
+
+1. Contact support at least 7 days in advance
+2. Explain your use case and expected volume
+3. Specify the duration needed
+
+## Monitoring Your Usage
+
+Track your API usage in the dashboard:
+
+1. Go to [app.voicevora.com/usage](https://app.voicevora.com/usage)
+2. View requests by endpoint, time period, and status
+3. Set up alerts for approaching limits
+
+<CardGroup cols={2}>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/api/errors">
+    Handle rate limit errors gracefully
+  </Card>
+  <Card title="Pagination" icon="file-lines" href="/api/pagination">
+    Efficiently fetch large datasets
+  </Card>
+</CardGroup>

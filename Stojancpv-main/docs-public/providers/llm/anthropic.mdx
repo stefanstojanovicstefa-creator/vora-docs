@@ -1,0 +1,220 @@
+---
+title: Anthropic Claude
+description: Claude Sonnet 4 and Opus 4 integration for Vora agents
+---
+
+# Anthropic Claude
+
+Anthropic's Claude 4 models excel at nuanced reasoning, coding, safety, and long-context understanding.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `anthropic` |
+| Default Model | `claude-sonnet-4-20250514` |
+| Context Window | Up to 200K tokens |
+| Streaming | Supported |
+| Function Calling | Tool use support |
+
+---
+
+## Available Models
+
+| Model | Context | Best For | Cost (per 1M tokens) |
+|-------|---------|----------|----------------------|
+| `claude-opus-4-20250514` | 200K | Complex analysis | $15 in / $75 out |
+| `claude-sonnet-4-20250514` | 200K | Balanced quality/cost | $3 in / $15 out |
+
+<Note>
+**Recommended**: `claude-sonnet-4` for best quality/cost balance. Use for complex reasoning where speed is less critical.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Research Agent',
+  systemPrompt: 'You are a research assistant with deep analytical capabilities.',
+  model: {
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-20250514'
+  }
+});
+```
+
+### Advanced Options
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Expert Agent',
+  systemPrompt: 'You are an expert consultant.',
+  model: {
+    provider: 'anthropic',
+    model: 'claude-opus-4-20250514',
+    temperature: 0.7,
+    maxTokens: 2048,
+    topP: 0.9,
+    topK: 40
+  }
+});
+```
+
+---
+
+## Strengths
+
+### 1. Reasoning Quality
+
+Claude Sonnet 4 and Opus 4 excel at:
+- Complex analytical tasks
+- Multi-step reasoning
+- Code generation and review
+- Technical explanations
+
+### 2. Long Context (200K)
+
+Ideal for:
+- Processing long documents
+- Multi-turn conversations
+- Knowledge-intensive tasks
+
+### 3. Safety
+
+Strong built-in safety:
+- Refuses harmful requests
+- Provides balanced perspectives
+- Acknowledges uncertainty
+
+---
+
+## Tool Use (Function Calling)
+
+Claude supports tool use for agent functions:
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Calculator Agent',
+  systemPrompt: 'You are a math assistant.',
+  model: {
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-20250514'
+  },
+  functions: [
+    {
+      name: 'calculate',
+      description: 'Perform mathematical calculations',
+      parameters: {
+        type: 'object',
+        properties: {
+          expression: { type: 'string', description: 'Math expression' }
+        },
+        required: ['expression']
+      },
+      handler: {
+        type: 'webhook',
+        url: 'https://api.example.com/calculate'
+      }
+    }
+  ]
+});
+```
+
+---
+
+## Latency Benchmarks
+
+| Model | TTFT (P50) | TTFT (P95) |
+|-------|------------|------------|
+| Claude Sonnet 4 | ~300ms | ~600ms |
+| Claude Opus 4 | ~500ms | ~1000ms |
+
+<Tip>
+Claude is best used when reasoning quality matters more than speed. For latency-sensitive voice agents, consider Gemini Flash as primary with Claude as fallback for complex queries.
+</Tip>
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for Voice">
+    ```typescript
+    model: {
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+      maxTokens: 200,
+      temperature: 0.7
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Use System Prompts Effectively">
+    Claude responds well to clear role definitions and explicit constraints:
+    ```typescript
+    systemPrompt: `You are a customer support agent for TechCorp.
+    Guidelines:
+    - Be friendly and professional
+    - Keep responses under 2 sentences for voice
+    - If you don't know, offer to connect to human support`
+    ```
+  </Accordion>
+
+  <Accordion title="Model Selection">
+    | Use Case | Model |
+    |----------|-------|
+    | General voice | Claude Sonnet 4 |
+    | Complex reasoning | Claude Opus 4 |
+    | Cost-sensitive | Use Gemini Flash instead |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+### Get Your Key
+
+1. Go to [Anthropic Console](https://console.anthropic.com)
+2. Navigate to API Keys
+3. Create a new key
+4. Add to your Vora environment or use [BYOK](/advanced/api-keys)
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Rate Limits">
+    Check usage in Anthropic Console, request limit increases, or configure fallback to OpenAI or Groq.
+  </Accordion>
+
+  <Accordion title="Slow Responses">
+    Switch from Opus to Sonnet, or configure latency-based fallback to Gemini Flash.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare LLM Providers" icon="scale-balanced" href="/providers/llm">
+    See all 15 LLM options
+  </Card>
+  <Card title="Custom Functions" icon="function" href="/advanced/custom-functions">
+    Add tools with Claude tool use
+  </Card>
+</CardGroup>

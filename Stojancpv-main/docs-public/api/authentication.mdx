@@ -1,0 +1,293 @@
+---
+title: Authentication
+description: Learn how to authenticate with the Vora API using API keys or Clerk JWT tokens
+---
+
+# Authentication
+
+The Vora API supports two authentication methods depending on your use case:
+
+1. **API Key** - For server-to-server integrations
+2. **Clerk JWT** - For client-side applications with user context
+
+<Info>
+  All API requests must include authentication. Unauthenticated requests will receive a `401 Unauthorized` response.
+</Info>
+
+## API Key Authentication
+
+API keys are the recommended method for server-to-server integrations, background jobs, and automation scripts.
+
+### Getting Your API Key
+
+1. Log in to [app.voicevora.com](https://app.voicevora.com)
+2. Navigate to **Settings** → **API Keys**
+3. Click **Create New Key**
+4. Copy and securely store your key (it won't be shown again)
+
+<Warning>
+  Keep your API key secret. Never expose it in client-side code, public repositories, or logs.
+</Warning>
+
+### Using Your API Key
+
+Include your API key in the `Authorization` header using the Bearer scheme:
+
+<CodeGroup>
+```bash cURL
+curl https://api.voicevora.com/v1/agents \
+  -H "Authorization: Bearer vora_sk_live_xxxxxxxxxxxx"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.voicevora.com/v1/agents', {
+  headers: {
+    'Authorization': 'Bearer vora_sk_live_xxxxxxxxxxxx',
+    'Content-Type': 'application/json'
+  }
+});
+
+const agents = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.voicevora.com/v1/agents',
+    headers={
+        'Authorization': 'Bearer vora_sk_live_xxxxxxxxxxxx',
+        'Content-Type': 'application/json'
+    }
+)
+
+agents = response.json()
+```
+
+```typescript TypeScript
+import { VoraClient } from '@vora/sdk';
+
+const vora = new VoraClient({
+  apiKey: process.env.VORA_API_KEY
+});
+
+const agents = await vora.agents.list();
+```
+</CodeGroup>
+
+### API Key Formats
+
+| Environment | Format | Example |
+|-------------|--------|---------|
+| Production | `vora_sk_live_*` | `vora_sk_live_abc123xyz789` |
+| Staging | `vora_sk_test_*` | `vora_sk_test_def456uvw012` |
+
+## Clerk JWT Authentication
+
+For client-side applications where users are authenticated via Clerk, use the Clerk JWT token to make API requests on behalf of the user.
+
+### How It Works
+
+1. User authenticates with Clerk in your frontend
+2. Your app obtains a Clerk session token
+3. Pass this token to the Vora API for user-scoped requests
+
+<Info>
+  Clerk JWT authentication automatically scopes requests to the authenticated user's organization and resources.
+</Info>
+
+### Using Clerk JWT
+
+<CodeGroup>
+```javascript React/Next.js
+import { useAuth } from '@clerk/nextjs';
+
+function MyComponent() {
+  const { getToken } = useAuth();
+
+  async function fetchAgents() {
+    const token = await getToken();
+
+    const response = await fetch('https://api.voicevora.com/v1/agents', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.json();
+  }
+
+  // ...
+}
+```
+
+```typescript TypeScript SDK
+import { VoraClient } from '@vora/sdk';
+import { useAuth } from '@clerk/nextjs';
+
+function useVoraClient() {
+  const { getToken } = useAuth();
+
+  return new VoraClient({
+    getToken: () => getToken() // Dynamic token refresh
+  });
+}
+```
+
+```python Python (Backend)
+# For Python backends validating Clerk JWTs
+import jwt
+from clerk_backend_api import Clerk
+
+clerk = Clerk(api_key='your_clerk_secret_key')
+
+def verify_clerk_token(token: str):
+    try:
+        decoded = clerk.verify_token(token)
+        return decoded
+    except jwt.InvalidTokenError:
+        raise AuthenticationError('Invalid Clerk token')
+```
+</CodeGroup>
+
+### When to Use Each Method
+
+| Use Case | Recommended Auth |
+|----------|------------------|
+| Server-side scripts | API Key |
+| Cron jobs / automation | API Key |
+| CI/CD pipelines | API Key |
+| Frontend apps with user login | Clerk JWT |
+| Mobile apps | Clerk JWT |
+| Admin dashboards | Clerk JWT |
+
+## Security Best Practices
+
+### API Key Security
+
+<AccordionGroup>
+  <Accordion title="Use environment variables">
+    Never hardcode API keys. Use environment variables or secret management services.
+
+    ```bash
+    # .env file (never commit this!)
+    VORA_API_KEY=vora_sk_live_xxxxxxxxxxxx
+    ```
+
+    ```javascript
+    // Access in code
+    const apiKey = process.env.VORA_API_KEY;
+    ```
+  </Accordion>
+
+  <Accordion title="Rotate keys regularly">
+    Generate new API keys periodically and revoke old ones. This limits the impact of any potential key exposure.
+
+    1. Create a new key in the dashboard
+    2. Update your applications to use the new key
+    3. Verify everything works
+    4. Revoke the old key
+  </Accordion>
+
+  <Accordion title="Use separate keys per environment">
+    Use different API keys for development, staging, and production environments.
+
+    | Environment | Key Type |
+    |-------------|----------|
+    | Development | Test key |
+    | Staging | Test key |
+    | Production | Live key |
+  </Accordion>
+
+  <Accordion title="Monitor API usage">
+    Regularly review your API usage in the dashboard to detect any unusual patterns that might indicate a compromised key.
+  </Accordion>
+</AccordionGroup>
+
+### Clerk JWT Security
+
+- Always verify JWT signatures on the backend
+- Check token expiration (`exp` claim)
+- Validate the audience (`aud`) and issuer (`iss`) claims
+- Use HTTPS for all API requests
+
+## Token Refresh
+
+### API Keys
+
+API keys do not expire automatically. You can revoke and regenerate them from the dashboard at any time.
+
+### Clerk JWTs
+
+Clerk tokens expire after a short period (typically 60 seconds). The Clerk SDK automatically handles token refresh:
+
+```javascript
+// The Clerk SDK handles refresh automatically
+const { getToken } = useAuth();
+
+// This always returns a fresh, valid token
+const token = await getToken();
+```
+
+For long-running operations, consider implementing retry logic:
+
+```javascript
+async function fetchWithRetry(url, options, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    const token = await getToken(); // Get fresh token
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.status === 401 && i < maxRetries - 1) {
+      continue; // Token expired, retry with fresh token
+    }
+
+    return response;
+  }
+
+  throw new Error('Authentication failed after retries');
+}
+```
+
+## Error Responses
+
+When authentication fails, the API returns one of these errors:
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | `UNAUTHORIZED` | Missing or invalid authentication token |
+| 401 | `TOKEN_EXPIRED` | The JWT token has expired |
+| 403 | `FORBIDDEN` | Valid token but insufficient permissions |
+| 403 | `INVALID_API_KEY` | API key is revoked or invalid |
+
+Example error response:
+
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing authentication token",
+    "details": {
+      "hint": "Include a valid API key or Clerk JWT in the Authorization header"
+    }
+  }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/api/errors">
+    Learn how to handle API errors
+  </Card>
+  <Card title="Rate Limits" icon="gauge-high" href="/api/rate-limits">
+    Understand rate limiting policies
+  </Card>
+</CardGroup>

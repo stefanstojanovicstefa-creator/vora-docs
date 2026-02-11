@@ -1,0 +1,346 @@
+---
+title: Agent Configuration
+description: Complete reference for all agent settings and options
+---
+
+# Agent Configuration
+
+This guide covers all configuration options available for Vora agents.
+
+---
+
+## General Settings
+
+### Name and Description
+
+| Setting | Description |
+|---------|-------------|
+| **Name** | Internal name for the agent (not visible to callers) |
+| **Description** | Notes about the agent's purpose |
+| **Tags** | Labels for organization and filtering |
+
+### Status
+
+| Status | Description |
+|--------|-------------|
+| **Draft** | Agent is being configured, not callable |
+| **Active** | Agent is deployed and handling calls |
+| **Paused** | Agent is temporarily disabled |
+| **Archived** | Agent is soft-deleted |
+
+---
+
+## AI Model Settings
+
+### LLM Provider
+
+Choose the language model that powers your agent:
+
+| Provider | Models | Best For |
+|----------|--------|----------|
+| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-3.5 Turbo | General purpose, best quality |
+| **Google** | Gemini Pro, Gemini Flash | Fast responses, good for simple tasks |
+| **Anthropic** | Claude 3 Opus, Claude 3 Sonnet | Complex reasoning, long context |
+| **Groq** | Llama 3, Mixtral | Ultra-low latency |
+
+<Tip>
+  Start with GPT-4 Turbo for the best balance of quality and cost. Use Gemini Flash or Groq for latency-critical applications.
+</Tip>
+
+### Model Settings
+
+| Setting | Range | Description |
+|---------|-------|-------------|
+| **Temperature** | 0.0 - 2.0 | Higher = more creative, lower = more consistent |
+| **Max Tokens** | 50 - 4096 | Maximum response length |
+| **Top P** | 0.0 - 1.0 | Nucleus sampling threshold |
+
+**Recommended settings by use case:**
+
+| Use Case | Temperature | Max Tokens |
+|----------|-------------|------------|
+| Customer Support | 0.3 - 0.5 | 200 |
+| Sales | 0.5 - 0.7 | 300 |
+| Creative | 0.8 - 1.0 | 500 |
+| Technical | 0.2 - 0.4 | 400 |
+
+---
+
+## Voice Settings
+
+### Voice Selection
+
+Choose from our library of natural voices:
+
+<Tabs>
+  <Tab title="Female Voices">
+    | Voice | Characteristics | Best For |
+    |-------|-----------------|----------|
+    | Sarah | Warm, professional | Customer support |
+    | Emma | Clear, energetic | Sales |
+    | Priya | Calm, soothing | Healthcare |
+    | Maya | Friendly, casual | Consumer apps |
+  </Tab>
+  <Tab title="Male Voices">
+    | Voice | Characteristics | Best For |
+    |-------|-----------------|----------|
+    | Marcus | Authoritative, clear | Enterprise |
+    | James | Friendly, approachable | General purpose |
+    | Raj | Professional, neutral | Technical support |
+    | Alex | Casual, young | Startups |
+  </Tab>
+</Tabs>
+
+### Voice Provider
+
+| Provider | Voices | Quality | Latency |
+|----------|--------|---------|---------|
+| **ElevenLabs** | 100+ | Highest | Medium |
+| **Cartesia** | 50+ | High | Low |
+| **Google Cloud TTS** | 200+ | High | Low |
+
+### Voice Settings
+
+| Setting | Description |
+|---------|-------------|
+| **Speed** | Speaking rate (0.5x - 2.0x) |
+| **Pitch** | Voice pitch adjustment |
+| **Stability** | Voice consistency (ElevenLabs) |
+| **Similarity** | Voice matching (ElevenLabs) |
+
+---
+
+## Speech-to-Text Settings
+
+### STT Provider
+
+| Provider | Languages | Quality | Latency |
+|----------|-----------|---------|---------|
+| **Deepgram** | 30+ | Highest | Lowest |
+| **AssemblyAI** | 20+ | High | Low |
+| **Google Cloud STT** | 100+ | High | Medium |
+| **Soniox** | 15+ | High | Low |
+
+### STT Settings
+
+| Setting | Description |
+|---------|-------------|
+| **Language** | Primary recognition language |
+| **Model** | General, phone, or enhanced |
+| **Punctuation** | Auto-punctuate transcripts |
+| **Profanity Filter** | Mask profane words |
+
+---
+
+## Conversation Settings
+
+### Greeting
+
+The first message the agent speaks when a call connects:
+
+```
+Hi! Thanks for calling Acme Corp. I'm Sarah, your virtual assistant.
+How can I help you today?
+```
+
+<Tip>
+  Keep greetings short (under 10 seconds). Get to "How can I help?" quickly.
+</Tip>
+
+### Fallback Messages
+
+Messages for when the agent can't understand or respond:
+
+| Scenario | Example Message |
+|----------|-----------------|
+| **Didn't understand** | "I'm sorry, I didn't catch that. Could you repeat?" |
+| **Can't help** | "I'm not able to help with that. Would you like to speak with a person?" |
+| **Technical error** | "I'm having technical difficulties. Let me transfer you." |
+
+### Silence Handling
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Initial silence** | Wait time before prompting | 5 seconds |
+| **Mid-conversation silence** | Wait time during call | 8 seconds |
+| **Max silence before disconnect** | Auto-hangup timeout | 30 seconds |
+| **Silence prompt** | Message after silence | "Are you still there?" |
+
+### Interruption Handling
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Allow interruptions** | Let users interrupt the agent | Yes |
+| **Interruption threshold** | Audio level to trigger interrupt | Medium |
+| **Resume after interrupt** | Continue previous response | Yes |
+
+---
+
+## Knowledge Base
+
+### Attached Knowledge Bases
+
+Connect knowledge bases for RAG-powered responses:
+
+| Setting | Description |
+|---------|-------------|
+| **Knowledge Base** | Select one or more knowledge bases |
+| **Search threshold** | Minimum relevance score (0.0 - 1.0) |
+| **Max results** | Number of chunks to retrieve |
+| **Citation mode** | Include source references in responses |
+
+### Search Settings
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Threshold** | Minimum similarity score | 0.7 |
+| **Results** | Max chunks per search | 5 |
+| **Reranking** | Use reranking for better results | On |
+
+---
+
+## Functions
+
+### Attached Functions
+
+Connect functions for actions:
+
+1. Go to **Agent** → **Functions**
+2. Click **Add Function**
+3. Select from available functions or create new
+
+### Function Settings
+
+| Setting | Description |
+|---------|-------------|
+| **Enabled** | Toggle function on/off |
+| **Confirmation** | Require user confirmation before executing |
+| **Timeout** | Maximum execution time |
+| **Fallback** | Message if function fails |
+
+---
+
+## Integrations
+
+### Connected Integrations
+
+| Integration | Use Case |
+|-------------|----------|
+| **HubSpot** | CRM lookup, contact updates |
+| **Salesforce** | Lead management, case creation |
+| **Google Calendar** | Appointment booking |
+| **WhatsApp** | Follow-up messages |
+
+### Integration Settings
+
+Configure per-integration:
+- Enabled/disabled
+- Field mappings
+- Sync frequency
+- Error handling
+
+---
+
+## Advanced Settings
+
+### Conversation History
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **History length** | Messages to include in context | 20 |
+| **Include timestamps** | Add time to messages | No |
+| **Summarize history** | Compress long conversations | Yes |
+
+### Recording
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Record audio** | Save call recordings | Yes |
+| **Recording format** | Audio file format | MP3 |
+| **Retention** | Days to keep recordings | 30 |
+| **Consent message** | Recording disclosure | None |
+
+### Transcription
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Save transcripts** | Store conversation text | Yes |
+| **Real-time events** | Stream transcripts via webhook | No |
+| **Include metadata** | Add timing and confidence | Yes |
+
+### Rate Limiting
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Max concurrent calls** | Simultaneous call limit | Unlimited |
+| **Calls per minute** | Rate limit per number | Unlimited |
+| **Queue overflow** | Behavior when limit hit | Voicemail |
+
+---
+
+## Webhooks
+
+### Event Notifications
+
+Configure webhooks to receive events:
+
+| Event | Description |
+|-------|-------------|
+| `session.started` | Call connected |
+| `session.completed` | Call ended normally |
+| `session.failed` | Call had an error |
+| `transcript.ready` | Transcript available |
+| `function.executed` | Function was called |
+
+See [Webhooks API](/api/webhooks) for full configuration.
+
+---
+
+## Saving and Versioning
+
+### Auto-save
+
+Changes are auto-saved as drafts. Published changes require explicit deploy.
+
+### Versions
+
+Every deploy creates a new version:
+- View version history
+- Compare versions
+- Rollback to previous versions
+
+See [Version Management](/platform/agents/versions) for details.
+
+---
+
+## Configuration Templates
+
+Start with pre-built templates:
+
+<CardGroup cols={2}>
+  <Card title="Customer Support" icon="headset">
+    Optimized for handling support inquiries
+  </Card>
+  <Card title="Sales Agent" icon="phone-volume">
+    Lead qualification and scheduling
+  </Card>
+  <Card title="Appointment Scheduler" icon="calendar">
+    Calendar integration focused
+  </Card>
+  <Card title="FAQ Bot" icon="circle-question">
+    Knowledge base Q&A
+  </Card>
+</CardGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Test Your Agent" icon="flask" href="/platform/agents/testing">
+    Test configuration in the simulator
+  </Card>
+  <Card title="Deploy" icon="rocket" href="/platform/agents/deployment">
+    Go live with your agent
+  </Card>
+</CardGroup>

@@ -1,0 +1,355 @@
+---
+title: Mistral
+description: Mistral Large integration for Vora agents
+---
+
+# Mistral
+
+Mistral provides high-quality open-source models with EU-hosted infrastructure for GDPR compliance.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `mistral` |
+| Default Model | `mistral-large-latest` |
+| Context Window | Up to 128K tokens |
+| Streaming | ✅ Supported |
+| Function Calling | ✅ Native support |
+| Data Residency | 🇪🇺 EU-hosted |
+
+---
+
+## Available Models
+
+| Model | Context | Best For | Cost (per 1M tokens) |
+|-------|---------|----------|----------------------|
+| `mistral-large-latest` | 128K | Complex reasoning | $4 in / $12 out |
+| `mistral-medium-latest` | 32K | Balanced | $2.7 in / $8.1 out |
+| `mistral-small-latest` | 32K | Speed + cost | $1 in / $3 out |
+| `open-mixtral-8x22b` | 64K | Open-source quality | $2 in / $6 out |
+
+<Note>
+**Recommended**: `mistral-large-latest` for quality, `mistral-small-latest` for speed.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'EU Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  model: {
+    provider: 'mistral',
+    model: 'mistral-large-latest'
+  }
+});
+```
+
+### Advanced Options
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Custom Agent',
+  systemPrompt: 'You are a professional assistant.',
+  model: {
+    provider: 'mistral',
+    model: 'mistral-large-latest',
+    temperature: 0.7,
+    maxTokens: 1024,
+    topP: 0.9,
+    safePrompt: true  // Enable safe mode
+  }
+});
+```
+
+---
+
+## Why Mistral?
+
+### 1. EU Data Residency
+
+Mistral is headquartered in Paris and processes data in the EU:
+- GDPR compliant by default
+- Data doesn't leave the EU
+- Ideal for European enterprises
+
+### 2. Open-Source Heritage
+
+Benefits of open-source foundation:
+- Transparent model behavior
+- No lock-in concerns
+- Community-vetted quality
+
+### 3. Competitive Quality
+
+Mistral Large competes with GPT-4:
+- Strong reasoning capabilities
+- Good instruction following
+- Excellent multilingual support
+
+### 4. European Language Support
+
+Strong performance in:
+- French, German, Spanish, Italian
+- Other European languages
+- Regional dialects
+
+---
+
+## Use Cases
+
+### GDPR-Compliant Applications
+
+For EU data processing requirements:
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'EU Support Agent',
+  systemPrompt: `You are a customer support agent.
+  You handle queries from EU customers.
+  Be helpful and GDPR-conscious.`,
+  model: {
+    provider: 'mistral',
+    model: 'mistral-large-latest',
+    safePrompt: true
+  }
+});
+```
+
+### Multilingual European Support
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'European Agent',
+  systemPrompt: `You are a multilingual support agent.
+  Respond in the customer's language.
+  Languages: English, French, German, Spanish, Italian, Dutch.`,
+  model: {
+    provider: 'mistral',
+    model: 'mistral-large-latest'
+  }
+});
+```
+
+### Cost-Effective Enterprise
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Enterprise Agent',
+  systemPrompt: 'You are a professional business assistant.',
+  model: {
+    provider: 'mistral',
+    model: 'mistral-small-latest',  // Budget-friendly
+    maxTokens: 200
+  }
+});
+```
+
+---
+
+## Function Calling
+
+Mistral has robust function calling support:
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Tool Agent',
+  systemPrompt: 'You help with various tasks.',
+  model: {
+    provider: 'mistral',
+    model: 'mistral-large-latest'
+  },
+  functions: [
+    {
+      name: 'search_products',
+      description: 'Search for products in the catalog',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' },
+          category: { type: 'string' },
+          maxPrice: { type: 'number' }
+        },
+        required: ['query']
+      },
+      handler: {
+        type: 'webhook',
+        url: 'https://api.example.com/products/search'
+      }
+    }
+  ]
+});
+```
+
+---
+
+## Safe Prompt Mode
+
+Enable built-in safety guardrails:
+
+```typescript
+model: {
+  provider: 'mistral',
+  model: 'mistral-large-latest',
+  safePrompt: true  // Adds safety system prompt
+}
+```
+
+Safe prompt mode:
+- Prevents harmful content generation
+- Adds content moderation
+- Ensures professional responses
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for Voice">
+    For voice applications:
+
+    ```typescript
+    model: {
+      provider: 'mistral',
+      model: 'mistral-small-latest',  // Faster
+      maxTokens: 150,
+      temperature: 0.7
+    }
+    ```
+
+    Or use Large for complex conversations:
+
+    ```typescript
+    model: {
+      provider: 'mistral',
+      model: 'mistral-large-latest',
+      maxTokens: 200
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Model Selection">
+    | Use Case | Model | Why |
+    |----------|-------|-----|
+    | Complex reasoning | mistral-large | Best quality |
+    | General voice | mistral-medium | Balanced |
+    | High volume | mistral-small | Cost-effective |
+    | EU compliance | Any Mistral | All EU-hosted |
+  </Accordion>
+
+  <Accordion title="European Languages">
+    Mistral excels at European languages:
+
+    ```typescript
+    systemPrompt: `Sie sind ein hilfreicher Kundendienstmitarbeiter.
+    Antworten Sie auf Deutsch.
+    Seien Sie professionell und freundlich.`
+    ```
+
+    Languages with strong support:
+    - French (native)
+    - German
+    - Spanish
+    - Italian
+    - Dutch
+    - Portuguese
+  </Accordion>
+
+  <Accordion title="Compliance Mode">
+    For regulated industries:
+
+    ```typescript
+    const agent = await vora.agents.create({
+      name: 'Compliant Agent',
+      systemPrompt: `You are a financial services assistant.
+      Always comply with regulations.
+      Never provide specific investment advice.`,
+      model: {
+        provider: 'mistral',
+        model: 'mistral-large-latest',
+        safePrompt: true,
+        temperature: 0.3  // More deterministic
+      }
+    });
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+MISTRAL_API_KEY=...
+```
+
+### Get Your Key
+
+1. Go to [Mistral Console](https://console.mistral.ai)
+2. Sign up or sign in
+3. Generate an API key
+4. Add to your Vora environment
+
+---
+
+## Latency Benchmarks
+
+Typical response latencies (streaming first token):
+
+| Model | P50 | P95 |
+|-------|-----|-----|
+| mistral-small | 300ms | 600ms |
+| mistral-medium | 400ms | 800ms |
+| mistral-large | 500ms | 1000ms |
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Rate Limits">
+    Mistral rate limits vary by tier:
+
+    - Check current limits in Mistral Console
+    - Request increases for production use
+    - Configure fallback provider
+  </Accordion>
+
+  <Accordion title="EU vs US Latency">
+    If calling from outside EU:
+
+    - Expect ~50-100ms additional latency
+    - Consider using EU-based Vora deployment
+    - Use fallback for latency-critical paths
+  </Accordion>
+
+  <Accordion title="Context Length">
+    If hitting context limits:
+
+    - Large: 128K tokens
+    - Medium/Small: 32K tokens
+    - Use summarization for long conversations
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare Providers" icon="scale-balanced" href="/providers/llm">
+    See all LLM options
+  </Card>
+  <Card title="Self-Hosting" icon="server" href="/self-hosting">
+    EU-compliant deployment
+  </Card>
+</CardGroup>

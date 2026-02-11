@@ -1,0 +1,411 @@
+---
+title: Testing Functions
+description: Verify your functions work correctly
+---
+
+# Testing Functions
+
+Thoroughly test your functions before deploying to ensure they work correctly in real conversations.
+
+---
+
+## Testing Methods
+
+### Direct Testing
+
+Test functions in isolation:
+
+<Steps>
+  <Step title="Navigate to function">
+    Go to **Functions** → Select your function.
+  </Step>
+  <Step title="Open test panel">
+    Click **Test** to open the test panel.
+  </Step>
+  <Step title="Enter parameters">
+    Fill in test parameters:
+    ```json
+    {
+      "order_number": "ORD-12345"
+    }
+    ```
+  </Step>
+  <Step title="Execute">
+    Click **Run Test** to execute.
+  </Step>
+  <Step title="Review results">
+    Check the response and execution time.
+  </Step>
+</Steps>
+
+### Simulator Testing
+
+Test functions in conversation context:
+
+1. Open your agent's simulator
+2. Have a conversation that triggers the function
+3. Watch the function execute in the transcript
+4. Verify the agent uses the result correctly
+
+### API Testing
+
+Test via the API:
+
+```javascript
+const result = await vora.functions.test('func_abc123', {
+  parameters: {
+    order_number: 'ORD-12345'
+  },
+  context: {
+    session: {
+      participant: {
+        phone: '+1234567890'
+      }
+    }
+  }
+});
+
+console.log('Success:', result.success);
+console.log('Output:', result.output);
+console.log('Duration:', result.duration);
+```
+
+---
+
+## Test Cases
+
+### Success Scenarios
+
+| Test | Input | Expected Output |
+|------|-------|-----------------|
+| Valid order | `ORD-12345` | Order details returned |
+| Valid email | `john@example.com` | Customer found |
+| Available slot | `2024-01-20, 10:00` | Slot confirmed |
+
+### Error Scenarios
+
+| Test | Input | Expected Output |
+|------|-------|-----------------|
+| Invalid order | `ORD-99999` | "Order not found" |
+| Bad format | `abc` | Validation error |
+| Timeout | (slow endpoint) | Timeout error |
+
+### Edge Cases
+
+| Test | Input | Expected Output |
+|------|-------|-----------------|
+| Empty input | `""` | Validation error |
+| Special characters | `O'Brien` | Handled correctly |
+| Very long input | 1000+ chars | Truncated or rejected |
+| Unicode | `日本語` | Handled correctly |
+
+---
+
+## Test Panel Features
+
+### Parameter Input
+
+Enter parameters as JSON:
+
+```json
+{
+  "order_number": "ORD-12345",
+  "include_items": true
+}
+```
+
+Or use the form view for structured input.
+
+### Context Override
+
+Simulate session context:
+
+```json
+{
+  "session": {
+    "id": "test_session",
+    "participant": {
+      "name": "Test User",
+      "phone": "+1234567890",
+      "email": "test@example.com"
+    },
+    "variables": {
+      "account_tier": "premium"
+    }
+  }
+}
+```
+
+### View Request
+
+See the actual request sent:
+
+```http
+POST https://api.example.com/orders/ORD-12345
+Content-Type: application/json
+Authorization: Bearer sk_test_xxx
+
+{
+  "include_items": true
+}
+```
+
+### View Response
+
+See the raw response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "order_number": "ORD-12345",
+    "status": "shipped",
+    "tracking": "1Z999ABC"
+  }
+}
+```
+
+---
+
+## Debugging
+
+### Enable Debug Mode
+
+Turn on detailed logging:
+
+```javascript
+{
+  "function": "order_lookup",
+  "debug": true,
+  "logLevel": "verbose"
+}
+```
+
+### Debug Output
+
+```
+[DEBUG] Function called: order_lookup
+[DEBUG] Parameters: {"order_number":"ORD-12345"}
+[DEBUG] Context: {"session":{"id":"sess_abc"...}}
+[DEBUG] Request URL: https://api.example.com/orders/ORD-12345
+[DEBUG] Request method: GET
+[DEBUG] Request headers: {"Authorization":"Bearer ***"}
+[DEBUG] Response status: 200
+[DEBUG] Response time: 234ms
+[DEBUG] Response body: {"success":true,"data":{...}}
+[DEBUG] Mapped output: {"status":"shipped","tracking":"1Z999ABC"}
+```
+
+### Common Issues
+
+| Issue | Debug Clue | Fix |
+|-------|------------|-----|
+| Timeout | No response logged | Increase timeout or optimize endpoint |
+| Auth error | 401 in response | Check credentials |
+| Wrong data | Unexpected response body | Check field mappings |
+| Parse error | JSON parse failed | Fix response format |
+
+---
+
+## Test Automation
+
+### Create Test Suites
+
+Organize tests by function:
+
+```javascript
+const testSuite = {
+  "order_lookup": [
+    {
+      "name": "Valid order",
+      "input": { "order_number": "ORD-12345" },
+      "expected": { "success": true }
+    },
+    {
+      "name": "Invalid order",
+      "input": { "order_number": "ORD-99999" },
+      "expected": { "success": false, "error": "not_found" }
+    }
+  ]
+};
+```
+
+### Run Automated Tests
+
+```javascript
+async function runTests(suites) {
+  for (const [funcName, tests] of Object.entries(suites)) {
+    console.log(`Testing ${funcName}...`);
+
+    for (const test of tests) {
+      const result = await vora.functions.test(funcName, {
+        parameters: test.input
+      });
+
+      const passed = result.success === test.expected.success;
+      console.log(`  ${test.name}: ${passed ? '✓' : '✗'}`);
+    }
+  }
+}
+```
+
+### CI/CD Integration
+
+Run tests in your pipeline:
+
+```yaml
+# GitHub Actions
+- name: Test Vora Functions
+  run: |
+    npm run test:functions
+  env:
+    VORA_API_KEY: ${{ secrets.VORA_API_KEY }}
+```
+
+---
+
+## Test Environment
+
+### Sandbox Mode
+
+Use sandbox credentials to avoid affecting production:
+
+| Setting | Sandbox | Production |
+|---------|---------|------------|
+| **API Key** | `sk_test_xxx` | `sk_live_xxx` |
+| **Data** | Test data | Real data |
+| **Billing** | Not charged | Charged |
+| **Webhooks** | Test endpoints | Production |
+
+### Mock Responses
+
+Configure mock responses for testing:
+
+```javascript
+{
+  "function": "order_lookup",
+  "testMode": {
+    "enabled": true,
+    "mockResponse": {
+      "success": true,
+      "data": {
+        "order_number": "ORD-12345",
+        "status": "shipped"
+      }
+    }
+  }
+}
+```
+
+### Test Data
+
+Use consistent test data:
+
+| Entity | Test Value |
+|--------|------------|
+| Order | `ORD-TEST-001` |
+| Email | `test@vora.ai` |
+| Phone | `+15555555555` |
+| Date | `2099-01-01` |
+
+---
+
+## Performance Testing
+
+### Latency Measurement
+
+Track execution time:
+
+| Percentile | Target | Actual |
+|------------|--------|--------|
+| P50 | &lt;500ms | 234ms ✓ |
+| P95 | &lt;1000ms | 567ms ✓ |
+| P99 | &lt;2000ms | 1234ms ✓ |
+
+### Load Testing
+
+Test under load:
+
+```javascript
+async function loadTest(functionId, concurrency, duration) {
+  const results = [];
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < duration) {
+    const batch = Array(concurrency).fill().map(() =>
+      vora.functions.test(functionId, { order_number: 'ORD-12345' })
+    );
+
+    const batchResults = await Promise.all(batch);
+    results.push(...batchResults);
+  }
+
+  return {
+    total: results.length,
+    success: results.filter(r => r.success).length,
+    avgLatency: avg(results.map(r => r.duration)),
+    p99Latency: percentile(results.map(r => r.duration), 99)
+  };
+}
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Test all code paths">
+    Cover success, error, and edge cases. Don't just test the happy path.
+  </Accordion>
+
+  <Accordion title="Use realistic data">
+    Test with data that resembles production. Fake orders should look like real ones.
+  </Accordion>
+
+  <Accordion title="Test timeout behavior">
+    Verify the function handles slow responses gracefully.
+  </Accordion>
+
+  <Accordion title="Automate regression tests">
+    Run tests automatically when functions change.
+  </Accordion>
+
+  <Accordion title="Test in simulator">
+    Function behavior in conversation can differ from isolated testing.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Checklist
+
+Before deploying a function:
+
+- [ ] Success cases tested
+- [ ] Error cases tested
+- [ ] Edge cases tested
+- [ ] Timeout behavior verified
+- [ ] Response mapping correct
+- [ ] Error messages clear
+- [ ] Latency acceptable
+- [ ] Works in simulator
+- [ ] Logged and monitored
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Functions" icon="code" href="/platform/functions">
+    Function overview
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/platform/integrations/webhooks">
+    Custom webhook functions
+  </Card>
+  <Card title="Agent Testing" icon="flask" href="/platform/agents/testing">
+    Test in context
+  </Card>
+  <Card title="Deployment" icon="rocket" href="/platform/agents/deployment">
+    Deploy your agent
+  </Card>
+</CardGroup>

@@ -1,0 +1,289 @@
+---
+title: URL Import
+description: Create agents by importing content from websites and documentation
+---
+
+# URL Import
+
+The URL Import method creates agents by extracting content from your website or documentation. It's the fastest way to build a knowledge-powered agent.
+
+---
+
+## How It Works
+
+1. **Provide URLs** - Enter your website, documentation, or FAQ pages
+2. **Content is extracted** - Vora crawls and extracts text content
+3. **Knowledge base is built** - Content is indexed for RAG retrieval
+4. **Agent is created** - A basic agent is configured to answer questions from the content
+
+---
+
+## Getting Started
+
+<Steps>
+  <Step title="Navigate to Create Agent">
+    Go to **Agents** → **Create Agent** → **URL Import**.
+  </Step>
+  <Step title="Enter URLs">
+    Enter one or more URLs to import:
+
+    ```
+    https://docs.yourcompany.com
+    https://yourcompany.com/faq
+    https://yourcompany.com/pricing
+    ```
+  </Step>
+  <Step title="Configure Crawling">
+    Set crawl options:
+    - **Depth** - How many links deep to follow
+    - **Page limit** - Maximum pages to crawl
+    - **Include/exclude patterns** - URL patterns to include or skip
+  </Step>
+  <Step title="Start Import">
+    Click **Import** to begin. Progress is shown in real-time.
+  </Step>
+</Steps>
+
+---
+
+## Crawl Settings
+
+### Crawl Depth
+
+| Depth | Description | Use Case |
+|-------|-------------|----------|
+| 1 | Only the provided URL | Single page FAQ |
+| 2 | Direct links from the page | Documentation section |
+| 3+ | Deeper nested pages | Full website |
+
+<Warning>
+  Deeper crawls take longer and may include irrelevant content. Start with depth 1-2.
+</Warning>
+
+### Page Limits
+
+Set the maximum number of pages to crawl:
+
+| Plan | Page Limit |
+|------|------------|
+| Free | 50 pages |
+| Pro | 500 pages |
+| Enterprise | Unlimited |
+
+### URL Patterns
+
+Use patterns to control what's included:
+
+**Include patterns** (only crawl matching URLs):
+```
+/docs/*
+/help/*
+/faq/*
+```
+
+**Exclude patterns** (skip matching URLs):
+```
+/blog/*
+/news/*
+/careers/*
+```
+
+---
+
+## Supported Content Types
+
+URL Import works best with:
+
+<CardGroup cols={2}>
+  <Card title="Documentation Sites" icon="book">
+    Markdown, HTML, or documentation platforms like GitBook, ReadMe, Notion
+  </Card>
+  <Card title="FAQ Pages" icon="circle-question">
+    Question-answer formatted content
+  </Card>
+  <Card title="Product Pages" icon="box">
+    Feature descriptions, specifications, pricing
+  </Card>
+  <Card title="Help Centers" icon="headset">
+    Support articles and troubleshooting guides
+  </Card>
+</CardGroup>
+
+### Content That Works Less Well
+
+- **Dynamic content** - JavaScript-rendered content may not be extracted
+- **Login-required pages** - Content behind authentication
+- **PDFs and images** - Text in images or PDFs won't be extracted (use document upload instead)
+- **Videos** - Video content is not transcribed
+
+---
+
+## Reviewing Imported Content
+
+After import, review what was captured:
+
+<Steps>
+  <Step title="View Extracted Pages">
+    See the list of pages that were crawled and their status.
+  </Step>
+  <Step title="Check Content Quality">
+    Click on individual pages to see extracted text. Look for:
+    - Missing content
+    - Irrelevant text (navigation, footers)
+    - Formatting issues
+  </Step>
+  <Step title="Remove Unwanted Pages">
+    Delete pages that shouldn't be in the knowledge base:
+    - Outdated content
+    - Irrelevant pages
+    - Duplicate content
+  </Step>
+  <Step title="Add Missing Content">
+    If important content was missed, add it manually:
+    - Upload documents
+    - Add individual URLs
+    - Paste text directly
+  </Step>
+</Steps>
+
+---
+
+## Customizing the Agent
+
+URL Import creates a basic agent. Customize it further:
+
+### Edit the System Prompt
+
+The default prompt is generic. Customize it for your use case:
+
+**Default:**
+```
+You are a helpful assistant that answers questions based on the provided knowledge base.
+```
+
+**Customized:**
+```
+You are a customer support agent for TechCorp. Answer questions about our products and services based on our documentation.
+
+Guidelines:
+- Be friendly and professional
+- If you're unsure, say so and offer to connect with a human
+- Focus on solving the customer's problem
+```
+
+### Select Appropriate Voice
+
+Choose a voice that matches your brand:
+- Corporate → Professional, clear voices
+- Consumer → Friendly, warm voices
+- Technical → Clear, precise voices
+
+### Add Functions
+
+Connect to external systems:
+- CRM lookup for customer information
+- Ticket creation for support issues
+- Calendar booking for appointments
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start with your most important pages">
+    Import your FAQ, getting started guide, or most-viewed documentation first. Add more content after testing.
+  </Accordion>
+
+  <Accordion title="Keep content focused">
+    A focused knowledge base produces better answers than a broad one. If you're building a support agent, import support content only.
+  </Accordion>
+
+  <Accordion title="Update regularly">
+    Set up scheduled re-crawls to keep content fresh:
+    - Weekly for documentation
+    - Daily for frequently changing content
+  </Accordion>
+
+  <Accordion title="Test with real questions">
+    After import, test with actual questions customers ask. This reveals gaps in the knowledge base.
+  </Accordion>
+
+  <Accordion title="Review extraction quality">
+    Some websites don't extract well. Check that the important content was captured and consider manual additions if needed.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Re-crawling
+
+Keep your knowledge base updated:
+
+### Manual Re-crawl
+
+1. Go to **Knowledge Base** → **Sources**
+2. Find the URL source
+3. Click **Re-crawl**
+
+### Scheduled Re-crawls
+
+Set up automatic updates:
+
+1. Go to **Knowledge Base** → **Sources**
+2. Click the URL source → **Settings**
+3. Enable **Scheduled Re-crawl**
+4. Set frequency (daily, weekly, monthly)
+
+<Note>
+  Re-crawls only update changed content. Unchanged pages are skipped to save processing time.
+</Note>
+
+---
+
+## Troubleshooting
+
+### Content Not Extracted
+
+**Problem:** Pages were crawled but have no content.
+
+**Solutions:**
+- Check if content is JavaScript-rendered (use browser developer tools)
+- Verify the page is publicly accessible
+- Try extracting as a single page instead of crawling
+
+### Wrong Content Extracted
+
+**Problem:** Navigation, footers, or irrelevant content is included.
+
+**Solutions:**
+- Use exclude patterns for unwanted sections
+- Edit the extracted content manually
+- Contact support for custom extraction rules
+
+### Pages Not Found
+
+**Problem:** Crawler returns 404 or can't access pages.
+
+**Solutions:**
+- Verify URLs are correct and accessible
+- Check robots.txt isn't blocking the crawler
+- Ensure no authentication is required
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Edit System Prompt" icon="code" href="/platform/agents/prompt-mode">
+    Customize agent behavior with prompt editing
+  </Card>
+  <Card title="Add More Documents" icon="file-arrow-up" href="/platform/knowledge-base/documents">
+    Upload PDFs, DOCX, and other files
+  </Card>
+  <Card title="Test Your Agent" icon="flask" href="/platform/agents/testing">
+    Verify the agent answers correctly
+  </Card>
+  <Card title="Deploy" icon="rocket" href="/platform/agents/deployment">
+    Go live with your agent
+  </Card>
+</CardGroup>

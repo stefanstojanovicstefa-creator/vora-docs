@@ -1,0 +1,429 @@
+---
+title: Naming Conventions
+description: Consistent naming patterns across the Vora codebase
+---
+
+# Naming Conventions
+
+Consistent naming improves code readability and maintainability. This guide covers all naming patterns used in the Vora platform.
+
+---
+
+## General Principles
+
+1. **Be descriptive** - Names should reveal intent
+2. **Be consistent** - Use the same pattern throughout
+3. **Be concise** - Long enough to be clear, short enough to be readable
+4. **Avoid abbreviations** - Except widely understood ones (API, URL, ID)
+
+---
+
+## Variables
+
+### Boolean Variables
+
+```typescript
+// ✅ Good - Use is/has/can/should prefix
+const isLoading = true;
+const hasPermission = false;
+const canEdit = user.role === 'admin';
+const shouldRefetch = staleTime < Date.now();
+
+// ❌ Bad - Unclear boolean naming
+const loading = true;
+const permission = false;
+const edit = true;
+```
+
+### Arrays and Collections
+
+```typescript
+// ✅ Good - Use plural nouns
+const agents: Agent[] = [];
+const userIds: string[] = [];
+const activeConnections = new Map<string, Connection>();
+
+// ✅ Good - Describe the collection
+const pendingJobs: Job[] = [];
+const failedAttempts: Attempt[] = [];
+
+// ❌ Bad - Singular for collections
+const agent: Agent[] = [];
+const userId: string[] = [];
+```
+
+### Counts and Quantities
+
+```typescript
+// ✅ Good - Use *Count suffix
+const agentCount = agents.length;
+const retryCount = 3;
+const maxTokenCount = 4000;
+
+// ❌ Bad - Ambiguous naming
+const agents = 5;  // Is this a count or array?
+const num = 3;
+```
+
+### Time Values
+
+```typescript
+// ✅ Good - Include unit in name
+const timeoutMs = 5000;
+const cacheTtlSeconds = 3600;
+const sessionDurationMinutes = 30;
+const retentionDays = 90;
+
+// ❌ Bad - Ambiguous time units
+const timeout = 5000;  // Seconds? Milliseconds?
+const cacheTtl = 3600;
+```
+
+---
+
+## Functions
+
+### Action Functions
+
+```typescript
+// ✅ Good - Verb prefix describing the action
+function createAgent(data: CreateAgentInput): Promise<Agent> {}
+function updateAgentConfig(id: string, config: Config): Promise<Agent> {}
+function deleteSession(sessionId: string): Promise<void> {}
+function validateInput(input: unknown): boolean {}
+function parseResponse(response: Response): ParsedData {}
+
+// ❌ Bad - Missing or unclear verb
+function agent(data: CreateAgentInput) {}
+function agentConfig(id: string, config: Config) {}
+function input(input: unknown) {}
+```
+
+### Getter Functions
+
+```typescript
+// ✅ Good - get* prefix for retrieving data
+function getAgentById(id: string): Promise<Agent | null> {}
+function getUserPreferences(userId: string): Preferences {}
+function getActiveConnections(): Connection[] {}
+
+// ✅ Good - find* for searching (may return multiple)
+function findAgentsByStatus(status: Status): Promise<Agent[]> {}
+function findMatchingDocuments(query: string): Document[] {}
+```
+
+### Boolean Functions
+
+```typescript
+// ✅ Good - is/has/can/should prefix
+function isValidEmail(email: string): boolean {}
+function hasPermission(user: User, action: Action): boolean {}
+function canAccessResource(userId: string, resourceId: string): boolean {}
+function shouldRetry(error: Error, attemptCount: number): boolean {}
+
+// ❌ Bad - Unclear return type
+function validEmail(email: string) {}
+function permission(user: User, action: Action) {}
+```
+
+### Event Handlers
+
+```typescript
+// ✅ Good - handle* for internal handlers
+function handleSubmit(event: FormEvent): void {}
+function handleAgentSelect(agent: Agent): void {}
+function handleConnectionError(error: Error): void {}
+
+// ✅ Good - on* for callback props
+interface Props {
+  onSubmit: (data: FormData) => void;
+  onAgentSelect: (agent: Agent) => void;
+  onError: (error: Error) => void;
+}
+```
+
+### Async Functions
+
+```typescript
+// ✅ Good - Name describes the operation, not that it's async
+async function fetchAgents(): Promise<Agent[]> {}
+async function saveDocument(doc: Document): Promise<void> {}
+async function processVoiceStream(stream: Stream): Promise<Result> {}
+
+// ❌ Bad - Redundant async in name
+async function fetchAgentsAsync() {}
+async function asyncGetAgents() {}
+```
+
+---
+
+## Types and Interfaces
+
+### Interface Naming
+
+```typescript
+// ✅ Good - PascalCase, descriptive noun
+interface User {
+  id: string;
+  email: string;
+}
+
+interface AgentConfiguration {
+  llm: LLMConfig;
+  stt: STTConfig;
+  tts: TTSConfig;
+}
+
+interface VoiceSessionState {
+  status: SessionStatus;
+  duration: number;
+}
+
+// ❌ Bad - I prefix (Hungarian notation)
+interface IUser {
+  id: string;
+}
+
+// ❌ Bad - Type suffix for interfaces
+interface UserType {
+  id: string;
+}
+```
+
+### Type Aliases
+
+```typescript
+// ✅ Good - Use for unions, intersections, and utility types
+type AgentStatus = 'draft' | 'active' | 'archived';
+type UserRole = 'user' | 'admin' | 'owner';
+type Nullable<T> = T | null;
+type AsyncResult<T> = Promise<Result<T>>;
+
+// ✅ Good - Use for complex mapped types
+type AgentWithRelations = Agent & {
+  knowledgeBase: KnowledgeBase | null;
+  sessions: Session[];
+};
+```
+
+### Props Interfaces
+
+```typescript
+// ✅ Good - ComponentNameProps pattern
+interface AgentCardProps {
+  agent: Agent;
+  onSelect: (agent: Agent) => void;
+}
+
+interface VoiceControlsProps {
+  isRecording: boolean;
+  onToggleRecording: () => void;
+  disabled?: boolean;
+}
+
+// ✅ Good - Separate read-only and action props
+interface AgentListProps {
+  // Data props
+  agents: Agent[];
+  isLoading: boolean;
+
+  // Action props
+  onAgentSelect: (agent: Agent) => void;
+  onCreateAgent: () => void;
+}
+```
+
+### Enum Naming
+
+```typescript
+// ✅ Good - PascalCase for enum, PascalCase for values
+enum AgentStatus {
+  Draft = 'draft',
+  Active = 'active',
+  Archived = 'archived',
+}
+
+enum Permission {
+  Read = 'read',
+  Write = 'write',
+  Admin = 'admin',
+}
+
+// ❌ Bad - SCREAMING_CASE for values (use for constants, not enums)
+enum Status {
+  DRAFT = 'draft',
+  ACTIVE = 'active',
+}
+```
+
+---
+
+## Files and Directories
+
+### React Components
+
+```
+components/
+├── AgentCard.tsx           # PascalCase
+├── AgentCard.test.tsx      # .test suffix
+├── VoiceControls.tsx
+├── VoiceControls.test.tsx
+└── ui/
+    ├── Button.tsx
+    └── Card.tsx
+```
+
+### Hooks
+
+```
+hooks/
+├── useAgents.ts            # camelCase with use prefix
+├── useVoiceSession.ts
+├── useLocalStorage.ts
+└── useDebounce.ts
+```
+
+### Services
+
+```
+services/
+├── agent.service.ts        # camelCase with .service suffix
+├── session.service.ts
+├── voice.service.ts
+└── analytics.service.ts
+```
+
+### Routes
+
+```
+routes/
+├── agents.ts               # camelCase, plural resource name
+├── sessions.ts
+├── webhooks.ts
+└── health.ts
+```
+
+### Types
+
+```
+types/
+├── agent.types.ts          # camelCase with .types suffix
+├── session.types.ts
+├── api.types.ts
+└── index.ts                # Re-exports all types
+```
+
+---
+
+## API Endpoints
+
+### REST Conventions
+
+```typescript
+// Resources: plural nouns
+GET    /agents              // List agents
+POST   /agents              // Create agent
+GET    /agents/:id          // Get agent
+PATCH  /agents/:id          // Update agent
+DELETE /agents/:id          // Delete agent
+
+// Nested resources
+GET    /agents/:id/sessions     // List agent's sessions
+POST   /agents/:id/sessions     // Create session for agent
+
+// Actions: verb suffix
+POST   /agents/:id/deploy       // Deploy agent
+POST   /agents/:id/archive      // Archive agent
+POST   /sessions/:id/end        // End session
+```
+
+### Query Parameters
+
+```typescript
+// ✅ Good - camelCase, descriptive
+GET /agents?status=active&sortBy=createdAt&sortOrder=desc
+GET /sessions?startDate=2024-01-01&endDate=2024-01-31
+GET /documents?pageSize=20&pageToken=abc123
+
+// ❌ Bad - Inconsistent casing
+GET /agents?Status=active&sort_by=created_at
+```
+
+---
+
+## Database
+
+### Table Names
+
+```sql
+-- ✅ Good - PascalCase, singular (Prisma convention)
+CREATE TABLE "Agent" (...)
+CREATE TABLE "Session" (...)
+CREATE TABLE "KnowledgeBase" (...)
+
+-- For join tables: both table names
+CREATE TABLE "AgentFunction" (...)
+```
+
+### Column Names
+
+```sql
+-- ✅ Good - camelCase (Prisma convention)
+CREATE TABLE "Agent" (
+  "id" TEXT PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT NOW(),
+  "updatedAt" TIMESTAMP,
+  "systemPrompt" TEXT,
+  "llmConfig" JSONB
+);
+```
+
+---
+
+## Constants
+
+### Application Constants
+
+```typescript
+// ✅ Good - SCREAMING_SNAKE_CASE
+const MAX_RETRY_COUNT = 3;
+const DEFAULT_TIMEOUT_MS = 5000;
+const API_BASE_URL = 'https://api.vora.io';
+
+// ✅ Good - Grouped in object for namespacing
+const LIMITS = {
+  MAX_AGENTS_PER_USER: 10,
+  MAX_SESSIONS_PER_AGENT: 100,
+  MAX_FILE_SIZE_MB: 50,
+} as const;
+```
+
+### Environment Variables
+
+```bash
+# ✅ Good - SCREAMING_SNAKE_CASE with prefix
+VORA_API_URL=https://api.vora.io
+VORA_DATABASE_URL=postgresql://...
+CLERK_PUBLISHABLE_KEY=pk_...
+OPENAI_API_KEY=sk_...
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Style Guide" icon="paint-brush" href="/internal/standards/style-guide">
+    Code formatting standards
+  </Card>
+  <Card title="Import Organization" icon="layer-group" href="/internal/standards/imports">
+    Import ordering rules
+  </Card>
+  <Card title="JSDoc Guidelines" icon="book" href="/internal/standards/jsdoc">
+    Documentation comments
+  </Card>
+  <Card title="Git Workflow" icon="code-branch" href="/internal/standards/git">
+    Commit and branch standards
+  </Card>
+</CardGroup>

@@ -1,0 +1,387 @@
+---
+title: Voice Settings
+description: Configure how your agent sounds
+---
+
+# Voice Settings
+
+Voice is a critical part of your agent's personality. This guide covers how to select and configure the perfect voice for your use case.
+
+---
+
+## Voice Architecture
+
+Vora's voice pipeline converts text to speech in real-time:
+
+```mermaid
+flowchart LR
+    T[LLM Response] --> TTS[Text-to-Speech]
+    TTS --> S[Streaming Audio]
+    S --> U[User Hears]
+
+    style U fill:#10b981,color:#fff
+```
+
+### Key Metrics
+
+| Metric | Description | Target |
+|--------|-------------|--------|
+| **Latency** | Time from text to first audio | &lt;200ms |
+| **Quality** | Natural, clear pronunciation | High |
+| **Consistency** | Same voice throughout session | 100% |
+
+---
+
+## Voice Providers
+
+Vora supports multiple Text-to-Speech providers:
+
+| Provider | Voices | Quality | Latency | Best For |
+|----------|--------|---------|---------|----------|
+| **ElevenLabs** | 100+ | Highest | Medium | Premium experiences |
+| **Cartesia** | 50+ | High | Low | Low-latency applications |
+| **Google Cloud** | 200+ | High | Low | Multilingual support |
+| **Amazon Polly** | 60+ | Good | Low | Cost-effective |
+| **Azure** | 300+ | High | Low | Enterprise deployments |
+
+<Tip>
+  **Recommendation**: Start with Cartesia for the best balance of quality and latency. Use ElevenLabs for premium experiences where quality is paramount.
+</Tip>
+
+---
+
+## Selecting a Voice
+
+### Voice Library
+
+Browse available voices in the Voice Library:
+
+1. Go to **Agent** → **Voice** → **Browse Voices**
+2. Filter by:
+   - Gender (Male, Female, Neutral)
+   - Accent (American, British, Australian, etc.)
+   - Style (Professional, Casual, Warm, etc.)
+   - Language
+3. Preview voices with sample text
+4. Select your preferred voice
+
+### Voice Categories
+
+<Tabs>
+  <Tab title="Female Voices">
+    | Voice | Provider | Characteristics | Best For |
+    |-------|----------|-----------------|----------|
+    | **Sarah** | ElevenLabs | Warm, professional | Customer support |
+    | **Emma** | ElevenLabs | Clear, energetic | Sales, marketing |
+    | **Priya** | Cartesia | Calm, soothing | Healthcare, wellness |
+    | **Maya** | Cartesia | Friendly, casual | Consumer apps |
+    | **Jessica** | Google | Neutral, clear | General purpose |
+  </Tab>
+  <Tab title="Male Voices">
+    | Voice | Provider | Characteristics | Best For |
+    |-------|----------|-----------------|----------|
+    | **Marcus** | ElevenLabs | Authoritative, clear | Enterprise, finance |
+    | **James** | ElevenLabs | Friendly, approachable | General purpose |
+    | **Raj** | Cartesia | Professional, neutral | Technical support |
+    | **Alex** | Cartesia | Casual, young | Startups, tech |
+    | **David** | Google | Clear, professional | Business |
+  </Tab>
+  <Tab title="Multilingual">
+    | Voice | Languages | Provider | Notes |
+    |-------|-----------|----------|-------|
+    | **Sofia** | Spanish, English | ElevenLabs | Neutral accent |
+    | **Hans** | German, English | Google | Clear pronunciation |
+    | **Yuki** | Japanese, English | Google | Natural intonation |
+    | **Pierre** | French, English | ElevenLabs | Parisian accent |
+  </Tab>
+</Tabs>
+
+---
+
+## Voice Settings
+
+### Speed
+
+Adjust speaking rate:
+
+| Setting | Value | Effect |
+|---------|-------|--------|
+| **Slow** | 0.75x | Clearer for complex info |
+| **Normal** | 1.0x | Natural conversation |
+| **Fast** | 1.25x | Efficient for simple info |
+
+<Warning>
+  Speaking too fast can reduce comprehension. Test with real users before speeding up.
+</Warning>
+
+### Pitch
+
+Adjust voice pitch (provider-dependent):
+
+| Setting | Value | Effect |
+|---------|-------|--------|
+| **Lower** | -20% | More authoritative |
+| **Normal** | 0% | Natural voice |
+| **Higher** | +20% | More energetic |
+
+### Stability (ElevenLabs)
+
+Controls voice consistency:
+
+| Setting | Value | Effect |
+|---------|-------|--------|
+| **Low** | 0.3 | More expressive, varies |
+| **Medium** | 0.5 | Balanced |
+| **High** | 0.8 | Very consistent |
+
+### Similarity (ElevenLabs)
+
+How closely to match the original voice:
+
+| Setting | Value | Effect |
+|---------|-------|--------|
+| **Low** | 0.3 | More variation |
+| **Medium** | 0.5 | Balanced |
+| **High** | 0.8 | Closest to original |
+
+---
+
+## Voice Preview
+
+Before applying a voice, preview it with sample text:
+
+1. Go to **Voice Settings**
+2. Select a voice
+3. Enter custom preview text (or use defaults)
+4. Click **Preview**
+5. Adjust settings as needed
+6. Save when satisfied
+
+### Sample Texts
+
+Use these to test different scenarios:
+
+```
+Greeting: "Hi! Thanks for calling. How can I help you today?"
+
+Information: "Your order number 12345 was shipped yesterday and should arrive by Friday."
+
+Apology: "I'm really sorry to hear that. Let me see what I can do to fix this for you."
+
+Technical: "To reset your password, go to settings, click security, and select 'Reset Password'."
+```
+
+---
+
+## Custom Voices
+
+### Voice Cloning (Enterprise)
+
+Create a custom voice from audio samples:
+
+<Steps>
+  <Step title="Prepare Samples">
+    Record 5-10 minutes of clear speech:
+    - High-quality microphone
+    - Quiet environment
+    - Natural speaking style
+    - Varied sentences
+  </Step>
+  <Step title="Upload Samples">
+    Go to **Voice** → **Custom Voices** → **Create**.
+  </Step>
+  <Step title="Process">
+    Voice processing takes 10-30 minutes.
+  </Step>
+  <Step title="Test and Refine">
+    Preview the cloned voice and provide feedback if needed.
+  </Step>
+</Steps>
+
+### Voice Requirements
+
+| Requirement | Specification |
+|-------------|---------------|
+| **Audio format** | WAV, MP3, M4A |
+| **Sample rate** | 44.1kHz or higher |
+| **Duration** | 5-10 minutes total |
+| **Quality** | No background noise |
+| **Content** | Natural speech, varied |
+
+### Legal Considerations
+
+<Warning>
+  Only clone voices with proper consent. You are responsible for ensuring you have rights to clone any voice.
+</Warning>
+
+---
+
+## Multilingual Support
+
+### Language Configuration
+
+Set the primary language for your agent:
+
+| Setting | Description |
+|---------|-------------|
+| **Primary language** | Main language for the agent |
+| **Accent** | Regional accent preference |
+| **Fallback** | Language if detection fails |
+
+### Automatic Language Detection
+
+Enable to automatically detect and respond in the caller's language:
+
+```javascript
+{
+  "voice": {
+    "languageDetection": true,
+    "supportedLanguages": ["en", "es", "fr", "de"],
+    "defaultLanguage": "en"
+  }
+}
+```
+
+### Per-Language Voices
+
+Configure different voices for each language:
+
+| Language | Voice | Accent |
+|----------|-------|--------|
+| English | Sarah | American |
+| Spanish | Sofia | Neutral |
+| French | Pierre | Parisian |
+| German | Hans | Standard |
+
+---
+
+## Advanced Settings
+
+### Pronunciation
+
+Customize how specific words are pronounced:
+
+```javascript
+{
+  "pronunciations": {
+    "SQL": "sequel",
+    "Vora": "voh-rah",
+    "API": "A-P-I",
+    "iOS": "eye-O-S"
+  }
+}
+```
+
+### SSML Support
+
+Use Speech Synthesis Markup Language for fine control:
+
+```xml
+<speak>
+  Your order
+  <say-as interpret-as="digits">12345</say-as>
+  is ready for pickup.
+  <break time="500ms"/>
+  Thank you for your order!
+</speak>
+```
+
+### Supported SSML Tags
+
+| Tag | Purpose | Example |
+|-----|---------|---------|
+| `<break>` | Pause | `<break time="500ms"/>` |
+| `<emphasis>` | Stress words | `<emphasis level="strong">important</emphasis>` |
+| `<prosody>` | Rate/pitch | `<prosody rate="slow">take your time</prosody>` |
+| `<say-as>` | Interpretation | `<say-as interpret-as="date">01/15/2024</say-as>` |
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Match voice to brand">
+    Choose a voice that aligns with your brand personality. A luxury brand might use a sophisticated voice; a casual app might use a friendly one.
+  </Accordion>
+
+  <Accordion title="Test with real users">
+    What sounds good to you might not work for your users. Gather feedback before finalizing.
+  </Accordion>
+
+  <Accordion title="Consider your audience">
+    Different demographics prefer different voice styles. Consider age, cultural background, and use case.
+  </Accordion>
+
+  <Accordion title="Keep it consistent">
+    Use the same voice across all touchpoints. Consistency builds recognition and trust.
+  </Accordion>
+
+  <Accordion title="Prioritize clarity over character">
+    An interesting voice that's hard to understand is worse than a clear, neutral one.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| **Robotic sound** | Low quality provider | Try ElevenLabs or Cartesia |
+| **Wrong pronunciation** | Technical terms | Add custom pronunciations |
+| **Too fast** | Speed setting | Reduce to 0.9x or lower |
+| **Inconsistent** | Low stability | Increase stability setting |
+| **Wrong language** | Language mismatch | Set correct primary language |
+
+### Audio Quality
+
+If audio quality is poor:
+
+1. Check the TTS provider status
+2. Verify network connectivity
+3. Try a different provider
+4. Contact support if persistent
+
+---
+
+## API Configuration
+
+```javascript
+// Configure voice settings via API
+await vora.agents.update('agent_abc123', {
+  voice: {
+    provider: 'elevenlabs',
+    voiceId: 'sarah',
+    settings: {
+      speed: 1.0,
+      stability: 0.5,
+      similarity: 0.75,
+    },
+    language: 'en-US',
+    pronunciations: {
+      'Vora': 'voh-rah',
+    },
+  },
+});
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Agent Configuration" icon="sliders" href="/platform/agents/configuration">
+    Configure other agent settings
+  </Card>
+  <Card title="Test Your Agent" icon="flask" href="/platform/agents/testing">
+    Test voice in the simulator
+  </Card>
+  <Card title="Deploy" icon="rocket" href="/platform/agents/deployment">
+    Go live with your agent
+  </Card>
+  <Card title="Voice Providers" icon="volume-high" href="/providers/tts">
+    Detailed provider documentation
+  </Card>
+</CardGroup>

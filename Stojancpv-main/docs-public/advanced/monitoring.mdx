@@ -1,0 +1,84 @@
+---
+title: Monitoring
+description: Real-time system health, provider status, and performance metrics
+---
+
+# Monitoring
+
+The Monitoring dashboard provides real-time visibility into your Vora platform's health, provider status, and performance metrics.
+
+<Info>
+  Monitoring is available in **Advanced Mode** only. In Simple Mode, use the Analytics page for agent-level metrics.
+</Info>
+
+---
+
+## Dashboard Overview
+
+The monitoring dashboard shows:
+
+| Panel | Description |
+|-------|-------------|
+| **Active Sessions** | Currently live calls across all agents |
+| **Provider Health** | Real-time status of STT, TTS, and LLM providers |
+| **Error Rate** | Percentage of failed requests in the last hour |
+| **Latency** | P50, P95, P99 response times across the pipeline |
+| **Cost Tracking** | Running cost total for the current billing period |
+
+---
+
+## Provider Health
+
+Each provider shows:
+- **Status** - Healthy, Degraded, or Down
+- **Latency** - Current average response time
+- **Error rate** - Percentage of failed requests
+- **Circuit breaker** - Open, Closed, or Half-Open
+
+<Warning>
+  If a provider shows **Down** status, check the [Advanced Tab](/advanced/command-center/advanced-tab) to ensure fallback providers are configured.
+</Warning>
+
+---
+
+## Alerts
+
+Configure alerts for critical conditions:
+
+| Alert Type | Default Threshold |
+|------------|------------------|
+| **Provider down** | Any provider returns 5+ consecutive errors |
+| **High latency** | P95 latency exceeds 2 seconds |
+| **Error spike** | Error rate exceeds 5% in 5 minutes |
+| **Budget threshold** | Spending exceeds configured limit |
+
+Alerts can be sent via:
+- Email notifications
+- Webhook callbacks
+- Dashboard banner
+
+---
+
+## Session Logs
+
+View real-time logs for active sessions:
+- STT transcription events
+- LLM request/response pairs
+- TTS generation events
+- Function call executions
+- Error events with stack traces
+
+Filter logs by:
+- Agent name
+- Session ID
+- Event type
+- Time range
+
+---
+
+## Metrics Export
+
+Export monitoring data for external dashboards:
+- **Prometheus** - Scrape metrics endpoint
+- **CSV Export** - Download historical data
+- **Webhook** - Push metrics to your monitoring system

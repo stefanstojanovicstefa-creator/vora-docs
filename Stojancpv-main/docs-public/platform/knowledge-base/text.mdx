@@ -1,0 +1,378 @@
+---
+title: Text Content
+description: Add text content directly to your knowledge base
+---
+
+# Text Content
+
+Add content directly to your knowledge base by pasting or typing text. This is the fastest way to add FAQs, quick notes, or content that doesn't exist as a document.
+
+---
+
+## When to Use Text Content
+
+<CardGroup cols={2}>
+  <Card title="FAQs" icon="circle-question">
+    Quick question-answer pairs that don't warrant full documents
+  </Card>
+  <Card title="Snippets" icon="scissors">
+    Specific pieces of information extracted from other sources
+  </Card>
+  <Card title="Updates" icon="clock">
+    Temporary or frequently changing information
+  </Card>
+  <Card title="Custom Answers" icon="pen">
+    Specific responses you want the agent to give
+  </Card>
+</CardGroup>
+
+---
+
+## Adding Text Content
+
+<Steps>
+  <Step title="Open Knowledge Base">
+    Go to **Knowledge Bases** → Select your KB → **Sources**.
+  </Step>
+  <Step title="Add Text Source">
+    Click **Add Source** → **Text**.
+  </Step>
+  <Step title="Enter Content">
+    Paste or type your content in the editor.
+  </Step>
+  <Step title="Add Metadata">
+    Optionally add:
+    - Title
+    - Category
+    - Tags
+    - Custom metadata
+  </Step>
+  <Step title="Save">
+    Click **Save**. Content is immediately chunked and indexed.
+  </Step>
+</Steps>
+
+---
+
+## Content Formatting
+
+### Plain Text
+
+Simple text is processed as-is:
+
+```
+Our business hours are Monday through Friday, 9 AM to 5 PM Eastern Time.
+We are closed on weekends and major holidays.
+For urgent matters outside business hours, please email support@example.com.
+```
+
+### Markdown
+
+Markdown formatting is supported and preserved:
+
+```markdown
+# Return Policy
+
+We offer **free returns** within 30 days of purchase.
+
+## Conditions
+- Items must be unused and in original packaging
+- Receipt or proof of purchase required
+- Some items are final sale (marked at checkout)
+
+## How to Return
+1. Visit our [returns portal](https://example.com/returns)
+2. Enter your order number
+3. Print the prepaid shipping label
+4. Drop off at any UPS location
+```
+
+### Q&A Format
+
+Structure content as questions and answers for better retrieval:
+
+```markdown
+## Frequently Asked Questions
+
+### What is your return policy?
+We accept returns within 30 days of purchase. Items must be unused and in original packaging.
+
+### How long does shipping take?
+Standard shipping takes 5-7 business days. Express shipping takes 2-3 business days.
+
+### Do you ship internationally?
+Yes, we ship to over 50 countries. International shipping typically takes 10-14 business days.
+```
+
+---
+
+## Text Entry Options
+
+### Editor Modes
+
+| Mode | Description |
+|------|-------------|
+| **Rich Text** | WYSIWYG editor with formatting toolbar |
+| **Markdown** | Raw markdown with preview |
+| **Plain Text** | No formatting, just text |
+
+### Import Options
+
+| Option | Description |
+|--------|-------------|
+| **Paste** | Copy/paste from any source |
+| **Type** | Write directly in editor |
+| **Import** | Upload a text file |
+
+---
+
+## Organization
+
+### Titles
+
+Give each text entry a descriptive title:
+
+| Good Title | Bad Title |
+|------------|-----------|
+| `Return Policy FAQ` | `Text 1` |
+| `Product Specifications - Widget Pro` | `Specs` |
+| `Holiday Hours 2024` | `Hours` |
+
+### Categories
+
+Organize text entries into categories:
+
+```
+Knowledge Base
+├── FAQs
+│   ├── Shipping FAQ
+│   ├── Returns FAQ
+│   └── Product FAQ
+├── Policies
+│   ├── Privacy Policy
+│   └── Terms of Service
+└── Temporary
+    ├── Holiday Hours
+    └── Sale Information
+```
+
+### Tags
+
+Add tags for filtering and organization:
+
+| Entry | Tags |
+|-------|------|
+| Return Policy | `policies`, `returns`, `support` |
+| Widget Pro Specs | `products`, `widget-pro`, `technical` |
+| Holiday Hours | `temporary`, `hours`, `seasonal` |
+
+---
+
+## Metadata
+
+Add custom metadata to text entries:
+
+```json
+{
+  "product": "Widget Pro",
+  "category": "support",
+  "priority": "high",
+  "expires": "2024-12-31",
+  "author": "support-team"
+}
+```
+
+### Using Metadata
+
+Metadata can be used for:
+- **Filtering**: Only retrieve content matching certain metadata
+- **Context**: Include metadata in retrieved chunks
+- **Management**: Track content ownership and freshness
+
+---
+
+## Bulk Text Import
+
+### Multiple Entries
+
+Import multiple text entries at once:
+
+1. Create a JSON or YAML file:
+
+```json
+[
+  {
+    "title": "Return Policy",
+    "content": "We accept returns within 30 days...",
+    "category": "Policies",
+    "tags": ["returns", "support"]
+  },
+  {
+    "title": "Shipping FAQ",
+    "content": "Standard shipping takes 5-7 business days...",
+    "category": "FAQs",
+    "tags": ["shipping", "faq"]
+  }
+]
+```
+
+2. Go to **Add Source** → **Bulk Import**
+3. Upload the file
+4. Review and confirm entries
+
+### Via API
+
+```javascript
+// Create single text entry
+const entry = await vora.knowledgeBase.text.create(
+  'kb_abc123',
+  {
+    title: 'Return Policy',
+    content: 'We accept returns within 30 days...',
+    category: 'Policies',
+    tags: ['returns', 'support'],
+    metadata: {
+      department: 'support',
+      lastReview: '2024-01-15',
+    },
+  }
+);
+
+// Bulk create
+const entries = await vora.knowledgeBase.text.bulkCreate(
+  'kb_abc123',
+  [
+    { title: 'Entry 1', content: '...' },
+    { title: 'Entry 2', content: '...' },
+  ]
+);
+```
+
+---
+
+## Editing Text Content
+
+### Making Changes
+
+1. Go to **Knowledge Base** → **Sources** → **Text**
+2. Click on the entry to edit
+3. Make changes in the editor
+4. Click **Save**
+
+<Note>
+  Editing text triggers re-chunking and re-embedding. Changes are reflected immediately in agent responses.
+</Note>
+
+### Version History
+
+View previous versions of text entries:
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| v3 (current) | Jan 20 | Sarah | Updated hours |
+| v2 | Jan 15 | Mike | Added holiday info |
+| v1 | Jan 10 | Sarah | Initial creation |
+
+Restore previous versions with one click.
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use clear, complete content">
+    Write content that stands alone. Include context that helps the agent understand when to use this information.
+  </Accordion>
+
+  <Accordion title="Structure for retrieval">
+    Use headings and Q&A format. This helps the chunking algorithm and improves retrieval accuracy.
+  </Accordion>
+
+  <Accordion title="Keep entries focused">
+    One topic per entry is better than mixing multiple topics. This improves retrieval precision.
+  </Accordion>
+
+  <Accordion title="Use consistent formatting">
+    Adopt a consistent style across all text entries. This makes content easier to maintain.
+  </Accordion>
+
+  <Accordion title="Add expiration dates for temporary content">
+    For seasonal or temporary information, add expiration metadata and review regularly.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Use Cases
+
+### FAQ Management
+
+```markdown
+## What payment methods do you accept?
+We accept all major credit cards (Visa, Mastercard, American Express), PayPal, and Apple Pay.
+
+## Is my payment information secure?
+Yes, we use industry-standard SSL encryption and never store your full credit card number.
+
+## Can I pay with cryptocurrency?
+We do not currently accept cryptocurrency payments.
+```
+
+### Product Information
+
+```markdown
+# Widget Pro Specifications
+
+- **Dimensions**: 10" x 6" x 4"
+- **Weight**: 2.5 lbs
+- **Power**: USB-C, 20W
+- **Battery**: 5000mAh, 8 hours usage
+- **Warranty**: 2 years limited
+
+## What's in the box
+- Widget Pro device
+- USB-C cable
+- Quick start guide
+- Warranty card
+```
+
+### Policy Snippets
+
+```markdown
+# Refund Timeline
+
+Refunds are processed within 5-7 business days after we receive your return.
+
+- **Credit card**: 3-5 additional days for bank processing
+- **PayPal**: Immediate once we process
+- **Store credit**: Instant, available immediately
+```
+
+---
+
+## Limits
+
+| Limit | Free | Pro | Enterprise |
+|-------|------|-----|------------|
+| **Text entries** | 20 | 200 | Unlimited |
+| **Max entry size** | 10,000 chars | 50,000 chars | 200,000 chars |
+| **Version history** | 5 versions | 20 versions | Unlimited |
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Add Documents" icon="file-arrow-up" href="/platform/knowledge-base/documents">
+    Upload PDFs and other files
+  </Card>
+  <Card title="Add URLs" icon="globe" href="/platform/knowledge-base/urls">
+    Sync from websites
+  </Card>
+  <Card title="Test Retrieval" icon="flask" href="/platform/knowledge-base#testing-your-knowledge-base">
+    Verify content is being retrieved
+  </Card>
+  <Card title="Connect to Agent" icon="robot" href="/platform/agents/configuration#knowledge-base">
+    Attach KB to your agent
+  </Card>
+</CardGroup>

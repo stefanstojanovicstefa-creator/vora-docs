@@ -1,0 +1,511 @@
+---
+title: Database Setup
+description: PostgreSQL configuration for Vora
+---
+
+# Database Setup
+
+Configure PostgreSQL for Vora self-hosted deployments.
+
+---
+
+## Requirements
+
+| Requirement | Specification |
+|-------------|---------------|
+| PostgreSQL Version | 14+ (15 recommended) |
+| Minimum Storage | 10 GB (production: 100+ GB) |
+| Extensions | `uuid-ossp`, `pgcrypto` |
+| Connection Pool | 10-100 connections |
+
+---
+
+## Quick Start
+
+### Option 1: Docker (Development)
+
+```bash
+# Start PostgreSQL with Docker
+docker run -d \
+  --name vora-postgres \
+  -e POSTGRES_USER=vora \
+  -e POSTGRES_PASSWORD=your_secure_password \
+  -e POSTGRES_DB=vora \
+  -p 5432:5432 \
+  -v postgres_data:/var/lib/postgresql/data \
+  postgres:15-alpine
+
+# Connection string
+DATABASE_URL=postgresql://vora:your_secure_password@localhost:5432/vora
+```
+
+### Option 2: Managed Database (Production)
+
+Recommended managed providers:
+
+| Provider | Features | Best For |
+|----------|----------|----------|
+| [Supabase](https://supabase.com) | Generous free tier, built-in pooling | Startups |
+| [Neon](https://neon.tech) | Serverless, auto-scaling | Variable workloads |
+| [Railway](https://railway.app) | Simple deployment | Quick setup |
+| [AWS RDS](https://aws.amazon.com/rds/) | Enterprise features | Large scale |
+| [Fly.io Postgres](https://fly.io/docs/postgres/) | Edge deployment | Low latency |
+
+### Option 3: Self-Managed
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install postgresql-15
+
+# Create database and user
+sudo -u postgres psql
+CREATE USER vora WITH PASSWORD 'your_secure_password';
+CREATE DATABASE vora OWNER vora;
+GRANT ALL PRIVILEGES ON DATABASE vora TO vora;
+
+# Enable required extensions
+\c vora
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+```
+
+---
+
+## Connection Configuration
+
+### Connection String Format
+
+```
+postgresql://[user]:[password]@[host]:[port]/[database]?[options]
+```
+
+### Examples
+
+```bash
+# Local development
+DATABASE_URL=postgresql://vora:password@localhost:5432/vora
+
+# With SSL (most managed providers)
+DATABASE_URL=postgresql://vora:password@db.example.com:5432/vora?sslmode=require
+
+# With connection pooling (Supabase)
+DATABASE_URL=postgresql://vora:password@db.xxx.supabase.co:6543/postgres?pgbouncer=true
+
+# Neon serverless
+DATABASE_URL=postgresql://vora:password@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+```
+
+### SSL Configuration
+
+```bash
+# Environment variables
+DATABASE_URL=postgresql://user:pass@host:5432/db?sslmode=require
+DATABASE_SSL=true
+
+# For custom CA certificates
+DATABASE_CA_CERT=/path/to/ca-certificate.crt
+```
+
+---
+
+## Schema Management
+
+### Run Migrations
+
+Vora uses Prisma for database migrations.
+
+```bash
+# Development: Generate and apply migrations
+npx prisma migrate dev
+
+# Production: Apply pending migrations
+npx prisma migrate deploy
+
+# Reset database (WARNING: destroys all data)
+npx prisma migrate reset
+```
+
+### Verify Schema
+
+```bash
+# Check migration status
+npx prisma migrate status
+
+# View current schema
+npx prisma db pull
+
+# Generate Prisma client
+npx prisma generate
+```
+
+### Docker Migration
+
+```bash
+# Run migrations in Docker
+docker compose exec backend npx prisma migrate deploy
+
+# Or standalone
+docker run --rm \
+  -e DATABASE_URL=postgresql://... \
+  vorahq/vora-backend:latest \
+  npx prisma migrate deploy
+```
+
+---
+
+## Connection Pooling
+
+### Why Pooling Matters
+
+- Reduces connection overhead
+- Prevents connection exhaustion
+- Essential for serverless environments
+
+### Using PgBouncer
+
+```yaml
+# docker-compose.yml
+services:
+  pgbouncer:
+    image: edoburu/pgbouncer:1.21.0
+    environment:
+      DATABASE_URL: postgresql://vora:password@postgres:5432/vora
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 20
+    ports:
+      - "6432:6432"
+```
+
+```bash
+# Use PgBouncer connection
+DATABASE_URL=postgresql://vora:password@pgbouncer:6432/vora
+```
+
+### Prisma Connection Pool
+
+```bash
+# Configure in DATABASE_URL
+DATABASE_URL=postgresql://...?connection_limit=10&pool_timeout=30
+```
+
+### Supabase Pooling
+
+```bash
+# Transaction mode (port 6543) - recommended for Prisma
+DATABASE_URL=postgresql://...@db.xxx.supabase.co:6543/postgres?pgbouncer=true
+
+# Session mode (port 5432) - for migrations
+DATABASE_URL=postgresql://...@db.xxx.supabase.co:5432/postgres
+```
+
+---
+
+## Performance Tuning
+
+### PostgreSQL Configuration
+
+```sql
+-- postgresql.conf recommendations for Vora
+
+# Memory (adjust based on available RAM)
+shared_buffers = 256MB          # 25% of RAM, max ~8GB
+effective_cache_size = 768MB    # 75% of RAM
+work_mem = 16MB                 # Per-operation memory
+maintenance_work_mem = 128MB    # For VACUUM, INDEX
+
+# Connections
+max_connections = 100           # Adjust based on pool size
+
+# WAL (Write-Ahead Log)
+wal_buffers = 16MB
+checkpoint_completion_target = 0.9
+max_wal_size = 2GB
+
+# Query Planning
+random_page_cost = 1.1          # For SSD storage
+effective_io_concurrency = 200  # For SSD storage
+
+# Logging (for debugging)
+log_min_duration_statement = 1000  # Log queries > 1 second
+```
+
+### Docker with Custom Config
+
+```yaml
+services:
+  postgres:
+    image: postgres:15-alpine
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c max_connections=100
+      -c work_mem=16MB
+```
+
+---
+
+## High Availability
+
+### Primary-Replica Setup
+
+```yaml
+# docker-compose.yml
+services:
+  postgres-primary:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: vora
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: vora
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c max_replication_slots=3
+
+  postgres-replica:
+    image: postgres:15-alpine
+    environment:
+      PGUSER: replicator
+      PGPASSWORD: ${REPLICA_PASSWORD}
+    command: >
+      pg_basebackup
+      -h postgres-primary
+      -D /var/lib/postgresql/data
+      -U replicator
+      -vP
+      -W
+```
+
+### Read Replicas
+
+Configure application to use replicas for read queries:
+
+```typescript
+// Prisma read replicas (preview feature)
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+});
+
+// For read operations, use replica
+const readPrisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_READ_URL,
+    },
+  },
+});
+```
+
+---
+
+## Backup & Recovery
+
+### Automated Backups
+
+```bash
+#!/bin/bash
+# backup.sh - Run daily via cron
+
+BACKUP_DIR=/backups
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE=$BACKUP_DIR/vora_$DATE.sql.gz
+
+# Create backup
+pg_dump -h localhost -U vora -d vora | gzip > $BACKUP_FILE
+
+# Upload to S3
+aws s3 cp $BACKUP_FILE s3://your-bucket/backups/
+
+# Keep only last 7 days locally
+find $BACKUP_DIR -name "vora_*.sql.gz" -mtime +7 -delete
+```
+
+### Docker Backup
+
+```bash
+# Backup
+docker compose exec -T postgres pg_dump -U vora vora | gzip > backup.sql.gz
+
+# Restore
+gunzip -c backup.sql.gz | docker compose exec -T postgres psql -U vora vora
+```
+
+### Point-in-Time Recovery (PITR)
+
+For managed databases, enable PITR:
+
+- **Supabase**: Automatic, 7-day retention
+- **AWS RDS**: Enable in settings
+- **Neon**: Automatic branching
+
+---
+
+## Monitoring
+
+### Essential Metrics
+
+| Metric | Query | Alert Threshold |
+|--------|-------|-----------------|
+| Connection count | `SELECT count(*) FROM pg_stat_activity` | > 80% max |
+| Database size | `SELECT pg_database_size('vora')` | > 80% disk |
+| Slow queries | `pg_stat_statements` | > 1 second |
+| Cache hit ratio | `pg_stat_database` | < 95% |
+
+### Monitoring Query
+
+```sql
+-- Active connections
+SELECT
+  datname,
+  usename,
+  application_name,
+  client_addr,
+  state,
+  query_start,
+  query
+FROM pg_stat_activity
+WHERE datname = 'vora'
+ORDER BY query_start DESC;
+
+-- Table sizes
+SELECT
+  relname AS table_name,
+  pg_size_pretty(pg_total_relation_size(relid)) AS total_size
+FROM pg_catalog.pg_statio_user_tables
+ORDER BY pg_total_relation_size(relid) DESC
+LIMIT 10;
+
+-- Cache hit ratio
+SELECT
+  sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)) AS cache_hit_ratio
+FROM pg_statio_user_tables;
+```
+
+### Using pg_stat_statements
+
+```sql
+-- Enable extension
+CREATE EXTENSION pg_stat_statements;
+
+-- Slow queries
+SELECT
+  query,
+  calls,
+  mean_exec_time,
+  total_exec_time
+FROM pg_stat_statements
+ORDER BY mean_exec_time DESC
+LIMIT 10;
+```
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection refused">
+    **Check PostgreSQL is running:**
+    ```bash
+    # Docker
+    docker compose ps postgres
+
+    # System
+    sudo systemctl status postgresql
+    ```
+
+    **Check connection string:**
+    - Verify host, port, user, password
+    - Check network/firewall rules
+    - Verify SSL settings match server
+  </Accordion>
+
+  <Accordion title="Too many connections">
+    **Check current connections:**
+    ```sql
+    SELECT count(*) FROM pg_stat_activity;
+    ```
+
+    **Solutions:**
+    - Use connection pooling (PgBouncer)
+    - Increase `max_connections`
+    - Check for connection leaks
+    - Reduce pool size in application
+  </Accordion>
+
+  <Accordion title="Database locked / slow queries">
+    **Find blocking queries:**
+    ```sql
+    SELECT
+      blocked_locks.pid AS blocked_pid,
+      blocking_locks.pid AS blocking_pid,
+      blocked_activity.query AS blocked_query,
+      blocking_activity.query AS blocking_query
+    FROM pg_catalog.pg_locks blocked_locks
+    JOIN pg_catalog.pg_stat_activity blocked_activity ON blocked_activity.pid = blocked_locks.pid
+    JOIN pg_catalog.pg_locks blocking_locks ON blocking_locks.locktype = blocked_locks.locktype
+    JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+    WHERE NOT blocked_locks.granted;
+    ```
+
+    **Kill blocking query:**
+    ```sql
+    SELECT pg_terminate_backend(pid);
+    ```
+  </Accordion>
+
+  <Accordion title="Out of disk space">
+    **Check database size:**
+    ```sql
+    SELECT pg_size_pretty(pg_database_size('vora'));
+    ```
+
+    **Clean up:**
+    ```sql
+    -- Reclaim space
+    VACUUM FULL;
+
+    -- Remove old data (application-specific)
+    DELETE FROM agent_sessions WHERE created_at < NOW() - INTERVAL '30 days';
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Security Checklist
+
+- [ ] Use strong password (32+ characters)
+- [ ] Enable SSL connections
+- [ ] Restrict network access (firewall)
+- [ ] Use least-privilege database user
+- [ ] Enable connection encryption
+- [ ] Regular security updates
+- [ ] Audit logging enabled
+- [ ] Backup encryption
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Redis Setup" icon="bolt" href="/self-hosting/redis">
+    Configure Redis
+  </Card>
+  <Card title="Environment Variables" icon="key" href="/self-hosting/environment">
+    Complete configuration
+  </Card>
+  <Card title="Scaling Guide" icon="arrows-alt" href="/self-hosting/scaling">
+    Scale your database
+  </Card>
+  <Card title="Monitoring" icon="chart-area" href="/self-hosting/monitoring">
+    Set up observability
+  </Card>
+</CardGroup>

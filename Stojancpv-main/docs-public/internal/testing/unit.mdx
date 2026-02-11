@@ -1,0 +1,551 @@
+---
+title: Unit Testing
+description: Unit testing patterns and best practices for the Vora platform
+---
+
+# Unit Testing
+
+Unit tests verify individual functions and classes in isolation. This guide covers patterns for effective unit testing in the Vora codebase.
+
+---
+
+## Test Structure
+
+### AAA Pattern
+
+```typescript
+describe('AgentService.create', () => {
+  it('creates agent with valid input', async () => {
+    // Arrange - Set up test data and mocks
+    const userId = 'user_123';
+    const input = createAgentInput();
+    prismaMock.agent.create.mockResolvedValue(mockAgent);
+
+    // Act - Execute the function under test
+    const result = await agentService.create(userId, input);
+
+    // Assert - Verify the outcome
+    expect(result.name).toBe(input.name);
+    expect(result.status).toBe('draft');
+    expect(prismaMock.agent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ userId }),
+      })
+    );
+  });
+});
+```
+
+### Describe Blocks
+
+```typescript
+describe('AgentService', () => {
+  describe('create', () => {
+    it('creates agent with valid input', async () => {});
+    it('throws ValidationError for invalid config', async () => {});
+    it('throws QuotaError when limit reached', async () => {});
+  });
+
+  describe('update', () => {
+    it('updates agent fields', async () => {});
+    it('throws NotFoundError for missing agent', async () => {});
+    it('throws ForbiddenError for unauthorized user', async () => {});
+  });
+
+  describe('delete', () => {
+    it('soft deletes agent', async () => {});
+    it('cleans up related resources', async () => {});
+  });
+});
+```
+
+---
+
+## Test Naming
+
+### Clear Test Names
+
+```typescript
+// ✅ Good - Describes expected behavior
+it('creates agent with draft status when no status provided', async () => {});
+it('throws ValidationError when system prompt exceeds 10000 characters', async () => {});
+it('returns null when agent not found', async () => {});
+
+// ❌ Bad - Vague or implementation-focused
+it('works correctly', async () => {});
+it('calls prisma.create', async () => {});
+it('test create agent', async () => {});
+```
+
+### Edge Cases
+
+```typescript
+describe('calculateSessionCost', () => {
+  it('returns 0 for zero duration', () => {});
+  it('rounds up to nearest cent', () => {});
+  it('handles very long sessions', () => {});
+  it('handles fractional minutes', () => {});
+});
+```
+
+---
+
+## Mocking
+
+### Prisma Mocking
+
+```typescript
+// tests/mocks/prisma.ts
+import { PrismaClient } from '@prisma/client';
+import { DeepMockProxy, mockDeep, mockReset } from 'vitest-mock-extended';
+
+export type MockPrismaClient = DeepMockProxy<PrismaClient>;
+
+export const prismaMock = mockDeep<PrismaClient>();
+
+vi.mock('@/lib/prisma', () => ({
+  prisma: prismaMock,
+}));
+
+beforeEach(() => {
+  mockReset(prismaMock);
+});
+```
+
+### Usage in Tests
+
+```typescript
+import { prismaMock } from '../mocks/prisma';
+import { agentService } from '@/services/agent.service';
+
+describe('AgentService', () => {
+  it('finds agent by ID', async () => {
+    const mockAgent = {
+      id: 'ag_123',
+      name: 'Test Agent',
+      status: 'active',
+    };
+
+    prismaMock.agent.findUnique.mockResolvedValue(mockAgent);
+
+    const result = await agentService.findById('ag_123');
+
+    expect(result).toEqual(mockAgent);
+    expect(prismaMock.agent.findUnique).toHaveBeenCalledWith({
+      where: { id: 'ag_123' },
+    });
+  });
+});
+```
+
+### External Service Mocking
+
+```typescript
+// Mock entire module
+vi.mock('@/providers/llm/openai', () => ({
+  OpenAIProvider: vi.fn().mockImplementation(() => ({
+    chat: vi.fn().mockResolvedValue({ content: 'Hello!' }),
+    stream: vi.fn(),
+  })),
+}));
+
+// Or use spyOn for specific methods
+const chatSpy = vi.spyOn(openaiProvider, 'chat');
+chatSpy.mockResolvedValue({ content: 'Mocked response' });
+```
+
+### Queue Mocking
+
+```typescript
+vi.mock('@/workers/queue', () => ({
+  knowledgeQueue: {
+    add: vi.fn().mockResolvedValue({ id: 'job_123' }),
+    getJob: vi.fn(),
+  },
+}));
+
+import { knowledgeQueue } from '@/workers/queue';
+
+it('queues document for indexing', async () => {
+  await documentService.upload(file);
+
+  expect(knowledgeQueue.add).toHaveBeenCalledWith(
+    'index-document',
+    expect.objectContaining({ documentId: expect.any(String) })
+  );
+});
+```
+
+---
+
+## Assertions
+
+### Common Assertions
+
+```typescript
+// Equality
+expect(result).toBe(expected);           // Strict equality
+expect(result).toEqual(expected);        // Deep equality
+expect(result).toStrictEqual(expected);  // Deep + type equality
+
+// Truthiness
+expect(result).toBeTruthy();
+expect(result).toBeFalsy();
+expect(result).toBeNull();
+expect(result).toBeUndefined();
+expect(result).toBeDefined();
+
+// Numbers
+expect(result).toBeGreaterThan(0);
+expect(result).toBeLessThanOrEqual(100);
+expect(result).toBeCloseTo(0.3, 5);
+
+// Strings
+expect(result).toMatch(/pattern/);
+expect(result).toContain('substring');
+
+// Arrays
+expect(result).toHaveLength(3);
+expect(result).toContain(item);
+expect(result).toContainEqual({ id: '123' });
+
+// Objects
+expect(result).toHaveProperty('name');
+expect(result).toHaveProperty('user.email');
+expect(result).toMatchObject({ status: 'active' });
+```
+
+### Custom Matchers
+
+```typescript
+// Partial matching
+expect(result).toEqual(
+  expect.objectContaining({
+    status: 'active',
+    createdAt: expect.any(Date),
+  })
+);
+
+// Array containing
+expect(result).toEqual(
+  expect.arrayContaining([
+    expect.objectContaining({ type: 'user' }),
+  ])
+);
+```
+
+### Async Assertions
+
+```typescript
+// Resolved value
+await expect(promise).resolves.toBe('value');
+await expect(promise).resolves.toMatchObject({ id: '123' });
+
+// Rejected error
+await expect(promise).rejects.toThrow('Error message');
+await expect(promise).rejects.toThrow(NotFoundError);
+await expect(promise).rejects.toMatchObject({
+  code: 'NOT_FOUND',
+});
+```
+
+---
+
+## Testing Async Code
+
+### Promises
+
+```typescript
+it('fetches agent data', async () => {
+  prismaMock.agent.findUnique.mockResolvedValue(mockAgent);
+
+  const result = await agentService.findById('ag_123');
+
+  expect(result).toEqual(mockAgent);
+});
+```
+
+### Error Handling
+
+```typescript
+it('throws NotFoundError when agent missing', async () => {
+  prismaMock.agent.findUnique.mockResolvedValue(null);
+
+  await expect(agentService.findById('ag_999')).rejects.toThrow(
+    NotFoundError
+  );
+});
+
+it('throws with correct error details', async () => {
+  prismaMock.agent.findUnique.mockResolvedValue(null);
+
+  await expect(agentService.findById('ag_999')).rejects.toMatchObject({
+    code: 'NOT_FOUND',
+    message: 'Agent not found',
+  });
+});
+```
+
+### Timers
+
+```typescript
+import { vi, beforeEach, afterEach } from 'vitest';
+
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+it('retries after delay', async () => {
+  const mockFn = vi.fn()
+    .mockRejectedValueOnce(new Error('fail'))
+    .mockResolvedValueOnce('success');
+
+  const promise = retryWithDelay(mockFn, { delay: 1000 });
+
+  await vi.advanceTimersByTimeAsync(1000);
+
+  const result = await promise;
+  expect(result).toBe('success');
+  expect(mockFn).toHaveBeenCalledTimes(2);
+});
+```
+
+---
+
+## Test Data
+
+### Factories
+
+```typescript
+// tests/factories/agent.factory.ts
+import { faker } from '@faker-js/faker';
+import type { Agent } from '@prisma/client';
+
+export function createAgent(overrides: Partial<Agent> = {}): Agent {
+  return {
+    id: `ag_${faker.string.alphanumeric(12)}`,
+    userId: `user_${faker.string.alphanumeric(12)}`,
+    name: faker.company.name() + ' Agent',
+    description: faker.lorem.sentence(),
+    systemPrompt: faker.lorem.paragraphs(2),
+    status: 'draft',
+    llmConfig: { provider: 'openai', model: 'gpt-4' },
+    sttConfig: { provider: 'deepgram', language: 'en-US' },
+    ttsConfig: { provider: 'elevenlabs', voiceId: 'rachel' },
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.recent(),
+    ...overrides,
+  };
+}
+
+export function createAgentInput(overrides = {}) {
+  return {
+    name: faker.company.name() + ' Agent',
+    systemPrompt: faker.lorem.paragraphs(2),
+    llm: { provider: 'openai', model: 'gpt-4' },
+    stt: { provider: 'deepgram', language: 'en-US' },
+    tts: { provider: 'elevenlabs', voiceId: 'rachel' },
+    ...overrides,
+  };
+}
+```
+
+### Fixtures
+
+```typescript
+// tests/fixtures/agents.fixture.ts
+export const agents = {
+  active: {
+    id: 'ag_active123',
+    name: 'Active Agent',
+    status: 'active',
+    // ...
+  },
+  draft: {
+    id: 'ag_draft456',
+    name: 'Draft Agent',
+    status: 'draft',
+    // ...
+  },
+  archived: {
+    id: 'ag_archived789',
+    name: 'Archived Agent',
+    status: 'archived',
+    // ...
+  },
+};
+```
+
+---
+
+## Service Testing
+
+### Complete Example
+
+```typescript
+// tests/unit/services/agent.service.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+import { AgentService } from '@/services/agent.service';
+import { prismaMock } from '../../mocks/prisma';
+import { createAgent, createAgentInput } from '../../factories/agent.factory';
+import { NotFoundError, ValidationError } from '@/lib/errors';
+
+describe('AgentService', () => {
+  let service: AgentService;
+
+  beforeEach(() => {
+    service = new AgentService();
+    vi.clearAllMocks();
+  });
+
+  describe('create', () => {
+    it('creates agent with valid input', async () => {
+      const userId = 'user_123';
+      const input = createAgentInput();
+      const expectedAgent = createAgent({ userId, ...input });
+
+      prismaMock.agent.create.mockResolvedValue(expectedAgent);
+
+      const result = await service.create(userId, input);
+
+      expect(result).toEqual(expectedAgent);
+      expect(prismaMock.agent.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId,
+          name: input.name,
+          status: 'draft',
+        }),
+      });
+    });
+
+    it('throws ValidationError for empty name', async () => {
+      const input = createAgentInput({ name: '' });
+
+      await expect(service.create('user_123', input)).rejects.toThrow(
+        ValidationError
+      );
+    });
+  });
+
+  describe('findById', () => {
+    it('returns agent when found', async () => {
+      const agent = createAgent();
+      prismaMock.agent.findUnique.mockResolvedValue(agent);
+
+      const result = await service.findById(agent.id);
+
+      expect(result).toEqual(agent);
+    });
+
+    it('returns null when not found', async () => {
+      prismaMock.agent.findUnique.mockResolvedValue(null);
+
+      const result = await service.findById('ag_nonexistent');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('delete', () => {
+    it('soft deletes agent', async () => {
+      const agent = createAgent();
+      prismaMock.agent.findUnique.mockResolvedValue(agent);
+      prismaMock.agent.update.mockResolvedValue({
+        ...agent,
+        status: 'archived',
+      });
+
+      await service.delete(agent.id, agent.userId);
+
+      expect(prismaMock.agent.update).toHaveBeenCalledWith({
+        where: { id: agent.id },
+        data: { status: 'archived' },
+      });
+    });
+
+    it('throws NotFoundError for missing agent', async () => {
+      prismaMock.agent.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.delete('ag_missing', 'user_123')
+      ).rejects.toThrow(NotFoundError);
+    });
+  });
+});
+```
+
+---
+
+## Utility Testing
+
+```typescript
+// tests/unit/utils/format.test.ts
+import { describe, it, expect } from 'vitest';
+import {
+  formatDuration,
+  formatCurrency,
+  truncateText,
+} from '@/utils/format';
+
+describe('formatDuration', () => {
+  it.each([
+    [0, '0s'],
+    [1000, '1s'],
+    [60000, '1m 0s'],
+    [90000, '1m 30s'],
+    [3600000, '1h 0m 0s'],
+    [3661000, '1h 1m 1s'],
+  ])('formats %i ms as %s', (ms, expected) => {
+    expect(formatDuration(ms)).toBe(expected);
+  });
+});
+
+describe('formatCurrency', () => {
+  it.each([
+    [0, '$0.00'],
+    [0.1, '$0.10'],
+    [1.5, '$1.50'],
+    [1234.56, '$1,234.56'],
+  ])('formats %f as %s', (amount, expected) => {
+    expect(formatCurrency(amount)).toBe(expected);
+  });
+});
+
+describe('truncateText', () => {
+  it('returns original if under limit', () => {
+    expect(truncateText('hello', 10)).toBe('hello');
+  });
+
+  it('truncates with ellipsis', () => {
+    expect(truncateText('hello world', 8)).toBe('hello...');
+  });
+
+  it('handles empty string', () => {
+    expect(truncateText('', 10)).toBe('');
+  });
+});
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Testing Overview" icon="flask" href="/internal/testing/overview">
+    Testing philosophy
+  </Card>
+  <Card title="Integration Testing" icon="layer-group" href="/internal/testing/integration">
+    API testing
+  </Card>
+  <Card title="Mocking Guide" icon="masks-theater" href="/internal/testing/mocking">
+    Mock strategies
+  </Card>
+  <Card title="Test Coverage" icon="chart-pie" href="/internal/testing/overview#coverage-requirements">
+    Coverage requirements
+  </Card>
+</CardGroup>

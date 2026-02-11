@@ -1,0 +1,211 @@
+---
+title: LLM Providers
+description: 15 language model providers for Vora voice agents
+---
+
+# LLM Providers
+
+Vora integrates with **15 language model providers** for agent intelligence. Choose based on language support, reasoning quality, latency, and cost.
+
+---
+
+## Available Providers
+
+<CardGroup cols={3}>
+  <Card title="Google" icon="google" href="/providers/llm/google">
+    Gemini 2.5 Flash/Pro - Fastest, 100+ languages
+  </Card>
+  <Card title="OpenAI" icon="circle-o" href="/providers/llm/openai">
+    GPT-4o, GPT-5 - Industry standard
+  </Card>
+  <Card title="Anthropic" icon="a" href="/providers/llm/anthropic">
+    Claude Sonnet 4 / Opus 4 - Reasoning
+  </Card>
+  <Card title="Groq" icon="bolt" href="/providers/llm/groq">
+    Llama 3 - Ultra-low latency hardware
+  </Card>
+  <Card title="Mistral" icon="wind" href="/providers/llm/mistral">
+    Mistral Large - EU hosting, 20+ languages
+  </Card>
+  <Card title="Cohere" icon="c" href="/providers/llm/cohere">
+    Command-R+, Aya Expanse - Enterprise RAG
+  </Card>
+  <Card title="Qwen" icon="earth-asia" href="/languages/llm-providers">
+    Qwen 2.5 - Best for Asian/SEA languages
+  </Card>
+  <Card title="Sarvam" icon="globe" href="/languages/hindi">
+    Sarvam 2B - Best for 11 Indian languages
+  </Card>
+  <Card title="Falcon" icon="feather" href="/languages/arabic">
+    Falcon Arabic - Best for Arabic
+  </Card>
+  <Card title="xAI" icon="x" href="/languages/llm-providers">
+    Grok 3 - Real-time data access
+  </Card>
+  <Card title="DeepSeek" icon="magnifying-glass" href="/languages/llm-providers">
+    DeepSeek V3 - Code and reasoning
+  </Card>
+</CardGroup>
+
+---
+
+## Comparison Matrix
+
+| Provider | Model | Languages | Latency (TTFT) | Input / Output (per 1M tokens) | Best For |
+|----------|-------|-----------|-----------------|-------------------------------|----------|
+| [Google](/providers/llm/google) | Gemini 2.5 Flash | 100+ | ~100ms | $0.15 / $0.60 | Voice agents (default) |
+| [Google](/providers/llm/google) | Gemini 2.5 Pro | 100+ | ~300ms | $1.25-$2.50 / $10-$15 | Research, 1M context |
+| [OpenAI](/providers/llm/openai) | GPT-4o | 50+ | ~300ms | $5 / $15 | General quality |
+| [OpenAI](/providers/llm/openai) | GPT-4o-mini | 50+ | ~150ms | $0.15 / $0.60 | Fast, cost-effective |
+| [OpenAI](/providers/llm/openai) | GPT-5 | 50+ | ~200ms | $1.25 / $10 | Advanced reasoning |
+| [Anthropic](/providers/llm/anthropic) | Claude Sonnet 4 | 30+ | ~300ms | $3 / $15 | Coding, reasoning |
+| [Anthropic](/providers/llm/anthropic) | Claude Opus 4 | 30+ | ~500ms | $15 / $75 | Complex analysis |
+| [Groq](/providers/llm/groq) | Llama 3 (70B) | 20+ | ~50ms | $0.05 / $0.08 | Lowest latency |
+| [Mistral](/providers/llm/mistral) | Mistral Large | 20+ | ~300ms | $2-$6 | EU compliance |
+| [Cohere](/providers/llm/cohere) | Command-R+ | 23 | ~400ms | $2.50 / $10 | RAG, enterprise |
+| [Cohere](/providers/llm/cohere) | Aya Expanse | 23 | ~300ms | $0.50 / $1.50 | Multilingual focus |
+| Qwen | Qwen 2.5 | 100+ | ~200ms | $0.30 / $0.90 | Asian/SEA languages |
+| xAI | Grok 3 | 20+ | ~300ms | $3 / $15 | Real-time data |
+| Sarvam | Sarvam 2B | 11 Indian | ~200ms | ~$0.02/min | Indian languages |
+| Falcon | Falcon Arabic | Arabic + EN | ~300ms | Enterprise | Arabic + dialects |
+| DeepSeek | DeepSeek V3 | 30+ | ~300ms | $0.27 / $1.10 | Code, reasoning |
+
+<Note>
+  Prices are approximate and subject to change. Check provider pricing pages for current rates.
+</Note>
+
+---
+
+## Choosing a Provider
+
+### By Use Case
+
+| Use Case | Recommended | Why |
+|----------|-------------|-----|
+| **Voice agents (general)** | Gemini 2.5 Flash | Lowest latency, 100+ languages, best cost |
+| **English conversations** | GPT-4o or Gemini Flash | Both excellent for English |
+| **Complex reasoning** | Claude Sonnet 4 or GPT-5 | Best analytical capabilities |
+| **Indian languages** | Sarvam 2B | Purpose-built for 11 Indian languages |
+| **Arabic** | Falcon Arabic | Best Arabic dialect understanding |
+| **SEA languages** | Qwen 2.5 | Strong Asian language support |
+| **European languages** | Mistral Large | EU hosting, GDPR compliant |
+| **Budget-conscious** | GPT-4o-mini or Gemini Flash | $0.15/1M input tokens |
+| **RAG-heavy** | Cohere Command-R+ | Built for retrieval workflows |
+
+### By Region
+
+| Region | Best Providers |
+|--------|---------------|
+| **Global/English** | Gemini Flash, GPT-4o |
+| **India** | Sarvam 2B, Gemini, GPT-4o |
+| **MENA** | Falcon Arabic, Gemini, GPT-4o |
+| **Southeast Asia** | Qwen 2.5, Gemini, GPT-4o |
+| **Europe** | Mistral Large, Claude, GPT-4o |
+
+---
+
+## Key Considerations
+
+### Speed (Time to First Token)
+
+For voice agents, low latency is critical:
+
+| Rank | Provider | TTFT |
+|------|----------|------|
+| 1 | Groq (Llama 3) | ~50ms |
+| 2 | Gemini 2.5 Flash | ~100ms |
+| 3 | GPT-4o-mini | ~150ms |
+| 4 | Qwen 2.5 | ~200ms |
+| 5 | Claude Sonnet 4 | ~300ms |
+
+### Cost Efficiency
+
+For voice agents (short responses, many calls):
+
+| Rank | Provider | Cost (Input/Output per 1M tokens) |
+|------|----------|-----------------------------------|
+| 1 | Groq | $0.05 / $0.08 |
+| 2 | Gemini Flash | $0.15 / $0.60 |
+| 3 | GPT-4o-mini | $0.15 / $0.60 |
+| 4 | DeepSeek | $0.27 / $1.10 |
+| 5 | Qwen 2.5 | $0.30 / $0.90 |
+
+### Multilingual Quality
+
+| Rank | Provider | Coverage |
+|------|----------|----------|
+| 1 | Gemini | 100+ languages, best overall coverage |
+| 2 | Qwen | Strong Asian/SEA language support |
+| 3 | GPT-4o | Good across 50+ languages |
+| 4 | Sarvam 2B | Best for 11 Indian languages |
+| 5 | Falcon Arabic | Best for Arabic + dialects |
+
+---
+
+## Voice Agent Recommendations
+
+For most voice agents, we recommend:
+
+| Component | Provider | Why |
+|-----------|----------|-----|
+| **Primary LLM** | Gemini 2.5 Flash | Lowest latency, 100+ languages, best cost |
+| **Fallback LLM** | GPT-4o-mini | Fast, reliable fallback |
+| **Complex tasks** | Claude Sonnet 4 | When reasoning quality matters more than speed |
+
+<Tip>
+  For voice agents, speed matters more than raw intelligence. Callers are waiting on the line. Gemini Flash at 100ms TTFT provides a much better experience than GPT-4o at 300ms, even though GPT-4o may score higher on benchmarks.
+</Tip>
+
+---
+
+## Configuration
+
+Configure LLM providers in the Command Center [Brain Tab](/advanced/command-center/brain-tab):
+1. Select your LLM provider and model
+2. Set temperature and max tokens
+3. Write your system prompt
+4. Configure a fallback LLM in the [Advanced Tab](/advanced/command-center/advanced-tab)
+
+### API Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'My Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  model: {
+    provider: 'google',
+    model: 'gemini-2.5-flash',
+    temperature: 0.7,
+    maxTokens: 1024
+  }
+});
+```
+
+---
+
+## Provider Details
+
+<CardGroup cols={3}>
+  <Card title="Google" icon="google" href="/providers/llm/google">
+    Gemini 2.5 Flash/Pro
+  </Card>
+  <Card title="OpenAI" icon="circle-o" href="/providers/llm/openai">
+    GPT-4o, GPT-5
+  </Card>
+  <Card title="Anthropic" icon="a" href="/providers/llm/anthropic">
+    Claude Sonnet 4 / Opus 4
+  </Card>
+  <Card title="Groq" icon="bolt" href="/providers/llm/groq">
+    Llama 3 - ultra-fast
+  </Card>
+  <Card title="Mistral" icon="wind" href="/providers/llm/mistral">
+    Mistral Large
+  </Card>
+  <Card title="Cohere" icon="c" href="/providers/llm/cohere">
+    Command-R+, Aya
+  </Card>
+</CardGroup>
+
+<Tip>
+  For detailed language-specific provider recommendations, see the [LLM Provider Comparison](/languages/llm-providers) page.
+</Tip>

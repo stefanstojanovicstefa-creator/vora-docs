@@ -1,0 +1,195 @@
+---
+title: Internal Documentation
+description: Technical documentation for the Vora development team
+---
+
+# Internal Documentation
+
+Technical documentation for the Vora Voice AI Platform development team. This section covers architecture, coding standards, testing patterns, deployment procedures, and team runbooks.
+
+---
+
+## Quick Links
+
+<CardGroup cols={3}>
+  <Card title="New Developer?" icon="user-plus" href="/internal/onboarding/new-developer">
+    Start here for local setup and codebase tour
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/internal/architecture/overview">
+    Understand the 5-layer system design
+  </Card>
+  <Card title="Incident?" icon="fire" href="/internal/runbooks/incident-response">
+    Follow the incident response runbook
+  </Card>
+</CardGroup>
+
+---
+
+## Documentation Sections
+
+### Architecture
+
+System design and component documentation.
+
+<CardGroup cols={2}>
+  <Card title="System Overview" icon="layer-group" href="/internal/architecture/overview">
+    5-layer architecture and component relationships
+  </Card>
+  <Card title="Backend Architecture" icon="server" href="/internal/architecture/backend">
+    Express + Prisma patterns and service layer
+  </Card>
+  <Card title="Frontend Architecture" icon="browser" href="/internal/architecture/frontend">
+    React + TanStack Query patterns
+  </Card>
+  <Card title="Voice Pipeline" icon="microphone" href="/internal/architecture/voice-pipeline">
+    LiveKit + Agent runtime architecture
+  </Card>
+  <Card title="Provider System" icon="puzzle-piece" href="/internal/architecture/providers">
+    LLM, STT, TTS provider abstraction
+  </Card>
+  <Card title="Data Flow" icon="arrows-alt" href="/internal/architecture/data-flow">
+    Request/response flows through the system
+  </Card>
+</CardGroup>
+
+---
+
+### Coding Standards
+
+Style guides and conventions for consistent code.
+
+<CardGroup cols={2}>
+  <Card title="Style Guide" icon="paint-brush" href="/internal/standards/style-guide">
+    Code formatting and structure rules
+  </Card>
+  <Card title="Naming Conventions" icon="tag" href="/internal/standards/naming">
+    File, variable, and function naming patterns
+  </Card>
+  <Card title="Import Ordering" icon="sort" href="/internal/standards/imports">
+    Module import organization
+  </Card>
+  <Card title="JSDoc Patterns" icon="file-code" href="/internal/standards/jsdoc">
+    Documentation comment standards
+  </Card>
+  <Card title="Git Workflow" icon="code-branch" href="/internal/standards/git">
+    Branching, commits, and PR process
+  </Card>
+</CardGroup>
+
+---
+
+### Testing
+
+Testing strategies and patterns.
+
+<CardGroup cols={2}>
+  <Card title="Testing Overview" icon="vial" href="/internal/testing/overview">
+    Test pyramid and coverage goals
+  </Card>
+  <Card title="Unit Testing" icon="cube" href="/internal/testing/unit">
+    Vitest patterns for unit tests
+  </Card>
+  <Card title="Integration Testing" icon="cubes" href="/internal/testing/integration">
+    API and database testing
+  </Card>
+  <Card title="E2E Testing" icon="globe" href="/internal/testing/e2e">
+    Playwright browser testing
+  </Card>
+  <Card title="Security Testing" icon="shield-alt" href="/internal/testing/security">
+    Security vulnerability testing
+  </Card>
+  <Card title="Mocking Patterns" icon="theater-masks" href="/internal/testing/mocking">
+    Test doubles and stubs
+  </Card>
+</CardGroup>
+
+---
+
+### Deployment
+
+Deployment procedures and checklists.
+
+<CardGroup cols={2}>
+  <Card title="Deployment Overview" icon="rocket" href="/internal/deployment/overview">
+    Environments and deployment pipeline
+  </Card>
+  <Card title="Staging Guide" icon="flask" href="/internal/deployment/staging">
+    Staging environment setup and testing
+  </Card>
+  <Card title="Production Checklist" icon="check-double" href="/internal/deployment/production">
+    Pre-deployment verification steps
+  </Card>
+  <Card title="Database Migrations" icon="database" href="/internal/deployment/migrations">
+    Prisma migration procedures
+  </Card>
+  <Card title="Rollback Procedures" icon="undo" href="/internal/deployment/rollback">
+    How to safely roll back changes
+  </Card>
+</CardGroup>
+
+---
+
+### Onboarding
+
+Getting started as a new team member.
+
+<CardGroup cols={2}>
+  <Card title="New Developer" icon="user-astronaut" href="/internal/onboarding/new-developer">
+    Complete onboarding guide
+  </Card>
+  <Card title="Local Setup" icon="laptop-code" href="/internal/onboarding/local-setup">
+    Development environment setup
+  </Card>
+  <Card title="Codebase Tour" icon="map" href="/internal/onboarding/codebase-tour">
+    Navigate the project structure
+  </Card>
+  <Card title="First Contribution" icon="code-pull-request" href="/internal/onboarding/first-contribution">
+    Your first PR guide
+  </Card>
+</CardGroup>
+
+---
+
+### Runbooks
+
+Operational procedures for incidents and issues.
+
+<CardGroup cols={2}>
+  <Card title="Incident Response" icon="bell" href="/internal/runbooks/incident-response">
+    How to handle production incidents
+  </Card>
+  <Card title="Provider Outages" icon="plug" href="/internal/runbooks/provider-outages">
+    Handling LLM/STT/TTS failures
+  </Card>
+  <Card title="Database Issues" icon="database" href="/internal/runbooks/database">
+    Common database problems and fixes
+  </Card>
+</CardGroup>
+
+---
+
+## Key Metrics
+
+| Metric | Target | Current |
+|--------|--------|---------|
+| Test Coverage | > 80% | ~75% |
+| P95 API Latency | < 200ms | ~150ms |
+| Deploy Frequency | Daily | 2-3/week |
+| MTTR (incidents) | < 30 min | ~20 min |
+| Code Review Time | < 24h | ~8h |
+
+---
+
+## Contact
+
+| Role | Contact |
+|------|---------|
+| Engineering Lead | @eng-lead |
+| DevOps | @devops-team |
+| On-call | Check PagerDuty |
+
+---
+
+<Note>
+This documentation is for internal team use only. For public API and SDK documentation, see the [Developer Docs](/developers) section.
+</Note>

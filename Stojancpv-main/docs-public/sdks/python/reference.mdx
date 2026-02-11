@@ -1,0 +1,705 @@
+---
+title: API Reference
+description: Complete Python SDK method reference
+---
+
+# Python SDK Reference
+
+Complete reference for all methods and types in the Vora Python SDK.
+
+---
+
+## VoraClient
+
+Main client class for API access.
+
+### Constructor
+
+```python
+from vora import VoraClient
+
+client = VoraClient(
+    api_key: str = None,           # Required: Your API key (or VORA_API_KEY env)
+    base_url: str = None,          # Custom API endpoint
+    timeout: float = 30.0,         # Request timeout (seconds)
+    max_retries: int = 3,          # Retry attempts
+    retry_delay: float = 1.0,      # Base retry delay (seconds)
+    http_client: httpx.AsyncClient = None  # Custom HTTP client
+)
+```
+
+### Context Manager
+
+```python
+async with VoraClient() as client:
+    agent = await client.agents.create(...)
+# Client automatically closed
+```
+
+### Manual Cleanup
+
+```python
+client = VoraClient()
+try:
+    # Use client
+    pass
+finally:
+    await client.close()
+```
+
+---
+
+## Agents
+
+### agents.create
+
+Create a new agent.
+
+```python
+agent = await client.agents.create(
+    name: str,                              # Required
+    system_prompt: str,                     # Required
+    voice: VoiceConfig = None,
+    model: ModelConfig = None,
+    greeting: str = None,
+    end_conversation_phrases: List[str] = None,
+    functions: List[FunctionDefinition] = None,
+    knowledge_base: KnowledgeBaseConfig = None,
+    metadata: Dict[str, Any] = None
+) -> Agent
+```
+
+### agents.get
+
+Get an agent by ID.
+
+```python
+agent = await client.agents.get(
+    id: str,
+    include: List[str] = None  # ["functions", "knowledge_base"]
+) -> Agent
+```
+
+### agents.list
+
+List all agents.
+
+```python
+result = await client.agents.list(
+    limit: int = 20,              # Max: 100
+    after: str = None,            # Cursor for pagination
+    status: AgentStatus = None,   # Filter by status
+    order_by: str = "created_at", # "created_at" | "updated_at" | "name"
+    order: str = "desc"           # "asc" | "desc"
+) -> ListResult[Agent]
+```
+
+### agents.update
+
+Update an agent.
+
+```python
+agent = await client.agents.update(
+    id: str,
+    name: str = None,
+    system_prompt: str = None,
+    voice: VoiceConfig = None,
+    model: ModelConfig = None,
+    greeting: str = None,
+    end_conversation_phrases: List[str] = None,
+    functions: List[FunctionDefinition] = None,
+    knowledge_base: KnowledgeBaseConfig = None,
+    metadata: Dict[str, Any] = None
+) -> Agent
+```
+
+### agents.delete
+
+Delete an agent.
+
+```python
+await client.agents.delete(id: str) -> None
+```
+
+### agents.pause
+
+Pause an agent.
+
+```python
+agent = await client.agents.pause(id: str) -> Agent
+```
+
+### agents.resume
+
+Resume a paused agent.
+
+```python
+agent = await client.agents.resume(id: str) -> Agent
+```
+
+### agents.clone
+
+Clone an agent.
+
+```python
+clone = await client.agents.clone(
+    id: str,
+    name: str = None,
+    status: AgentStatus = None
+) -> Agent
+```
+
+### agents.test
+
+Test an agent.
+
+```python
+result = await client.agents.test(
+    id: str,
+    message: str,
+    variables: Dict[str, Any] = None
+) -> TestResult
+# TestResult has: reply (str), latency (int)
+```
+
+---
+
+## Sessions
+
+### sessions.create
+
+Create a new session.
+
+```python
+session = await client.sessions.create(
+    agent_id: str,                          # Required
+    user_id: str = None,
+    variables: Dict[str, Any] = None,
+    metadata: Dict[str, Any] = None,
+    options: SessionOptions = None
+) -> Session
+```
+
+**SessionOptions:**
+
+```python
+@dataclass
+class SessionOptions:
+    initial_message: str = None
+    skip_greeting: bool = False
+    recording_enabled: bool = True
+```
+
+### sessions.get
+
+Get a session by ID.
+
+```python
+session = await client.sessions.get(
+    id: str,
+    include: List[str] = None  # ["transcript", "recording", "analytics"]
+) -> Session
+```
+
+### sessions.list
+
+List sessions.
+
+```python
+result = await client.sessions.list(
+    limit: int = 20,
+    after: str = None,
+    agent_id: str = None,
+    user_id: str = None,
+    status: SessionStatus = None,
+    start_date: str = None,
+    end_date: str = None,
+    order_by: str = "created_at",
+    order: str = "desc"
+) -> ListResult[Session]
+```
+
+### sessions.update
+
+Update session metadata.
+
+```python
+session = await client.sessions.update(
+    id: str,
+    metadata: Dict[str, Any] = None
+) -> Session
+```
+
+### sessions.end
+
+End a session.
+
+```python
+await client.sessions.end(
+    id: str,
+    reason: str = None,
+    message: str = None
+) -> None
+```
+
+### sessions.get_transcript
+
+Get session transcript.
+
+```python
+transcript = await client.sessions.get_transcript(
+    id: str,
+    format: str = "json",          # "json" | "text"
+    include_timestamps: bool = True
+) -> Transcript
+```
+
+### sessions.get_recording
+
+Get session recording.
+
+```python
+recording = await client.sessions.get_recording(id: str) -> Recording
+```
+
+### sessions.transfer
+
+Transfer a session.
+
+```python
+transfer = await client.sessions.transfer(
+    id: str,
+    destination: str,              # Phone number or agent ID
+    context: Dict[str, Any] = None,
+    warm_transfer: bool = False,
+    whisper_message: str = None
+) -> TransferResult
+```
+
+---
+
+## Knowledge Bases
+
+### knowledge_bases.create
+
+Create a knowledge base.
+
+```python
+kb = await client.knowledge_bases.create(
+    name: str,
+    description: str = None,
+    embedding_model: str = None,
+    metadata: Dict[str, Any] = None
+) -> KnowledgeBase
+```
+
+### knowledge_bases.get
+
+Get a knowledge base.
+
+```python
+kb = await client.knowledge_bases.get(id: str) -> KnowledgeBase
+```
+
+### knowledge_bases.list
+
+List knowledge bases.
+
+```python
+result = await client.knowledge_bases.list(
+    limit: int = 20,
+    after: str = None
+) -> ListResult[KnowledgeBase]
+```
+
+### knowledge_bases.add_documents
+
+Add documents.
+
+```python
+docs = await client.knowledge_bases.add_documents(
+    id: str,
+    documents: List[DocumentInput]
+) -> List[Document]
+```
+
+### knowledge_bases.query
+
+Query a knowledge base.
+
+```python
+results = await client.knowledge_bases.query(
+    id: str,
+    query: str,
+    top_k: int = 5,
+    threshold: float = 0.7
+) -> List[QueryResult]
+```
+
+### knowledge_bases.delete
+
+Delete a knowledge base.
+
+```python
+await client.knowledge_bases.delete(id: str) -> None
+```
+
+---
+
+## Phone Numbers
+
+### phone_numbers.search
+
+Search available numbers.
+
+```python
+numbers = await client.phone_numbers.search(
+    country: str,
+    area_code: str = None,
+    contains: str = None,
+    limit: int = 10
+) -> List[AvailableNumber]
+```
+
+### phone_numbers.purchase
+
+Purchase a number.
+
+```python
+number = await client.phone_numbers.purchase(
+    phone_number: str,
+    friendly_name: str = None
+) -> PhoneNumber
+```
+
+### phone_numbers.get
+
+Get a phone number.
+
+```python
+number = await client.phone_numbers.get(id: str) -> PhoneNumber
+```
+
+### phone_numbers.list
+
+List phone numbers.
+
+```python
+result = await client.phone_numbers.list(
+    limit: int = 20,
+    after: str = None
+) -> ListResult[PhoneNumber]
+```
+
+### phone_numbers.update
+
+Update a phone number.
+
+```python
+number = await client.phone_numbers.update(
+    id: str,
+    friendly_name: str = None,
+    metadata: Dict[str, Any] = None
+) -> PhoneNumber
+```
+
+### phone_numbers.assign_agent
+
+Assign an agent to a number.
+
+```python
+await client.phone_numbers.assign_agent(
+    id: str,
+    agent_id: str,
+    mode: str = "both"  # "inbound" | "outbound" | "both"
+) -> None
+```
+
+### phone_numbers.release
+
+Release a phone number.
+
+```python
+await client.phone_numbers.release(id: str) -> None
+```
+
+---
+
+## Webhooks
+
+### webhooks.create
+
+Create a webhook endpoint.
+
+```python
+webhook = await client.webhooks.create(
+    url: str,
+    events: List[WebhookEvent],
+    secret: str = None
+) -> Webhook
+```
+
+### webhooks.get
+
+Get a webhook.
+
+```python
+webhook = await client.webhooks.get(id: str) -> Webhook
+```
+
+### webhooks.list
+
+List webhooks.
+
+```python
+result = await client.webhooks.list(
+    limit: int = 20,
+    after: str = None
+) -> ListResult[Webhook]
+```
+
+### webhooks.update
+
+Update a webhook.
+
+```python
+webhook = await client.webhooks.update(
+    id: str,
+    url: str = None,
+    events: List[WebhookEvent] = None,
+    enabled: bool = None
+) -> Webhook
+```
+
+### webhooks.delete
+
+Delete a webhook.
+
+```python
+await client.webhooks.delete(id: str) -> None
+```
+
+### webhooks.test
+
+Send a test event.
+
+```python
+result = await client.webhooks.test(
+    id: str,
+    event: WebhookEvent
+) -> WebhookTestResult
+```
+
+---
+
+## Analytics
+
+### analytics.sessions
+
+Get session metrics.
+
+```python
+metrics = await client.analytics.sessions(
+    start_date: str,
+    end_date: str,
+    agent_id: str = None,
+    granularity: str = "day"
+) -> SessionMetrics
+```
+
+### analytics.performance
+
+Get performance metrics.
+
+```python
+metrics = await client.analytics.performance(
+    start_date: str,
+    end_date: str,
+    agent_id: str = None
+) -> PerformanceMetrics
+```
+
+### analytics.functions
+
+Get function usage metrics.
+
+```python
+metrics = await client.analytics.functions(
+    start_date: str,
+    end_date: str,
+    agent_id: str = None
+) -> FunctionMetrics
+```
+
+---
+
+## Types
+
+### Agent
+
+```python
+from vora.types import Agent
+from typing import Literal
+
+@dataclass
+class Agent:
+    id: str
+    name: str
+    system_prompt: str
+    voice: VoiceConfig | None
+    model: ModelConfig | None
+    greeting: str | None
+    end_conversation_phrases: list[str] | None
+    functions: list[FunctionDefinition] | None
+    knowledge_base: KnowledgeBaseConfig | None
+    status: Literal["draft", "active", "paused", "archived"]
+    metadata: dict[str, Any] | None
+    created_at: datetime
+    updated_at: datetime
+```
+
+### Session
+
+```python
+@dataclass
+class Session:
+    id: str
+    agent_id: str
+    user_id: str | None
+    status: Literal["created", "connecting", "active", "ending", "completed", "failed"]
+    token: str
+    room_url: str
+    duration: int | None
+    variables: dict[str, Any] | None
+    metadata: dict[str, Any] | None
+    expires_at: datetime
+    created_at: datetime
+    ended_at: datetime | None
+```
+
+### VoiceConfig
+
+```python
+@dataclass
+class VoiceConfig:
+    provider: Literal["elevenlabs", "cartesia", "google"]
+    voice_id: str | None = None
+    model: str | None = None
+    stability: float | None = None
+    similarity_boost: float | None = None
+    style: float | None = None
+    use_speaker_boost: bool | None = None
+    speed: float | None = None
+    language_code: str | None = None
+    voice_name: str | None = None
+    speaking_rate: float | None = None
+    pitch: float | None = None
+```
+
+### ModelConfig
+
+```python
+@dataclass
+class ModelConfig:
+    provider: Literal["openai", "anthropic", "google", "groq"]
+    model: str
+    temperature: float | None = None
+    max_tokens: int | None = None
+    top_p: float | None = None
+    frequency_penalty: float | None = None
+    presence_penalty: float | None = None
+```
+
+### FunctionDefinition
+
+```python
+@dataclass
+class FunctionDefinition:
+    name: str
+    description: str
+    parameters: dict  # JSON Schema
+    handler: FunctionHandler
+
+@dataclass
+class FunctionHandler:
+    type: Literal["webhook", "builtin"]
+    url: str | None = None
+    method: Literal["GET", "POST", "PUT", "DELETE"] | None = None
+    headers: dict[str, str] | None = None
+    action: str | None = None
+    config: dict[str, Any] | None = None
+```
+
+### Transcript
+
+```python
+@dataclass
+class Transcript:
+    session_id: str
+    messages: list[TranscriptMessage]
+    duration: int
+    word_count: int
+
+@dataclass
+class TranscriptMessage:
+    speaker: Literal["agent", "user"]
+    text: str
+    timestamp: datetime
+```
+
+---
+
+## Exceptions
+
+```python
+from vora.exceptions import (
+    VoraError,              # Base error class
+    AuthenticationError,    # 401 errors
+    AuthorizationError,     # 403 errors
+    NotFoundError,          # 404 errors
+    ValidationError,        # 400 errors
+    RateLimitError,         # 429 errors
+    InternalError           # 500 errors
+)
+
+# Base error properties
+class VoraError(Exception):
+    type: str
+    code: str
+    message: str
+    details: dict[str, Any] | None
+    request_id: str | None
+
+# RateLimitError has additional property
+class RateLimitError(VoraError):
+    retry_after: int  # Seconds until retry
+```
+
+---
+
+## Synchronous Methods
+
+All async methods have synchronous counterparts with `sync_` prefix:
+
+```python
+# Async
+agent = await client.agents.create(...)
+session = await client.sessions.create(...)
+
+# Sync
+agent = client.agents.sync_create(...)
+session = client.sessions.sync_create(...)
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/developers/quickstarts/python">
+    Get started quickly
+  </Card>
+  <Card title="Examples" icon="github" href="https://github.com/vora-ai/examples-python">
+    Sample code
+  </Card>
+</CardGroup>

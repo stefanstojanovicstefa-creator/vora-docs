@@ -1,0 +1,584 @@
+---
+title: Webhook Events
+description: Complete reference for all webhook event types and payloads
+---
+
+# Webhook Events
+
+This page documents all webhook events and their payload structures.
+
+## Event Structure
+
+All webhook events follow this structure:
+
+```json
+{
+  "id": "evt_abc123xyz",
+  "type": "session.completed",
+  "created_at": "2024-01-15T10:35:30Z",
+  "data": {
+    // Event-specific data
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique event ID (use for idempotency) |
+| `type` | string | Event type |
+| `created_at` | string | ISO 8601 timestamp |
+| `data` | object | Event payload |
+
+---
+
+## Session Events
+
+### session.started
+
+Fired when a voice session begins.
+
+```json
+{
+  "id": "evt_abc123",
+  "type": "session.started",
+  "created_at": "2024-01-15T10:30:00Z",
+  "data": {
+    "session_id": "session_abc123xyz",
+    "agent_id": "agent_def456uvw",
+    "agent_name": "Customer Support",
+    "participant": {
+      "name": "John Doe",
+      "phone_number": "+1234567890",
+      "metadata": {
+        "customer_id": "cust_123"
+      }
+    },
+    "room": {
+      "name": "room_xyz789"
+    },
+    "test_mode": false,
+    "started_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+### session.completed
+
+Fired when a session ends normally.
+
+```json
+{
+  "id": "evt_def456",
+  "type": "session.completed",
+  "created_at": "2024-01-15T10:35:30Z",
+  "data": {
+    "session_id": "session_abc123xyz",
+    "agent_id": "agent_def456uvw",
+    "agent_name": "Customer Support",
+    "participant": {
+      "name": "John Doe",
+      "phone_number": "+1234567890"
+    },
+    "started_at": "2024-01-15T10:30:00Z",
+    "ended_at": "2024-01-15T10:35:30Z",
+    "duration_seconds": 330,
+    "end_reason": "user_hangup",
+    "metrics": {
+      "turns": 12,
+      "agent_words": 245,
+      "user_words": 89,
+      "avg_response_time_ms": 850,
+      "interruptions": 2
+    },
+    "test_mode": false
+  }
+}
+```
+
+**End reasons:**
+- `user_hangup` - User ended the call
+- `agent_hangup` - Agent ended the call
+- `timeout` - Session timed out
+- `completed` - Conversation reached natural end
+
+### session.failed
+
+Fired when a session encounters an error.
+
+```json
+{
+  "id": "evt_ghi789",
+  "type": "session.failed",
+  "created_at": "2024-01-15T10:32:15Z",
+  "data": {
+    "session_id": "session_abc123xyz",
+    "agent_id": "agent_def456uvw",
+    "started_at": "2024-01-15T10:30:00Z",
+    "failed_at": "2024-01-15T10:32:15Z",
+    "duration_seconds": 135,
+    "error": {
+      "code": "LLM_ERROR",
+      "message": "LLM provider returned an error",
+      "details": {
+        "provider": "openai",
+        "status": 503
+      }
+    },
+    "test_mode": false
+  }
+}
+```
+
+**Error codes:**
+- `CONNECTION_FAILED` - WebRTC connection failed
+- `LLM_ERROR` - LLM provider error
+- `TTS_ERROR` - Text-to-speech error
+- `STT_ERROR` - Speech-to-text error
+- `INTERNAL_ERROR` - Vora internal error
+
+### session.recording_ready
+
+Fired when session recording is available.
+
+```json
+{
+  "id": "evt_jkl012",
+  "type": "session.recording_ready",
+  "created_at": "2024-01-15T10:40:00Z",
+  "data": {
+    "session_id": "session_abc123xyz",
+    "recording": {
+      "id": "rec_abc123",
+      "duration_seconds": 330,
+      "size_bytes": 5242880,
+      "format": "mp3",
+      "url": "https://storage.voicevora.com/recordings/rec_abc123.mp3",
+      "expires_at": "2024-01-22T10:40:00Z"
+    }
+  }
+}
+```
+
+---
+
+## Transcript Events
+
+### transcript.ready
+
+Fired when transcript processing is complete.
+
+```json
+{
+  "id": "evt_mno345",
+  "type": "transcript.ready",
+  "created_at": "2024-01-15T10:38:00Z",
+  "data": {
+    "session_id": "session_abc123xyz",
+    "transcript": {
+      "id": "tr_abc123",
+      "language": "en",
+      "duration_seconds": 330,
+      "messages_count": 12,
+      "summary": "Customer inquired about order status. Agent confirmed shipping.",
+      "topics": ["order status", "shipping"],
+      "sentiment": {
+        "overall": 0.8,
+        "user": 0.7,
+        "agent": 0.9
+      }
+    }
+  }
+}
+```
+
+### transcript.failed
+
+Fired when transcript processing fails.
+
+```json
+{
+  "id": "evt_pqr678",
+  "type": "transcript.failed",
+  "created_at": "2024-01-15T10:38:00Z",
+  "data": {
+    "session_id": "session_abc123xyz",
+    "error": {
+      "code": "PROCESSING_FAILED",
+      "message": "Failed to process audio",
+      "details": {
+        "reason": "audio_too_short"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Agent Events
+
+### agent.deployed
+
+Fired when an agent is deployed to production.
+
+```json
+{
+  "id": "evt_stu901",
+  "type": "agent.deployed",
+  "created_at": "2024-01-15T10:30:00Z",
+  "data": {
+    "agent_id": "agent_def456uvw",
+    "name": "Customer Support",
+    "version": 5,
+    "previous_version": 4,
+    "deployed_by": "user_abc123",
+    "config": {
+      "voice_id": "voice_sarah",
+      "model": "gpt-4o",
+      "temperature": 0.7
+    }
+  }
+}
+```
+
+### agent.updated
+
+Fired when agent configuration is modified.
+
+```json
+{
+  "id": "evt_vwx234",
+  "type": "agent.updated",
+  "created_at": "2024-01-15T11:00:00Z",
+  "data": {
+    "agent_id": "agent_def456uvw",
+    "name": "Customer Support",
+    "changes": {
+      "system_prompt": {
+        "changed": true
+      },
+      "temperature": {
+        "from": 0.7,
+        "to": 0.5
+      }
+    },
+    "updated_by": "user_abc123"
+  }
+}
+```
+
+### agent.deleted
+
+Fired when an agent is deleted.
+
+```json
+{
+  "id": "evt_yza567",
+  "type": "agent.deleted",
+  "created_at": "2024-01-15T12:00:00Z",
+  "data": {
+    "agent_id": "agent_def456uvw",
+    "name": "Customer Support",
+    "deleted_by": "user_abc123",
+    "recoverable_until": "2024-02-14T12:00:00Z"
+  }
+}
+```
+
+---
+
+## Function Events
+
+### function.executed
+
+Fired when a function is called during a session.
+
+```json
+{
+  "id": "evt_bcd890",
+  "type": "function.executed",
+  "created_at": "2024-01-15T10:32:00Z",
+  "data": {
+    "session_id": "session_abc123xyz",
+    "function_id": "fn_xyz789",
+    "function_name": "get_order_status",
+    "parameters": {
+      "order_id": "ORD-12345"
+    },
+    "result": {
+      "success": true,
+      "response": "Order ORD-12345 is shipped.",
+      "latency_ms": 234
+    },
+    "executed_at": "2024-01-15T10:32:00Z"
+  }
+}
+```
+
+### function.failed
+
+Fired when a function execution fails.
+
+```json
+{
+  "id": "evt_efg123",
+  "type": "function.failed",
+  "created_at": "2024-01-15T10:32:00Z",
+  "data": {
+    "session_id": "session_abc123xyz",
+    "function_id": "fn_xyz789",
+    "function_name": "get_order_status",
+    "parameters": {
+      "order_id": "ORD-12345"
+    },
+    "error": {
+      "code": "TIMEOUT",
+      "message": "Function execution timed out",
+      "latency_ms": 5000
+    },
+    "executed_at": "2024-01-15T10:32:00Z"
+  }
+}
+```
+
+---
+
+## Knowledge Base Events
+
+### knowledge_base.document_ready
+
+Fired when a document is fully processed and indexed.
+
+```json
+{
+  "id": "evt_hij456",
+  "type": "knowledge_base.document_ready",
+  "created_at": "2024-01-15T10:35:00Z",
+  "data": {
+    "knowledge_base_id": "kb_abc123",
+    "document_id": "doc_xyz789",
+    "name": "Product Manual v2.1",
+    "chunks_count": 145,
+    "processing": {
+      "started_at": "2024-01-15T10:30:00Z",
+      "completed_at": "2024-01-15T10:35:00Z",
+      "duration_seconds": 300
+    }
+  }
+}
+```
+
+### knowledge_base.document_failed
+
+Fired when document processing fails.
+
+```json
+{
+  "id": "evt_klm789",
+  "type": "knowledge_base.document_failed",
+  "created_at": "2024-01-15T10:32:00Z",
+  "data": {
+    "knowledge_base_id": "kb_abc123",
+    "document_id": "doc_xyz789",
+    "name": "corrupted-file.pdf",
+    "error": {
+      "code": "PROCESSING_FAILED",
+      "message": "Unable to extract text from PDF",
+      "details": {
+        "reason": "corrupted_file"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Billing Events
+
+### billing.usage_threshold
+
+Fired when usage reaches a configured threshold.
+
+```json
+{
+  "id": "evt_nop012",
+  "type": "billing.usage_threshold",
+  "created_at": "2024-01-15T10:00:00Z",
+  "data": {
+    "threshold_percent": 80,
+    "current_usage": {
+      "minutes_used": 800,
+      "minutes_limit": 1000,
+      "percent_used": 80
+    },
+    "billing_period": {
+      "start": "2024-01-01T00:00:00Z",
+      "end": "2024-01-31T23:59:59Z"
+    }
+  }
+}
+```
+
+### billing.limit_reached
+
+Fired when usage limit is reached.
+
+```json
+{
+  "id": "evt_qrs345",
+  "type": "billing.limit_reached",
+  "created_at": "2024-01-15T15:00:00Z",
+  "data": {
+    "limit_type": "session_minutes",
+    "current_usage": {
+      "minutes_used": 1000,
+      "minutes_limit": 1000
+    },
+    "billing_period": {
+      "start": "2024-01-01T00:00:00Z",
+      "end": "2024-01-31T23:59:59Z"
+    },
+    "action": "sessions_blocked"
+  }
+}
+```
+
+---
+
+## Subscribing to Events
+
+### Subscribe to All Events
+
+```javascript
+const webhook = await vora.webhooks.create({
+  url: 'https://your-server.com/webhooks/vora',
+  events: ['*']  // All events
+});
+```
+
+### Subscribe to Specific Events
+
+```javascript
+const webhook = await vora.webhooks.create({
+  url: 'https://your-server.com/webhooks/vora',
+  events: [
+    'session.completed',
+    'session.failed',
+    'transcript.ready'
+  ]
+});
+```
+
+### Subscribe by Category
+
+```javascript
+// Session events only
+const webhook = await vora.webhooks.create({
+  url: 'https://your-server.com/webhooks/vora',
+  events: ['session.*']
+});
+
+// All transcript events
+const webhook = await vora.webhooks.create({
+  url: 'https://your-server.com/webhooks/vora',
+  events: ['transcript.*']
+});
+```
+
+---
+
+## Event Handling Examples
+
+### Session Analytics
+
+```javascript
+function handleSessionCompleted(data) {
+  // Track session metrics
+  analytics.track('session_completed', {
+    session_id: data.session_id,
+    agent_id: data.agent_id,
+    duration: data.duration_seconds,
+    turns: data.metrics.turns,
+    avg_response_time: data.metrics.avg_response_time_ms
+  });
+
+  // Alert if response time is high
+  if (data.metrics.avg_response_time_ms > 2000) {
+    alerting.warn('High response time', {
+      session_id: data.session_id,
+      avg_ms: data.metrics.avg_response_time_ms
+    });
+  }
+}
+```
+
+### Error Monitoring
+
+```javascript
+function handleSessionFailed(data) {
+  // Log to error tracking
+  errorTracker.captureException(new Error(data.error.message), {
+    extra: {
+      session_id: data.session_id,
+      error_code: data.error.code,
+      duration: data.duration_seconds
+    }
+  });
+
+  // Alert team for critical errors
+  if (data.error.code === 'INTERNAL_ERROR') {
+    slack.alert(`Session ${data.session_id} failed: ${data.error.message}`);
+  }
+}
+```
+
+### CRM Integration
+
+```javascript
+function handleTranscriptReady(data) {
+  // Fetch full transcript
+  const transcript = await vora.sessions.getTranscript(data.session_id);
+
+  // Update CRM with call summary
+  await crm.updateContact(data.participant.customer_id, {
+    last_call_date: data.created_at,
+    last_call_summary: transcript.summary,
+    last_call_sentiment: transcript.sentiment.overall
+  });
+
+  // Create follow-up if needed
+  if (transcript.sentiment.overall < 0.5) {
+    await crm.createTask({
+      type: 'follow_up',
+      contact_id: data.participant.customer_id,
+      description: 'Low satisfaction call - follow up needed',
+      due_date: addDays(new Date(), 1)
+    });
+  }
+}
+```
+
+---
+
+## Event Categories
+
+| Category | Events | Description |
+|----------|--------|-------------|
+| Session | `session.*` | Voice session lifecycle |
+| Transcript | `transcript.*` | Transcript processing |
+| Agent | `agent.*` | Agent configuration changes |
+| Function | `function.*` | Function execution |
+| Knowledge Base | `knowledge_base.*` | Document processing |
+| Billing | `billing.*` | Usage and billing |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Webhooks Overview" icon="webhook" href="/api/webhooks">
+    Create and manage webhooks
+  </Card>
+  <Card title="Sessions API" icon="phone" href="/api/sessions">
+    Understand session lifecycle
+  </Card>
+</CardGroup>

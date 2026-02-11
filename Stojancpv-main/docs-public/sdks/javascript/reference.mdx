@@ -1,0 +1,641 @@
+---
+title: API Reference
+description: Complete JavaScript SDK method reference
+---
+
+# JavaScript SDK Reference
+
+Complete reference for all methods and types in the Vora JavaScript SDK.
+
+---
+
+## VoraClient
+
+Main client class for API access.
+
+### Constructor
+
+```typescript
+import { VoraClient } from '@vora-ai/sdk';
+
+const vora = new VoraClient(options: VoraClientOptions);
+```
+
+### Options
+
+```typescript
+interface VoraClientOptions {
+  apiKey: string;                // Required: Your API key
+  baseUrl?: string;              // Custom API endpoint
+  timeout?: number;              // Request timeout (ms)
+  maxRetries?: number;           // Retry attempts
+  retryDelay?: number;           // Base retry delay (ms)
+  fetch?: typeof fetch;          // Custom fetch implementation
+}
+```
+
+---
+
+## Agents
+
+### agents.create
+
+Create a new agent.
+
+```typescript
+const agent = await vora.agents.create(input: CreateAgentInput): Promise<Agent>
+```
+
+**Input:**
+
+```typescript
+interface CreateAgentInput {
+  name: string;
+  systemPrompt: string;
+  voice?: VoiceConfig;
+  model?: ModelConfig;
+  greeting?: string;
+  endConversationPhrases?: string[];
+  functions?: FunctionDefinition[];
+  knowledgeBase?: KnowledgeBaseConfig;
+  metadata?: Record<string, any>;
+}
+```
+
+### agents.get
+
+Get an agent by ID.
+
+```typescript
+const agent = await vora.agents.get(
+  id: string,
+  options?: { include?: string[] }
+): Promise<Agent>
+```
+
+### agents.list
+
+List all agents.
+
+```typescript
+const result = await vora.agents.list(options?: ListOptions): Promise<ListResult<Agent>>
+```
+
+**Options:**
+
+```typescript
+interface ListOptions {
+  limit?: number;                // Default: 20, Max: 100
+  after?: string;                // Cursor for pagination
+  status?: AgentStatus;          // Filter by status
+  orderBy?: 'createdAt' | 'updatedAt' | 'name';
+  order?: 'asc' | 'desc';
+}
+```
+
+### agents.update
+
+Update an agent.
+
+```typescript
+const agent = await vora.agents.update(
+  id: string,
+  input: UpdateAgentInput
+): Promise<Agent>
+```
+
+### agents.delete
+
+Delete an agent.
+
+```typescript
+await vora.agents.delete(id: string): Promise<void>
+```
+
+### agents.pause
+
+Pause an agent.
+
+```typescript
+const agent = await vora.agents.pause(id: string): Promise<Agent>
+```
+
+### agents.resume
+
+Resume a paused agent.
+
+```typescript
+const agent = await vora.agents.resume(id: string): Promise<Agent>
+```
+
+### agents.clone
+
+Clone an agent.
+
+```typescript
+const clone = await vora.agents.clone(
+  id: string,
+  options?: { name?: string; status?: AgentStatus }
+): Promise<Agent>
+```
+
+### agents.test
+
+Test an agent.
+
+```typescript
+const result = await vora.agents.test(
+  id: string,
+  input: { message: string; variables?: Record<string, any> }
+): Promise<{ reply: string; latency: number }>
+```
+
+---
+
+## Sessions
+
+### sessions.create
+
+Create a new session.
+
+```typescript
+const session = await vora.sessions.create(input: CreateSessionInput): Promise<Session>
+```
+
+**Input:**
+
+```typescript
+interface CreateSessionInput {
+  agentId: string;
+  userId?: string;
+  variables?: Record<string, any>;
+  metadata?: Record<string, any>;
+  options?: {
+    initialMessage?: string;
+    skipGreeting?: boolean;
+    recordingEnabled?: boolean;
+  };
+}
+```
+
+### sessions.get
+
+Get a session by ID.
+
+```typescript
+const session = await vora.sessions.get(
+  id: string,
+  options?: { include?: ('transcript' | 'recording' | 'analytics')[] }
+): Promise<Session>
+```
+
+### sessions.list
+
+List sessions.
+
+```typescript
+const result = await vora.sessions.list(options?: SessionListOptions): Promise<ListResult<Session>>
+```
+
+**Options:**
+
+```typescript
+interface SessionListOptions extends ListOptions {
+  agentId?: string;
+  userId?: string;
+  status?: SessionStatus;
+  startDate?: string;
+  endDate?: string;
+}
+```
+
+### sessions.update
+
+Update session metadata.
+
+```typescript
+const session = await vora.sessions.update(
+  id: string,
+  input: { metadata?: Record<string, any> }
+): Promise<Session>
+```
+
+### sessions.end
+
+End a session.
+
+```typescript
+await vora.sessions.end(
+  id: string,
+  options?: { reason?: string; message?: string }
+): Promise<void>
+```
+
+### sessions.getTranscript
+
+Get session transcript.
+
+```typescript
+const transcript = await vora.sessions.getTranscript(
+  id: string,
+  options?: { format?: 'json' | 'text'; includeTimestamps?: boolean }
+): Promise<Transcript>
+```
+
+### sessions.getRecording
+
+Get session recording.
+
+```typescript
+const recording = await vora.sessions.getRecording(id: string): Promise<Recording>
+```
+
+### sessions.transfer
+
+Transfer a session.
+
+```typescript
+const transfer = await vora.sessions.transfer(
+  id: string,
+  input: TransferInput
+): Promise<TransferResult>
+```
+
+---
+
+## Knowledge Bases
+
+### knowledgeBases.create
+
+Create a knowledge base.
+
+```typescript
+const kb = await vora.knowledgeBases.create(input: CreateKnowledgeBaseInput): Promise<KnowledgeBase>
+```
+
+### knowledgeBases.get
+
+Get a knowledge base.
+
+```typescript
+const kb = await vora.knowledgeBases.get(id: string): Promise<KnowledgeBase>
+```
+
+### knowledgeBases.list
+
+List knowledge bases.
+
+```typescript
+const result = await vora.knowledgeBases.list(options?: ListOptions): Promise<ListResult<KnowledgeBase>>
+```
+
+### knowledgeBases.addDocuments
+
+Add documents.
+
+```typescript
+const docs = await vora.knowledgeBases.addDocuments(
+  id: string,
+  input: { documents: DocumentInput[] }
+): Promise<Document[]>
+```
+
+### knowledgeBases.query
+
+Query a knowledge base.
+
+```typescript
+const results = await vora.knowledgeBases.query(
+  id: string,
+  input: { query: string; topK?: number; threshold?: number }
+): Promise<QueryResult[]>
+```
+
+### knowledgeBases.delete
+
+Delete a knowledge base.
+
+```typescript
+await vora.knowledgeBases.delete(id: string): Promise<void>
+```
+
+---
+
+## Phone Numbers
+
+### phoneNumbers.search
+
+Search available numbers.
+
+```typescript
+const numbers = await vora.phoneNumbers.search(options: PhoneSearchOptions): Promise<AvailableNumber[]>
+```
+
+### phoneNumbers.purchase
+
+Purchase a number.
+
+```typescript
+const number = await vora.phoneNumbers.purchase(input: PurchaseNumberInput): Promise<PhoneNumber>
+```
+
+### phoneNumbers.get
+
+Get a phone number.
+
+```typescript
+const number = await vora.phoneNumbers.get(id: string): Promise<PhoneNumber>
+```
+
+### phoneNumbers.list
+
+List phone numbers.
+
+```typescript
+const result = await vora.phoneNumbers.list(options?: ListOptions): Promise<ListResult<PhoneNumber>>
+```
+
+### phoneNumbers.update
+
+Update a phone number.
+
+```typescript
+const number = await vora.phoneNumbers.update(
+  id: string,
+  input: UpdatePhoneNumberInput
+): Promise<PhoneNumber>
+```
+
+### phoneNumbers.assignAgent
+
+Assign an agent to a number.
+
+```typescript
+await vora.phoneNumbers.assignAgent(
+  id: string,
+  input: { agentId: string; mode: 'inbound' | 'outbound' | 'both' }
+): Promise<void>
+```
+
+### phoneNumbers.release
+
+Release a phone number.
+
+```typescript
+await vora.phoneNumbers.release(id: string): Promise<void>
+```
+
+---
+
+## Webhooks
+
+### webhooks.create
+
+Create a webhook endpoint.
+
+```typescript
+const webhook = await vora.webhooks.create(input: CreateWebhookInput): Promise<Webhook>
+```
+
+**Input:**
+
+```typescript
+interface CreateWebhookInput {
+  url: string;
+  events: WebhookEvent[];
+  secret?: string;
+}
+```
+
+### webhooks.get
+
+Get a webhook.
+
+```typescript
+const webhook = await vora.webhooks.get(id: string): Promise<Webhook>
+```
+
+### webhooks.list
+
+List webhooks.
+
+```typescript
+const result = await vora.webhooks.list(options?: ListOptions): Promise<ListResult<Webhook>>
+```
+
+### webhooks.update
+
+Update a webhook.
+
+```typescript
+const webhook = await vora.webhooks.update(
+  id: string,
+  input: UpdateWebhookInput
+): Promise<Webhook>
+```
+
+### webhooks.delete
+
+Delete a webhook.
+
+```typescript
+await vora.webhooks.delete(id: string): Promise<void>
+```
+
+### webhooks.test
+
+Send a test event.
+
+```typescript
+const result = await vora.webhooks.test(
+  id: string,
+  input: { event: WebhookEvent }
+): Promise<WebhookTestResult>
+```
+
+---
+
+## Analytics
+
+### analytics.sessions
+
+Get session metrics.
+
+```typescript
+const metrics = await vora.analytics.sessions(options: AnalyticsOptions): Promise<SessionMetrics>
+```
+
+### analytics.performance
+
+Get performance metrics.
+
+```typescript
+const metrics = await vora.analytics.performance(options: AnalyticsOptions): Promise<PerformanceMetrics>
+```
+
+### analytics.functions
+
+Get function usage metrics.
+
+```typescript
+const metrics = await vora.analytics.functions(options: AnalyticsOptions): Promise<FunctionMetrics>
+```
+
+---
+
+## Types
+
+### Agent
+
+```typescript
+interface Agent {
+  id: string;
+  name: string;
+  systemPrompt: string;
+  voice?: VoiceConfig;
+  model?: ModelConfig;
+  greeting?: string;
+  endConversationPhrases?: string[];
+  functions?: FunctionDefinition[];
+  knowledgeBase?: KnowledgeBaseConfig;
+  status: AgentStatus;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+type AgentStatus = 'draft' | 'active' | 'paused' | 'archived';
+```
+
+### Session
+
+```typescript
+interface Session {
+  id: string;
+  agentId: string;
+  userId?: string;
+  status: SessionStatus;
+  token: string;
+  roomUrl: string;
+  duration?: number;
+  variables?: Record<string, any>;
+  metadata?: Record<string, any>;
+  expiresAt: Date;
+  createdAt: Date;
+  endedAt?: Date;
+}
+
+type SessionStatus = 'created' | 'connecting' | 'active' | 'ending' | 'completed' | 'failed';
+```
+
+### VoiceConfig
+
+```typescript
+interface VoiceConfig {
+  provider: 'elevenlabs' | 'cartesia' | 'google';
+  voiceId?: string;
+  model?: string;
+  stability?: number;
+  similarityBoost?: number;
+  style?: number;
+  useSpeakerBoost?: boolean;
+  speed?: number;
+  languageCode?: string;
+  voiceName?: string;
+  speakingRate?: number;
+  pitch?: number;
+}
+```
+
+### ModelConfig
+
+```typescript
+interface ModelConfig {
+  provider: 'openai' | 'anthropic' | 'google' | 'groq';
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+}
+```
+
+### FunctionDefinition
+
+```typescript
+interface FunctionDefinition {
+  name: string;
+  description: string;
+  parameters: JSONSchema;
+  handler: FunctionHandler;
+}
+
+interface FunctionHandler {
+  type: 'webhook' | 'builtin';
+  url?: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  headers?: Record<string, string>;
+  action?: string;
+  config?: Record<string, any>;
+}
+```
+
+### Transcript
+
+```typescript
+interface Transcript {
+  sessionId: string;
+  messages: TranscriptMessage[];
+  duration: number;
+  wordCount: number;
+}
+
+interface TranscriptMessage {
+  speaker: 'agent' | 'user';
+  text: string;
+  timestamp: Date;
+}
+```
+
+---
+
+## Errors
+
+```typescript
+import {
+  VoraError,              // Base error class
+  AuthenticationError,    // 401 errors
+  AuthorizationError,     // 403 errors
+  NotFoundError,          // 404 errors
+  ValidationError,        // 400 errors
+  RateLimitError,         // 429 errors
+  InternalError           // 500 errors
+} from '@vora-ai/sdk';
+
+// Error properties
+interface VoraError extends Error {
+  type: string;
+  code: string;
+  message: string;
+  details?: Record<string, any>;
+  requestId?: string;
+}
+
+interface RateLimitError extends VoraError {
+  retryAfter: number;     // Seconds until retry
+}
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/developers/quickstarts/javascript">
+    Get started quickly
+  </Card>
+  <Card title="Examples" icon="github" href="https://github.com/vora-ai/examples">
+    Sample code
+  </Card>
+</CardGroup>

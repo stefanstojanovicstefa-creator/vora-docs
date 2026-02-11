@@ -1,0 +1,74 @@
+---
+title: Advanced Tab
+description: Configure fallbacks, circuit breakers, timeouts, and reliability settings
+---
+
+# Advanced Tab
+
+The Advanced tab contains reliability and performance settings for production-grade agents.
+
+---
+
+## Provider Fallbacks
+
+Configure backup providers that activate automatically if the primary provider fails.
+
+| Component | Primary Example | Fallback Example |
+|-----------|----------------|-----------------|
+| **STT** | Deepgram | Google Cloud STT |
+| **LLM** | Gemini Flash | GPT-4o-mini |
+| **TTS** | ElevenLabs | Cartesia |
+
+When a primary provider returns an error or exceeds the latency threshold, Vora automatically switches to the fallback provider for the remainder of the session.
+
+<Tip>
+  Always configure fallbacks for production agents. Provider outages happen, and fallbacks keep your agent live.
+</Tip>
+
+---
+
+## Circuit Breakers
+
+Circuit breakers prevent cascading failures by temporarily disabling unhealthy providers.
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Failure threshold** | Errors before the circuit opens | 5 |
+| **Recovery timeout** | Time before retrying the failed provider | 60 seconds |
+| **Half-open requests** | Test requests during recovery | 1 |
+
+When a circuit breaker trips:
+1. The provider is marked as unhealthy
+2. All requests route to the fallback provider
+3. After the recovery timeout, a test request is sent
+4. If successful, the primary provider is restored
+
+---
+
+## Timeouts
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **STT timeout** | Max wait for transcription | 5 seconds |
+| **LLM timeout** | Max wait for AI response | 10 seconds |
+| **TTS timeout** | Max wait for speech generation | 5 seconds |
+| **Session timeout** | Max idle time before auto-disconnect | 300 seconds |
+
+<Warning>
+  Setting timeouts too low may cause premature failures during high-load periods. The defaults are tuned for a balance of responsiveness and reliability.
+</Warning>
+
+---
+
+## Concurrent Sessions
+
+Set the maximum number of simultaneous active sessions for this agent. Excess calls receive a busy signal or are queued.
+
+---
+
+## Retry Policy
+
+Configure automatic retry behavior for transient failures:
+- **Max retries** - Number of retry attempts (default: 2)
+- **Retry delay** - Wait time between retries (default: 500ms)
+- **Exponential backoff** - Increase delay on each retry (default: enabled)

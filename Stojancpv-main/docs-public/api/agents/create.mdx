@@ -1,0 +1,345 @@
+---
+title: Create Agent
+description: Create a new voice AI agent
+api: POST /agents
+---
+
+# Create Agent
+
+Create a new voice AI agent with the specified configuration.
+
+<Info>
+  After creating an agent, you must [deploy it](/api/agents/deploy) before it can receive calls.
+</Info>
+
+## Request
+
+```
+POST https://api.voicevora.com/v1/agents
+```
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_KEY` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Body Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Display name for the agent (max 100 chars) |
+| `description` | string | No | Description of the agent's purpose |
+| `config` | object | Yes | Agent configuration (see below) |
+| `knowledge_bases` | array | No | Array of knowledge base IDs to attach |
+| `functions` | array | No | Array of function IDs to enable |
+
+### Config Object
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `voice_id` | string | Yes | - | ID of the voice to use |
+| `llm_provider` | string | No | `openai` | LLM provider |
+| `llm_model` | string | No | `gpt-4-turbo` | Model ID |
+| `system_prompt` | string | Yes | - | Instructions for the agent |
+| `temperature` | number | No | `0.7` | Response creativity (0-1) |
+| `max_tokens` | number | No | `500` | Max tokens per response |
+| `language` | string | No | `en` | Primary language code |
+| `interruption_threshold` | number | No | `0.5` | User interruption sensitivity |
+| `silence_timeout_ms` | number | No | `5000` | Silence timeout in ms |
+| `greeting` | string | No | - | Initial greeting message |
+| `fallback_message` | string | No | - | Message when agent can't respond |
+
+### Available LLM Providers
+
+| Provider | Models |
+|----------|--------|
+| `openai` | `gpt-4-turbo`, `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo` |
+| `anthropic` | `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku` |
+| `google` | `gemini-1.5-pro`, `gemini-1.5-flash` |
+
+## Response
+
+<Tabs>
+  <Tab title="Success (201)">
+    ```json
+    {
+      "data": {
+        "id": "agent_abc123xyz",
+        "name": "Customer Support Agent",
+        "description": "Handles customer inquiries",
+        "status": "draft",
+        "config": {
+          "voice_id": "voice_sarah",
+          "llm_provider": "openai",
+          "llm_model": "gpt-4-turbo",
+          "system_prompt": "You are a helpful customer support agent...",
+          "temperature": 0.7,
+          "max_tokens": 500,
+          "language": "en",
+          "interruption_threshold": 0.5,
+          "silence_timeout_ms": 5000,
+          "greeting": "Hello! How can I help you today?",
+          "fallback_message": "I'm sorry, I didn't understand that."
+        },
+        "knowledge_bases": ["kb_docs123"],
+        "functions": [],
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:30:00Z",
+        "deployed_at": null,
+        "stats": {
+          "total_calls": 0,
+          "avg_duration_seconds": 0,
+          "last_call_at": null
+        }
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Validation Error (422)">
+    ```json
+    {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Invalid request parameters",
+        "details": {
+          "errors": [
+            {
+              "field": "config.voice_id",
+              "message": "Voice ID is required"
+            },
+            {
+              "field": "config.system_prompt",
+              "message": "System prompt must be at least 10 characters"
+            }
+          ]
+        },
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Examples
+
+### Basic Agent
+
+<CodeGroup>
+```javascript JavaScript
+const agent = await vora.agents.create({
+  name: 'Simple Receptionist',
+  config: {
+    voice_id: 'voice_sarah',
+    system_prompt: `You are a receptionist for Dr. Smith's office.
+    Answer questions about office hours and schedule appointments.`,
+    greeting: 'Hello, Dr. Smith\'s office. How may I help you?'
+  }
+});
+```
+
+```python Python
+agent = vora.agents.create(
+    name='Simple Receptionist',
+    config={
+        'voice_id': 'voice_sarah',
+        'system_prompt': '''You are a receptionist for Dr. Smith's office.
+        Answer questions about office hours and schedule appointments.''',
+        'greeting': "Hello, Dr. Smith's office. How may I help you?"
+    }
+)
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/agents \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Simple Receptionist",
+    "config": {
+      "voice_id": "voice_sarah",
+      "system_prompt": "You are a receptionist for Dr. Smith'\''s office...",
+      "greeting": "Hello, Dr. Smith'\''s office. How may I help you?"
+    }
+  }'
+```
+</CodeGroup>
+
+### Agent with Knowledge Base
+
+<CodeGroup>
+```javascript JavaScript
+// First, create a knowledge base with your documents
+const kb = await vora.knowledgeBases.create({
+  name: 'Product Documentation'
+});
+
+await vora.knowledgeBases.uploadDocument(kb.id, {
+  file: productManual,
+  name: 'Product Manual'
+});
+
+// Create agent with knowledge base attached
+const agent = await vora.agents.create({
+  name: 'Product Expert',
+  config: {
+    voice_id: 'voice_michael',
+    llm_provider: 'anthropic',
+    llm_model: 'claude-3-sonnet',
+    system_prompt: `You are a product expert for TechCorp.
+    Use the knowledge base to answer detailed questions about our products.
+    Always cite specific sections when answering.`,
+    temperature: 0.3 // Lower for more factual responses
+  },
+  knowledge_bases: [kb.id]
+});
+```
+
+```python Python
+# Create agent with knowledge base
+agent = vora.agents.create(
+    name='Product Expert',
+    config={
+        'voice_id': 'voice_michael',
+        'llm_provider': 'anthropic',
+        'llm_model': 'claude-3-sonnet',
+        'system_prompt': '''You are a product expert for TechCorp.
+        Use the knowledge base to answer detailed questions.''',
+        'temperature': 0.3
+    },
+    knowledge_bases=['kb_docs123']
+)
+```
+</CodeGroup>
+
+### Agent with Custom Functions
+
+<CodeGroup>
+```javascript JavaScript
+const agent = await vora.agents.create({
+  name: 'Order Support Agent',
+  config: {
+    voice_id: 'voice_sarah',
+    system_prompt: `You are an order support agent.
+    Help customers track orders and process returns.
+    Use the available functions to look up order information.`
+  },
+  functions: ['fn_lookup_order', 'fn_process_return', 'fn_update_shipping']
+});
+```
+
+```python Python
+agent = vora.agents.create(
+    name='Order Support Agent',
+    config={
+        'voice_id': 'voice_sarah',
+        'system_prompt': '''You are an order support agent.
+        Help customers track orders and process returns.'''
+    },
+    functions=['fn_lookup_order', 'fn_process_return']
+)
+```
+</CodeGroup>
+
+### Multi-language Agent
+
+<CodeGroup>
+```javascript JavaScript
+const agent = await vora.agents.create({
+  name: 'Multilingual Support',
+  config: {
+    voice_id: 'voice_elena', // Multilingual voice
+    system_prompt: `You are a multilingual customer support agent.
+    Detect the user's language and respond in the same language.
+    You support: English, Spanish, French, German, and Portuguese.`,
+    language: 'auto', // Auto-detect language
+    greeting: 'Hello! Hola! Bonjour! How can I help you today?'
+  }
+});
+```
+
+```python Python
+agent = vora.agents.create(
+    name='Multilingual Support',
+    config={
+        'voice_id': 'voice_elena',
+        'system_prompt': '''You are a multilingual support agent.
+        Detect and respond in the user's language.''',
+        'language': 'auto',
+        'greeting': 'Hello! Hola! Bonjour! How can I help you today?'
+    }
+)
+```
+</CodeGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Write clear system prompts">
+    The system prompt defines your agent's behavior. Be specific about:
+    - The agent's role and personality
+    - What it can and cannot do
+    - How to handle edge cases
+    - Tone and communication style
+
+    ```
+    Good: "You are a friendly appointment scheduler for Dr. Smith's dental office.
+    Help patients book, reschedule, or cancel appointments.
+    Office hours are Monday-Friday 9am-5pm.
+    You cannot provide medical advice."
+
+    Bad: "You are a helpful assistant."
+    ```
+  </Accordion>
+
+  <Accordion title="Choose the right temperature">
+    - **Low (0.1-0.3)**: Factual responses, following scripts
+    - **Medium (0.5-0.7)**: Balanced creativity and consistency
+    - **High (0.8-1.0)**: Creative, varied responses
+
+    Use lower temperatures for support and factual queries, higher for creative or sales roles.
+  </Accordion>
+
+  <Accordion title="Set appropriate timeouts">
+    Adjust `silence_timeout_ms` based on your use case:
+    - **3000-5000ms**: Fast-paced conversations (sales)
+    - **5000-8000ms**: Standard support calls
+    - **8000-15000ms**: Complex queries requiring user thought
+  </Accordion>
+
+  <Accordion title="Test before deploying">
+    Use the [Sessions API](/api/sessions) in test mode before deploying to production:
+
+    ```javascript
+    const session = await vora.sessions.create({
+      agent_id: agent.id,
+      test_mode: true
+    });
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Error Codes
+
+| Code | Description | Resolution |
+|------|-------------|------------|
+| `VALIDATION_ERROR` | Invalid parameters | Check the `details.errors` array |
+| `VOICE_NOT_FOUND` | Voice ID doesn't exist | Use `GET /voices` to list available voices |
+| `KNOWLEDGE_BASE_NOT_FOUND` | KB ID doesn't exist | Verify knowledge base ID |
+| `FUNCTION_NOT_FOUND` | Function ID doesn't exist | Verify function ID |
+| `QUOTA_EXCEEDED` | Agent limit reached | Delete unused agents or upgrade plan |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy Agent" icon="rocket" href="/api/agents/deploy">
+    Make your agent live
+  </Card>
+  <Card title="Start a Session" icon="phone" href="/api/sessions/create">
+    Test your agent with a call
+  </Card>
+</CardGroup>

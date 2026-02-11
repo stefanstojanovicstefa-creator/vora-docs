@@ -1,0 +1,330 @@
+---
+title: Testing Agents
+description: How to test your voice agents before going live
+---
+
+# Testing Agents
+
+Thorough testing ensures your agent handles real conversations correctly. This guide covers the testing workflow and best practices.
+
+---
+
+## The Simulator
+
+The built-in simulator lets you test conversations without deploying.
+
+### Opening the Simulator
+
+1. Go to your agent's page
+2. Click the **Test** button in the top right
+3. The simulator opens in a side panel
+
+### Using the Simulator
+
+<Steps>
+  <Step title="Start a conversation">
+    Click the microphone button and start speaking. The simulator uses your computer's microphone.
+  </Step>
+  <Step title="View the transcript">
+    The conversation transcript appears in real-time. You can see:
+    - What you said (transcribed)
+    - What the agent responded
+    - Any functions that were called
+  </Step>
+  <Step title="End the conversation">
+    Click the hang-up button or say "goodbye" to end the test.
+  </Step>
+</Steps>
+
+### Simulator Features
+
+| Feature | Description |
+|---------|-------------|
+| **Real-time transcript** | See what's being said and heard |
+| **Function calls** | View functions executed and their results |
+| **Latency metrics** | See response times |
+| **Reset** | Start a fresh conversation |
+| **Variables** | Set session variables for testing |
+
+---
+
+## Test Mode Sessions
+
+Test mode sessions let you test with real phone calls but without affecting production metrics.
+
+### Creating a Test Session
+
+<CodeGroup>
+```javascript JavaScript
+const session = await vora.sessions.create({
+  agentId: 'agent_abc123',
+  testMode: true,
+  participant: {
+    name: 'Test User',
+    phone: '+1234567890',
+  },
+});
+
+console.log(`Test session: ${session.id}`);
+console.log(`Room URL: ${session.roomUrl}`);
+```
+
+```python Python
+session = vora.sessions.create(
+    agent_id='agent_abc123',
+    test_mode=True,
+    participant={
+        'name': 'Test User',
+        'phone': '+1234567890',
+    },
+)
+
+print(f"Test session: {session.id}")
+print(f"Room URL: {session.room_url}")
+```
+</CodeGroup>
+
+### Test Mode Behavior
+
+| Feature | Test Mode | Production |
+|---------|-----------|------------|
+| Billed | No | Yes |
+| Analytics | Separate | Combined |
+| Recordings | Optional | Per settings |
+| Webhooks | Sent | Sent |
+| Functions | Called | Called |
+
+<Warning>
+  Test mode still calls real functions and integrations. Use sandbox APIs for testing.
+</Warning>
+
+---
+
+## What to Test
+
+### 1. Happy Path
+
+Test the ideal conversation flow:
+
+- [ ] Agent greets correctly
+- [ ] Understands primary use case questions
+- [ ] Provides accurate information
+- [ ] Completes expected actions
+- [ ] Ends conversation appropriately
+
+### 2. Edge Cases
+
+Test unusual or challenging situations:
+
+<AccordionGroup>
+  <Accordion title="Ambiguous questions">
+    Test questions that could have multiple meanings:
+    - "Can you help me with my order?" (Which order? What help?)
+    - "I need to change something" (Change what?)
+
+    **Expected:** Agent asks clarifying questions
+  </Accordion>
+
+  <Accordion title="Out of scope requests">
+    Test requests the agent shouldn't handle:
+    - Topics outside the agent's domain
+    - Requests for forbidden actions
+    - Inappropriate content
+
+    **Expected:** Polite refusal or escalation
+  </Accordion>
+
+  <Accordion title="Long silences">
+    Test what happens when the caller doesn't respond:
+    - No response after greeting
+    - Silence mid-conversation
+    - Background noise without speech
+
+    **Expected:** Appropriate prompts and eventual disconnect
+  </Accordion>
+
+  <Accordion title="Interruptions">
+    Test interrupting the agent:
+    - Interrupt mid-sentence
+    - Rapid corrections
+    - Talking over the agent
+
+    **Expected:** Agent stops and listens
+  </Accordion>
+
+  <Accordion title="Frustrated callers">
+    Test with escalating frustration:
+    - Repeat the same question
+    - Express dissatisfaction
+    - Request a human
+
+    **Expected:** Empathetic response, offer to escalate
+  </Accordion>
+</AccordionGroup>
+
+### 3. Function Testing
+
+Test all connected functions:
+
+| Function | Test Scenario |
+|----------|---------------|
+| Order lookup | Valid order, invalid order, customer not found |
+| Booking | Available slot, no availability, invalid date |
+| CRM update | New contact, existing contact, update failure |
+
+### 4. Knowledge Base
+
+Test knowledge retrieval:
+
+- Questions from documentation
+- Questions with slight variations
+- Questions not in the knowledge base
+- Multiple related questions
+
+### 5. Error Scenarios
+
+Test failure handling:
+
+| Scenario | Expected Behavior |
+|----------|-------------------|
+| Function timeout | Fallback message, retry or escalate |
+| API error | Graceful error message |
+| Audio issues | "I'm having trouble hearing you" |
+| Unknown errors | Transfer or callback offer |
+
+---
+
+## Test Scripts
+
+Create reusable test scripts for consistent testing:
+
+### Example Test Script
+
+```markdown
+# Customer Support Agent - Test Script
+
+## Test 1: Basic Inquiry
+- [ ] Call the agent
+- [ ] Ask "What are your business hours?"
+- [ ] Verify: Agent provides correct hours
+- [ ] Rate response quality: ___/5
+
+## Test 2: Order Lookup
+- [ ] Say "I want to check on my order"
+- [ ] Provide order number: ORD-12345
+- [ ] Verify: Agent retrieves correct order
+- [ ] Verify: Status is accurately reported
+
+## Test 3: Escalation
+- [ ] Say "I want to speak to a human"
+- [ ] Verify: Agent offers to transfer
+- [ ] Verify: Transfer reason is captured
+
+## Test 4: Knowledge Base
+- [ ] Ask "How do I reset my password?"
+- [ ] Verify: Agent uses KB content
+- [ ] Ask follow-up question
+- [ ] Verify: Context is maintained
+```
+
+---
+
+## Reviewing Test Results
+
+### Conversation Logs
+
+After testing, review the conversation:
+
+1. Go to **Sessions** → Filter by **Test Mode**
+2. Click on the session
+3. Review:
+   - Full transcript
+   - Function calls and results
+   - Timestamps and latency
+   - Any errors
+
+### Identifying Issues
+
+| Symptom | Possible Cause | Fix |
+|---------|----------------|-----|
+| Wrong answers | Missing knowledge | Add to KB |
+| Confused responses | Vague prompt | Clarify instructions |
+| Function failures | API issues | Check integration |
+| Slow responses | Complex queries | Simplify or cache |
+| Awkward phrasing | Voice mismatch | Try different voice |
+
+---
+
+## Testing Best Practices
+
+<AccordionGroup>
+  <Accordion title="Test before every deployment">
+    Run your test script before each deploy to catch regressions.
+  </Accordion>
+
+  <Accordion title="Use realistic scenarios">
+    Base tests on actual customer questions from your support history.
+  </Accordion>
+
+  <Accordion title="Test with multiple testers">
+    Different people speak differently. Get diverse testers.
+  </Accordion>
+
+  <Accordion title="Test in a quiet environment">
+    Background noise can affect transcription quality.
+  </Accordion>
+
+  <Accordion title="Document findings">
+    Keep a log of issues found and how they were fixed.
+  </Accordion>
+
+  <Accordion title="Automate where possible">
+    Use the API to create automated test suites for regression testing.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## A/B Testing
+
+Test different agent configurations:
+
+### Setting Up an A/B Test
+
+<Steps>
+  <Step title="Create variant agents">
+    Create two versions of your agent with different configurations.
+  </Step>
+  <Step title="Configure traffic split">
+    Set up routing to split calls between variants.
+  </Step>
+  <Step title="Run the test">
+    Let the test run until you have statistically significant data.
+  </Step>
+  <Step title="Analyze results">
+    Compare metrics like completion rate, call duration, and satisfaction.
+  </Step>
+</Steps>
+
+### Metrics to Compare
+
+| Metric | Description |
+|--------|-------------|
+| **Task completion rate** | % of callers who achieved their goal |
+| **Average call duration** | Shorter may indicate efficiency |
+| **Escalation rate** | % transferred to humans |
+| **Repeat calls** | Lower indicates better resolution |
+| **Sentiment score** | Caller satisfaction |
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy Your Agent" icon="rocket" href="/platform/agents/deployment">
+    Go live after successful testing
+  </Card>
+  <Card title="Monitor Performance" icon="chart-line" href="/platform/analytics">
+    Track metrics in production
+  </Card>
+</CardGroup>

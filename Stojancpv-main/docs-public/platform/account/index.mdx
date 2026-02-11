@@ -1,0 +1,262 @@
+---
+title: Account Setup
+description: Configure your Vora account, manage team members, and handle API keys
+---
+
+# Account Setup
+
+Learn how to set up and manage your Vora account, including team management, API keys, and organization settings.
+
+---
+
+## Creating Your Account
+
+<Steps>
+  <Step title="Sign Up">
+    Go to [app.voicevora.com/signup](https://app.voicevora.com/signup) and create an account using:
+    - Email and password
+    - Google OAuth
+    - Microsoft OAuth
+  </Step>
+  <Step title="Verify Email">
+    Check your inbox for a verification email. Click the link to activate your account.
+  </Step>
+  <Step title="Complete Onboarding">
+    Answer a few questions about your use case. This helps us customize your experience:
+    - Your industry
+    - Primary use case (support, sales, scheduling)
+    - Expected call volume
+  </Step>
+  <Step title="Choose Your Plan">
+    Select a plan that fits your needs:
+    - **Free** - 50 minutes/month, 1 agent
+    - **Pro** - 500 minutes/month, unlimited agents
+    - **Enterprise** - Custom limits, dedicated support
+
+    You can start with Free and upgrade anytime.
+  </Step>
+</Steps>
+
+---
+
+## Organization Settings
+
+Access organization settings by clicking your profile icon → **Settings**.
+
+### General Settings
+
+| Setting | Description |
+|---------|-------------|
+| Organization Name | Your company or project name |
+| Timezone | Default timezone for analytics and scheduling |
+| Default Language | Primary language for new agents |
+| Logo | Custom logo for white-label features |
+
+### Notification Preferences
+
+Configure how you receive notifications:
+
+- **Email notifications** - Daily summary, alert emails
+- **In-app notifications** - Real-time alerts in dashboard
+- **Webhook notifications** - Send events to your systems
+
+---
+
+## Team Management
+
+Invite team members and manage access levels.
+
+### Inviting Team Members
+
+<Steps>
+  <Step title="Go to Team Settings">
+    Navigate to **Settings** → **Team**.
+  </Step>
+  <Step title="Send Invite">
+    Click **Invite Member**, enter their email address, and select a role.
+  </Step>
+  <Step title="Member Accepts">
+    The invitee receives an email with a link to join your organization.
+  </Step>
+</Steps>
+
+### Roles and Permissions
+
+| Role | Permissions |
+|------|-------------|
+| **Owner** | Full access, billing, can delete organization |
+| **Admin** | Manage agents, team members, settings |
+| **Developer** | Create/edit agents, view analytics, API access |
+| **Viewer** | Read-only access to agents and analytics |
+
+<Warning>
+  Only Owners can access billing information and delete the organization.
+</Warning>
+
+### Removing Team Members
+
+1. Go to **Settings** → **Team**
+2. Find the member you want to remove
+3. Click the **...** menu → **Remove**
+4. Confirm the removal
+
+---
+
+## API Keys
+
+API keys allow programmatic access to your Vora account.
+
+### Creating an API Key
+
+<Steps>
+  <Step title="Go to API Settings">
+    Navigate to **Settings** → **API Keys**.
+  </Step>
+  <Step title="Create Key">
+    Click **Create API Key**, give it a descriptive name (e.g., "Production Backend").
+  </Step>
+  <Step title="Copy the Key">
+    Copy the key immediately - you won't be able to see it again.
+
+    ```
+    sk_live_abc123xyz...
+    ```
+  </Step>
+</Steps>
+
+### Key Types
+
+| Type | Prefix | Use Case |
+|------|--------|----------|
+| Live | `sk_live_` | Production applications |
+| Test | `sk_test_` | Development and testing |
+
+<Warning>
+  Test keys only work with test-mode sessions. Never use test keys in production.
+</Warning>
+
+### Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use environment variables">
+    Never hardcode API keys in your source code:
+
+    ```bash
+    # .env file
+    VORA_API_KEY=sk_live_your_key_here
+    ```
+
+    ```javascript
+    // Access in code
+    const apiKey = process.env.VORA_API_KEY;
+    ```
+  </Accordion>
+
+  <Accordion title="Rotate keys regularly">
+    Create new keys periodically and deprecate old ones. This limits exposure if a key is compromised.
+  </Accordion>
+
+  <Accordion title="Use separate keys per environment">
+    Create different keys for development, staging, and production. This makes it easier to revoke access without affecting other environments.
+  </Accordion>
+
+  <Accordion title="Limit key permissions">
+    When available, create keys with only the permissions they need (principle of least privilege).
+  </Accordion>
+</AccordionGroup>
+
+### Revoking Keys
+
+If a key is compromised or no longer needed:
+
+1. Go to **Settings** → **API Keys**
+2. Find the key to revoke
+3. Click **Revoke** → Confirm
+
+<Note>
+  Revoking a key immediately invalidates it. Any applications using that key will stop working.
+</Note>
+
+---
+
+## Security Settings
+
+### Two-Factor Authentication (2FA)
+
+Enable 2FA for additional account security:
+
+1. Go to **Settings** → **Security**
+2. Click **Enable 2FA**
+3. Scan the QR code with your authenticator app
+4. Enter the verification code to confirm
+
+### Session Management
+
+View and manage active sessions:
+
+- See all devices where you're logged in
+- Sign out of specific sessions remotely
+- Sign out of all sessions at once
+
+### Audit Log
+
+Enterprise plans include an audit log showing:
+
+- Login attempts
+- Agent changes
+- Team member changes
+- API key usage
+- Setting modifications
+
+---
+
+## Data & Privacy
+
+### Data Export
+
+Export your data at any time:
+
+1. Go to **Settings** → **Data**
+2. Click **Request Export**
+3. You'll receive a download link via email
+
+Export includes:
+- Agent configurations
+- Conversation transcripts
+- Analytics data
+- Account settings
+
+### Data Retention
+
+| Data Type | Retention Period |
+|-----------|------------------|
+| Session recordings | 30 days (configurable) |
+| Transcripts | 90 days |
+| Analytics | 1 year |
+| Agent configurations | Indefinite |
+
+### Account Deletion
+
+To delete your account:
+
+1. Go to **Settings** → **Account**
+2. Click **Delete Account**
+3. Confirm by typing your organization name
+4. Account and all data will be permanently deleted after 30 days
+
+<Warning>
+  Account deletion is permanent and cannot be undone. Export your data first if needed.
+</Warning>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Your First Agent" icon="robot" href="/platform/quickstart">
+    Follow the quickstart guide
+  </Card>
+  <Card title="API Reference" icon="code" href="/api">
+    Integrate with your applications
+  </Card>
+</CardGroup>

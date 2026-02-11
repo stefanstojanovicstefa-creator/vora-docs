@@ -1,0 +1,495 @@
+---
+title: Error Handling
+description: Comprehensive guide to Vora API error codes and how to handle them
+---
+
+# Error Handling
+
+The Vora API uses conventional HTTP response codes and returns detailed error information to help you diagnose and fix issues quickly.
+
+## Error Response Format
+
+All errors follow a consistent JSON structure:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid request parameters",
+    "details": {
+      "field": "voice_id",
+      "reason": "Voice ID 'xyz' not found",
+      "hint": "Use GET /voices to list available voices"
+    },
+    "request_id": "req_abc123xyz789"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `code` | string | Machine-readable error code |
+| `message` | string | Human-readable error description |
+| `details` | object | Additional context (optional) |
+| `request_id` | string | Unique ID for support reference |
+
+<Tip>
+  Include the `request_id` when contacting support—it helps us quickly locate and diagnose your issue.
+</Tip>
+
+## HTTP Status Codes
+
+### Success Codes
+
+| Status | Meaning |
+|--------|---------|
+| 200 | OK - Request succeeded |
+| 201 | Created - Resource created successfully |
+| 202 | Accepted - Request accepted for processing |
+| 204 | No Content - Request succeeded with no response body |
+
+### Client Error Codes (4xx)
+
+| Status | Code | Description | Resolution |
+|--------|------|-------------|------------|
+| 400 | `BAD_REQUEST` | Malformed request syntax | Check request format and JSON structure |
+| 401 | `UNAUTHORIZED` | Missing or invalid authentication | Verify your API key or JWT token |
+| 403 | `FORBIDDEN` | Valid auth but insufficient permissions | Check resource ownership or upgrade plan |
+| 404 | `NOT_FOUND` | Resource doesn't exist | Verify resource ID and path |
+| 409 | `CONFLICT` | Resource state conflict | Check current resource state |
+| 422 | `VALIDATION_ERROR` | Invalid parameter values | Review the `details` field for specifics |
+| 429 | `RATE_LIMIT_EXCEEDED` | Too many requests | Implement backoff and retry |
+
+### Server Error Codes (5xx)
+
+| Status | Code | Description | Resolution |
+|--------|------|-------------|------------|
+| 500 | `INTERNAL_ERROR` | Server error | Retry after a moment; contact support if persistent |
+| 502 | `BAD_GATEWAY` | Upstream service error | Retry after a moment |
+| 503 | `SERVICE_UNAVAILABLE` | Service temporarily unavailable | Check status page; retry with backoff |
+| 504 | `GATEWAY_TIMEOUT` | Request timed out | Retry with smaller payload or simpler request |
+
+## Common Error Codes
+
+### Authentication Errors
+
+<AccordionGroup>
+  <Accordion title="UNAUTHORIZED">
+    **Status:** 401
+
+    **Cause:** Missing, malformed, or invalid authentication credentials.
+
+    **Resolution:**
+    - Ensure you're including the `Authorization` header
+    - Check that your API key or JWT format is correct
+    - Verify your API key hasn't been revoked
+
+    ```bash
+    # Correct format
+    curl -H "Authorization: Bearer vora_sk_live_xxx" ...
+
+    # Common mistakes
+    curl -H "Authorization: vora_sk_live_xxx" ...      # Missing 'Bearer'
+    curl -H "Api-Key: vora_sk_live_xxx" ...            # Wrong header name
+    ```
+  </Accordion>
+
+  <Accordion title="TOKEN_EXPIRED">
+    **Status:** 401
+
+    **Cause:** The Clerk JWT token has expired.
+
+    **Resolution:**
+    - Refresh the token using Clerk's `getToken()` method
+    - Implement automatic retry with fresh token
+
+    ```javascript
+    // Get a fresh token before each request
+    const token = await getToken();
+    ```
+  </Accordion>
+
+  <Accordion title="FORBIDDEN">
+    **Status:** 403
+
+    **Cause:** You're authenticated but don't have permission for this action.
+
+    **Resolution:**
+    - Verify you own the resource you're accessing
+    - Check if this feature requires a higher plan tier
+    - Ensure the API key has necessary scopes
+  </Accordion>
+</AccordionGroup>
+
+### Validation Errors
+
+<AccordionGroup>
+  <Accordion title="VALIDATION_ERROR">
+    **Status:** 422
+
+    **Cause:** Request parameters failed validation.
+
+    **Resolution:** Check the `details` field for specific field errors.
+
+    ```json
+    {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Invalid request parameters",
+        "details": {
+          "errors": [
+            {
+              "field": "config.voice_id",
+              "message": "Voice ID is required"
+            },
+            {
+              "field": "config.llm_provider",
+              "message": "Must be one of: openai, anthropic, google"
+            }
+          ]
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="INVALID_JSON">
+    **Status:** 400
+
+    **Cause:** Request body is not valid JSON.
+
+    **Resolution:**
+    - Validate your JSON syntax
+    - Ensure `Content-Type: application/json` header is set
+    - Check for trailing commas or unquoted strings
+
+    ```bash
+    # Use a JSON validator
+    echo '{"name": "test",}' | jq .
+    # parse error: Expected another key-value pair
+    ```
+  </Accordion>
+
+  <Accordion title="MISSING_REQUIRED_FIELD">
+    **Status:** 422
+
+    **Cause:** A required field is missing from the request.
+
+    **Resolution:** Include all required fields as specified in the API reference.
+
+    ```json
+    {
+      "error": {
+        "code": "MISSING_REQUIRED_FIELD",
+        "message": "Required field 'name' is missing",
+        "details": {
+          "field": "name",
+          "hint": "Agent name is required when creating an agent"
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Resource Errors
+
+<AccordionGroup>
+  <Accordion title="NOT_FOUND">
+    **Status:** 404
+
+    **Cause:** The requested resource doesn't exist or you don't have access.
+
+    **Resolution:**
+    - Verify the resource ID is correct
+    - Check that the resource belongs to your organization
+    - Ensure the resource hasn't been deleted
+
+    ```json
+    {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Agent not found",
+        "details": {
+          "resource_type": "agent",
+          "resource_id": "agent_xyz123"
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="RESOURCE_DELETED">
+    **Status:** 410
+
+    **Cause:** The resource was deleted.
+
+    **Resolution:** The resource is no longer available. Create a new one if needed.
+  </Accordion>
+
+  <Accordion title="CONFLICT">
+    **Status:** 409
+
+    **Cause:** The request conflicts with the current resource state.
+
+    **Resolution:**
+    - For deployments: Wait for current deployment to complete
+    - For updates: Refresh and retry with latest state
+    - For creates: Resource with same identifier already exists
+
+    ```json
+    {
+      "error": {
+        "code": "CONFLICT",
+        "message": "Agent is already being deployed",
+        "details": {
+          "current_status": "deploying",
+          "hint": "Wait for deployment to complete before starting another"
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Rate Limiting Errors
+
+<AccordionGroup>
+  <Accordion title="RATE_LIMIT_EXCEEDED">
+    **Status:** 429
+
+    **Cause:** You've exceeded your rate limit.
+
+    **Resolution:**
+    - Implement exponential backoff
+    - Check `X-RateLimit-*` headers for limits
+    - Consider upgrading your plan for higher limits
+
+    ```json
+    {
+      "error": {
+        "code": "RATE_LIMIT_EXCEEDED",
+        "message": "Rate limit exceeded",
+        "details": {
+          "limit": 100,
+          "remaining": 0,
+          "reset_at": "2024-01-15T10:30:00Z",
+          "retry_after": 45
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="QUOTA_EXCEEDED">
+    **Status:** 403
+
+    **Cause:** You've exceeded your plan's monthly quota.
+
+    **Resolution:**
+    - Check your usage in the dashboard
+    - Upgrade to a higher plan
+    - Wait for quota reset at billing cycle
+
+    ```json
+    {
+      "error": {
+        "code": "QUOTA_EXCEEDED",
+        "message": "Monthly API call quota exceeded",
+        "details": {
+          "quota": 10000,
+          "used": 10000,
+          "resets_at": "2024-02-01T00:00:00Z"
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Error Handling Best Practices
+
+### Implement Retry Logic
+
+Use exponential backoff for transient errors:
+
+<CodeGroup>
+```javascript JavaScript
+async function fetchWithRetry(url, options, maxRetries = 3) {
+  let lastError;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+
+      if (response.ok) {
+        return response.json();
+      }
+
+      const error = await response.json();
+
+      // Don't retry client errors (except rate limits)
+      if (response.status >= 400 && response.status < 500) {
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After') || 1;
+          await sleep(retryAfter * 1000);
+          continue;
+        }
+        throw new VoraAPIError(error);
+      }
+
+      lastError = error;
+    } catch (err) {
+      lastError = err;
+    }
+
+    // Exponential backoff: 1s, 2s, 4s
+    await sleep(Math.pow(2, attempt) * 1000);
+  }
+
+  throw lastError;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+```
+
+```python Python
+import time
+import requests
+from typing import Optional
+
+def fetch_with_retry(
+    url: str,
+    method: str = 'GET',
+    max_retries: int = 3,
+    **kwargs
+) -> dict:
+    last_error = None
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.request(method, url, **kwargs)
+
+            if response.ok:
+                return response.json()
+
+            error = response.json()
+
+            # Don't retry client errors (except rate limits)
+            if 400 <= response.status_code < 500:
+                if response.status_code == 429:
+                    retry_after = int(response.headers.get('Retry-After', 1))
+                    time.sleep(retry_after)
+                    continue
+                raise VoraAPIError(error)
+
+            last_error = error
+
+        except requests.RequestException as e:
+            last_error = e
+
+        # Exponential backoff
+        time.sleep(2 ** attempt)
+
+    raise last_error
+```
+</CodeGroup>
+
+### Handle Specific Error Codes
+
+<CodeGroup>
+```javascript JavaScript
+async function createAgent(config) {
+  try {
+    const response = await vora.agents.create(config);
+    return response;
+  } catch (error) {
+    switch (error.code) {
+      case 'VALIDATION_ERROR':
+        // Show user-friendly validation message
+        showValidationErrors(error.details.errors);
+        break;
+
+      case 'QUOTA_EXCEEDED':
+        // Prompt user to upgrade
+        showUpgradePrompt();
+        break;
+
+      case 'RATE_LIMIT_EXCEEDED':
+        // Queue for later
+        return queueForLater(config);
+
+      case 'UNAUTHORIZED':
+        // Redirect to login
+        redirectToLogin();
+        break;
+
+      default:
+        // Log and show generic error
+        console.error('API Error:', error);
+        showGenericError();
+    }
+  }
+}
+```
+
+```python Python
+def create_agent(config: dict) -> dict:
+    try:
+        return vora.agents.create(config)
+    except VoraAPIError as error:
+        if error.code == 'VALIDATION_ERROR':
+            handle_validation_errors(error.details['errors'])
+        elif error.code == 'QUOTA_EXCEEDED':
+            show_upgrade_prompt()
+        elif error.code == 'RATE_LIMIT_EXCEEDED':
+            return queue_for_later(config)
+        elif error.code == 'UNAUTHORIZED':
+            redirect_to_login()
+        else:
+            logger.error(f'API Error: {error}')
+            show_generic_error()
+```
+</CodeGroup>
+
+### Log Errors with Context
+
+```javascript
+function logAPIError(error, context) {
+  console.error({
+    timestamp: new Date().toISOString(),
+    error_code: error.code,
+    error_message: error.message,
+    request_id: error.request_id,
+    context: {
+      endpoint: context.endpoint,
+      method: context.method,
+      user_id: context.userId
+    }
+  });
+
+  // Send to error tracking service
+  Sentry.captureException(error, {
+    extra: { request_id: error.request_id }
+  });
+}
+```
+
+## Getting Help
+
+If you encounter persistent errors:
+
+1. **Check the status page** at [status.voicevora.com](https://status.voicevora.com)
+2. **Search our documentation** for the specific error code
+3. **Contact support** with the `request_id` from the error response
+
+<CardGroup cols={2}>
+  <Card title="Rate Limits" icon="gauge-high" href="/api/rate-limits">
+    Understand rate limiting policies
+  </Card>
+  <Card title="Support" icon="headset" href="mailto:support@voicevora.com">
+    Contact our support team
+  </Card>
+</CardGroup>

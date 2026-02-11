@@ -1,0 +1,415 @@
+---
+title: Session Events
+description: Track and analyze events during conversations
+---
+
+# Session Events
+
+Events capture every significant action during a conversation. Use them for debugging, analysis, and building integrations.
+
+---
+
+## What are Events?
+
+Events are timestamped records of actions during a session:
+
+```mermaid
+timeline
+    title Session Timeline
+    10:30:45 : session.started
+    10:30:46 : agent.speaking
+    10:30:52 : user.speaking
+    10:31:05 : function.called
+    10:31:06 : function.completed
+    10:32:15 : session.ended
+```
+
+---
+
+## Event Types
+
+### Session Events
+
+| Event | Description |
+|-------|-------------|
+| `session.started` | Call connected |
+| `session.ended` | Call ended |
+| `session.transferred` | Escalated to human |
+| `session.error` | Error occurred |
+
+### Speech Events
+
+| Event | Description |
+|-------|-------------|
+| `agent.speaking.started` | Agent began speaking |
+| `agent.speaking.stopped` | Agent finished speaking |
+| `user.speaking.started` | User began speaking |
+| `user.speaking.stopped` | User finished speaking |
+| `user.interrupted` | User interrupted agent |
+| `silence.detected` | Prolonged silence |
+
+### Function Events
+
+| Event | Description |
+|-------|-------------|
+| `function.called` | Function execution started |
+| `function.completed` | Function completed successfully |
+| `function.failed` | Function execution failed |
+
+### Knowledge Events
+
+| Event | Description |
+|-------|-------------|
+| `kb.query` | Knowledge base searched |
+| `kb.result` | Results returned |
+| `kb.empty` | No results found |
+
+### System Events
+
+| Event | Description |
+|-------|-------------|
+| `transcription.received` | New transcript segment |
+| `audio.quality.issue` | Audio problem detected |
+| `latency.warning` | High latency detected |
+| `reconnection.attempted` | Connection recovery |
+
+---
+
+## Viewing Events
+
+### Event Timeline
+
+In a session, view all events chronologically:
+
+| Time | Event | Details |
+|------|-------|---------|
+| 10:30:45.123 | `session.started` | Channel: web |
+| 10:30:45.456 | `agent.speaking.started` | Greeting |
+| 10:30:48.789 | `agent.speaking.stopped` | Duration: 3.3s |
+| 10:30:49.012 | `user.speaking.started` | - |
+| 10:30:52.345 | `user.speaking.stopped` | Duration: 3.3s |
+| 10:30:52.567 | `transcription.received` | "I need help..." |
+
+### Filtering Events
+
+Filter by event type:
+
+- **All events** - Complete timeline
+- **Speech** - Speaking events only
+- **Functions** - Function calls
+- **Knowledge** - KB queries
+- **Errors** - Problems only
+
+### Event Search
+
+Search within session events:
+
+```
+function.called AND order
+```
+
+---
+
+## Event Details
+
+Click any event for full details:
+
+### Session Started
+
+```json
+{
+  "event": "session.started",
+  "timestamp": "2024-01-15T10:30:45.123Z",
+  "data": {
+    "sessionId": "sess_abc123",
+    "agentId": "agent_xyz",
+    "channel": "web",
+    "participant": {
+      "name": "John Doe",
+      "phone": "+1234567890"
+    },
+    "variables": {
+      "account_tier": "premium"
+    }
+  }
+}
+```
+
+### Function Called
+
+```json
+{
+  "event": "function.called",
+  "timestamp": "2024-01-15T10:31:05.456Z",
+  "data": {
+    "function": "order_lookup",
+    "input": {
+      "order_number": "12345"
+    },
+    "correlationId": "corr_abc"
+  }
+}
+```
+
+### Function Completed
+
+```json
+{
+  "event": "function.completed",
+  "timestamp": "2024-01-15T10:31:06.789Z",
+  "data": {
+    "function": "order_lookup",
+    "correlationId": "corr_abc",
+    "duration_ms": 1333,
+    "output": {
+      "status": "shipped",
+      "tracking": "1Z999..."
+    }
+  }
+}
+```
+
+---
+
+## Real-Time Events
+
+### Webhooks
+
+Receive events in real-time via webhooks:
+
+```javascript
+// Configure webhook for events
+{
+  "url": "https://your-server.com/webhook",
+  "events": [
+    "session.started",
+    "session.ended",
+    "function.called",
+    "function.completed"
+  ],
+  "secret": "webhook_secret_key"
+}
+```
+
+### WebSocket Stream
+
+Stream events via WebSocket:
+
+```javascript
+const ws = new WebSocket('wss://api.vora.ai/sessions/sess_abc123/events');
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log(`Event: ${data.event}`, data.data);
+};
+```
+
+---
+
+## Event Analytics
+
+### Event Frequency
+
+Analyze event patterns across sessions:
+
+| Event | Count | Avg per Session |
+|-------|-------|-----------------|
+| `session.started` | 10,234 | 1.0 |
+| `function.called` | 15,456 | 1.5 |
+| `user.interrupted` | 2,345 | 0.23 |
+| `session.error` | 123 | 0.01 |
+
+### Latency Analysis
+
+Track timing between events:
+
+| Transition | Avg Time | P95 |
+|------------|----------|-----|
+| User stops → Agent starts | 450ms | 850ms |
+| Function called → completed | 1.2s | 2.5s |
+| KB query → result | 85ms | 150ms |
+
+### Error Analysis
+
+Identify problematic patterns:
+
+| Error Event | Count | % of Sessions | Trend |
+|-------------|-------|---------------|-------|
+| `function.failed` | 45 | 0.4% | ↓ |
+| `session.error` | 23 | 0.2% | → |
+| `audio.quality.issue` | 89 | 0.9% | ↑ |
+
+---
+
+## Using Events
+
+### Debugging
+
+Use events to troubleshoot issues:
+
+1. Find the session with the problem
+2. View the event timeline
+3. Look for:
+   - Errors and their context
+   - Unusual timing
+   - Missing expected events
+4. Correlate with transcript and recording
+
+### Building Integrations
+
+React to events in real-time:
+
+```javascript
+// Example: Log function calls to analytics
+app.post('/webhook', (req, res) => {
+  const event = req.body;
+
+  if (event.event === 'function.called') {
+    analytics.track('Function Called', {
+      function: event.data.function,
+      sessionId: event.sessionId,
+      timestamp: event.timestamp,
+    });
+  }
+
+  res.status(200).send('OK');
+});
+```
+
+### Custom Dashboards
+
+Build dashboards from event data:
+
+```javascript
+// Query events for dashboard
+const events = await vora.events.query({
+  dateFrom: '2024-01-01',
+  dateTo: '2024-01-31',
+  event: 'function.called',
+  groupBy: 'function',
+});
+
+// Result
+{
+  "order_lookup": 5234,
+  "book_appointment": 3456,
+  "transfer_to_human": 1234
+}
+```
+
+---
+
+## Event API
+
+### List Session Events
+
+```javascript
+const events = await vora.sessions.listEvents('sess_abc123', {
+  types: ['function.called', 'function.completed'],
+  limit: 100,
+});
+```
+
+### Query Events
+
+```javascript
+const results = await vora.events.query({
+  agentId: 'agent_abc123',
+  event: 'session.error',
+  dateFrom: '2024-01-01',
+  dateTo: '2024-01-31',
+});
+```
+
+### Stream Events
+
+```javascript
+const stream = await vora.sessions.streamEvents('sess_abc123');
+
+stream.on('event', (event) => {
+  console.log(event);
+});
+
+stream.on('end', () => {
+  console.log('Session ended');
+});
+```
+
+---
+
+## Custom Events
+
+### Logging Custom Events
+
+Add your own events during function execution:
+
+```javascript
+// In your function handler
+async function handleFunction(params, context) {
+  // Log custom event
+  await context.logEvent('custom.order_verified', {
+    orderId: params.orderId,
+    verified: true,
+  });
+
+  return { success: true };
+}
+```
+
+### Custom Event Structure
+
+```json
+{
+  "event": "custom.order_verified",
+  "timestamp": "2024-01-15T10:31:07.000Z",
+  "data": {
+    "orderId": "12345",
+    "verified": true
+  }
+}
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use events for debugging">
+    When issues occur, the event timeline is your first stop for understanding what happened.
+  </Accordion>
+
+  <Accordion title="Set up error alerts">
+    Configure webhooks to alert on error events for proactive monitoring.
+  </Accordion>
+
+  <Accordion title="Track function performance">
+    Monitor function duration events to identify slow integrations.
+  </Accordion>
+
+  <Accordion title="Correlate with transcripts">
+    View events alongside transcripts for full context of what happened.
+  </Accordion>
+
+  <Accordion title="Log custom events">
+    Add custom events for business-specific milestones and tracking.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="webhook" href="/api/webhooks">
+    Receive real-time events
+  </Card>
+  <Card title="Sessions" icon="list" href="/platform/sessions">
+    Session management
+  </Card>
+  <Card title="Analytics" icon="chart-line" href="/platform/analytics">
+    Aggregate analytics
+  </Card>
+  <Card title="Functions" icon="code" href="/platform/functions">
+    Function reference
+  </Card>
+</CardGroup>

@@ -1,0 +1,390 @@
+---
+title: ElevenLabs
+description: Premium text-to-speech with voice cloning
+---
+
+# ElevenLabs
+
+ElevenLabs offers the most natural, expressive AI voices with professional-grade voice cloning.
+
+---
+
+## Overview
+
+| Aspect | Details |
+|--------|---------|
+| Provider ID | `elevenlabs` |
+| Default Model | `eleven_turbo_v2` |
+| Streaming | ✅ Native support |
+| Latency | ~250-350ms |
+| Languages | 30+ |
+| Voice Cloning | ✅ Supported |
+
+---
+
+## Available Models
+
+| Model | Quality | Latency | Best For |
+|-------|---------|---------|----------|
+| `eleven_turbo_v2` | Very Good | ~250ms | Real-time voice AI |
+| `eleven_multilingual_v2` | Excellent | ~400ms | Multilingual content |
+| `eleven_monolingual_v1` | Good | ~300ms | English-only |
+
+<Note>
+**Recommended**: `eleven_turbo_v2` for voice AI — best speed/quality balance.
+</Note>
+
+---
+
+## Configuration
+
+### Basic Setup
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Voice Agent',
+  systemPrompt: 'You are a helpful assistant.',
+  voice: {
+    provider: 'elevenlabs',
+    voiceId: 'EXAVITQu4vr4xnSDxMaL'  // Rachel
+  }
+});
+```
+
+### Full Configuration
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Custom Voice Agent',
+  systemPrompt: 'You are a professional assistant.',
+  voice: {
+    provider: 'elevenlabs',
+    voiceId: 'EXAVITQu4vr4xnSDxMaL',
+    model: 'eleven_turbo_v2',
+    stability: 0.5,
+    similarityBoost: 0.75,
+    style: 0.0,
+    useSpeakerBoost: true,
+    speed: 1.0,
+    outputFormat: 'mp3_44100_128'
+  }
+});
+```
+
+---
+
+## Popular Voices
+
+### Professional Voices
+
+| Voice | ID | Description |
+|-------|-----|-------------|
+| Rachel | `EXAVITQu4vr4xnSDxMaL` | American female, calm and professional |
+| Adam | `pNInz6obpgDQGcFmaJgB` | American male, deep and authoritative |
+| Domi | `AZnzlk1XvdvUeBnXmlld` | American female, energetic and expressive |
+| Elli | `MF3mGyEYCl7XYWbV9V6O` | American female, young and enthusiastic |
+| Josh | `TxGEqnHWrfWFTfGW9XjX` | American male, youthful and casual |
+| Arnold | `VR6AewLTigWG4xSOukaG` | American male, crisp and confident |
+| Bella | `EXAVITQu4vr4xnSDxMaL` | American female, warm and friendly |
+| Antoni | `ErXwobaYiN019PkySvjV` | American male, well-rounded |
+
+### Multilingual Voices
+
+| Voice | ID | Languages |
+|-------|-----|-----------|
+| Charlotte | `XB0fDUnXU5powFXDhCwa` | English, French, German |
+| Daniel | `onwK4e9ZLuTAKqWW03F9` | English, German |
+| Serena | `pMsXgVXv3BLzUgSXRplE` | English, Spanish |
+
+---
+
+## Voice Settings
+
+### Stability
+
+Controls voice consistency vs expressiveness:
+
+```typescript
+stability: 0.5  // 0.0 - 1.0
+```
+
+| Value | Effect |
+|-------|--------|
+| 0.0 - 0.3 | Very expressive, varied |
+| 0.3 - 0.5 | Balanced |
+| 0.5 - 0.7 | Consistent |
+| 0.7 - 1.0 | Very stable, monotone |
+
+### Similarity Boost
+
+How closely to match the original voice:
+
+```typescript
+similarityBoost: 0.75  // 0.0 - 1.0
+```
+
+| Value | Effect |
+|-------|--------|
+| 0.0 - 0.3 | More variation |
+| 0.5 | Balanced |
+| 0.7 - 1.0 | Very close to original |
+
+### Style
+
+Exaggeration of voice style:
+
+```typescript
+style: 0.0  // 0.0 - 1.0
+```
+
+<Warning>
+Higher style values increase latency. Keep at 0 for real-time voice AI.
+</Warning>
+
+### Speaker Boost
+
+Enhance voice clarity:
+
+```typescript
+useSpeakerBoost: true
+```
+
+Recommended for phone/noisy environments.
+
+---
+
+## Voice Cloning
+
+### Instant Voice Clone
+
+Create a voice from a sample:
+
+```typescript
+// Through ElevenLabs API
+const voice = await elevenlabs.voices.add({
+  name: 'My Custom Voice',
+  files: [audioSample],  // MP3/WAV file
+  description: 'Custom voice for support'
+});
+
+// Use in Vora
+voice: {
+  provider: 'elevenlabs',
+  voiceId: voice.voice_id
+}
+```
+
+### Professional Voice Clone
+
+For higher quality clones:
+1. Contact ElevenLabs for Professional tier
+2. Provide 30+ minutes of audio
+3. Receive high-fidelity voice clone
+
+### Cloning Requirements
+
+- Clear audio, minimal background noise
+- Single speaker
+- 1-5 minutes for instant clone
+- 30+ minutes for professional clone
+
+---
+
+## Use Cases
+
+### Customer Support
+
+```typescript
+voice: {
+  provider: 'elevenlabs',
+  voiceId: 'EXAVITQu4vr4xnSDxMaL',  // Rachel
+  model: 'eleven_turbo_v2',
+  stability: 0.5,        // Balanced
+  similarityBoost: 0.75,
+  speed: 1.0
+}
+```
+
+### Sales/Outreach
+
+```typescript
+voice: {
+  provider: 'elevenlabs',
+  voiceId: 'AZnzlk1XvdvUeBnXmlld',  // Domi - energetic
+  model: 'eleven_turbo_v2',
+  stability: 0.4,        // More expressive
+  similarityBoost: 0.7,
+  speed: 1.05           // Slightly faster
+}
+```
+
+### Healthcare
+
+```typescript
+voice: {
+  provider: 'elevenlabs',
+  voiceId: 'EXAVITQu4vr4xnSDxMaL',  // Rachel - calm
+  model: 'eleven_turbo_v2',
+  stability: 0.6,        // More stable
+  similarityBoost: 0.8,
+  speed: 0.95           // Slightly slower
+}
+```
+
+### Multilingual
+
+```typescript
+voice: {
+  provider: 'elevenlabs',
+  voiceId: 'XB0fDUnXU5powFXDhCwa',  // Charlotte
+  model: 'eleven_multilingual_v2',
+  stability: 0.5
+}
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimize for Real-Time">
+    For conversational voice AI:
+
+    ```typescript
+    voice: {
+      provider: 'elevenlabs',
+      voiceId: 'EXAVITQu4vr4xnSDxMaL',
+      model: 'eleven_turbo_v2',  // Fastest model
+      stability: 0.4,            // More natural
+      style: 0.0,                // No style (faster)
+      useSpeakerBoost: true
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Match Voice to Brand">
+    Consider:
+    - Industry expectations
+    - Target audience demographics
+    - Desired personality traits
+    - Energy level needed
+
+    Test multiple voices before deciding.
+  </Accordion>
+
+  <Accordion title="Handle Long Responses">
+    For longer agent responses:
+
+    - Enable streaming
+    - Consider breaking into chunks
+    - Adjust speed if needed
+    - Monitor latency
+  </Accordion>
+
+  <Accordion title="Pronunciation Tips">
+    For tricky words:
+    - Use phonetic spelling in agent responses
+    - Test edge cases thoroughly
+    - Consider SSML for precise control
+    - ElevenLabs has good default pronunciation
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Language Support
+
+ElevenLabs supports 30+ languages:
+
+| Language | Code | Voice Quality |
+|----------|------|---------------|
+| English | `en` | Excellent |
+| Spanish | `es` | Excellent |
+| French | `fr` | Excellent |
+| German | `de` | Very Good |
+| Italian | `it` | Very Good |
+| Portuguese | `pt` | Very Good |
+| Polish | `pl` | Good |
+| Japanese | `ja` | Good |
+| Chinese | `zh` | Good |
+| Korean | `ko` | Good |
+| Arabic | `ar` | Good |
+| Hindi | `hi` | Good |
+
+---
+
+## API Key Setup
+
+### Environment Variable
+
+```bash
+ELEVENLABS_API_KEY=...
+```
+
+### Get Your Key
+
+1. Go to [ElevenLabs](https://elevenlabs.io)
+2. Sign up or sign in
+3. Go to Profile → API Keys
+4. Copy your API key
+5. Add to your Vora environment
+
+---
+
+## Pricing
+
+| Plan | Characters/Month | Cost |
+|------|------------------|------|
+| Free | 10,000 | $0 |
+| Starter | 30,000 | $5/mo |
+| Creator | 100,000 | $22/mo |
+| Pro | 500,000 | $99/mo |
+| Scale | 2,000,000 | $330/mo |
+
+Pay-as-you-go: ~$0.30 per 1,000 characters
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Voice Sounds Robotic">
+    If voice lacks naturalness:
+
+    - Lower stability (try 0.3-0.4)
+    - Increase similarity boost
+    - Try a different voice
+    - Check if model matches language
+  </Accordion>
+
+  <Accordion title="High Latency">
+    If responses are slow:
+
+    - Use `eleven_turbo_v2` model
+    - Set `style: 0`
+    - Enable streaming
+    - Check network latency
+  </Accordion>
+
+  <Accordion title="Pronunciation Errors">
+    If words are mispronounced:
+
+    - Use phonetic alternatives
+    - Try SSML markup
+    - Test with different voices
+    - Report to ElevenLabs for fixes
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Compare TTS" icon="scale-balanced" href="/providers/tts">
+    See all TTS options
+  </Card>
+  <Card title="Voice Settings" icon="sliders" href="/platform/voice">
+    Configure voice pipeline
+  </Card>
+</CardGroup>

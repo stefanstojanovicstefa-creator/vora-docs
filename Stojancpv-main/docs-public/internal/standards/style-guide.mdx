@@ -1,0 +1,466 @@
+---
+title: Code Style Guide
+description: Code formatting and style standards for the Vora platform
+---
+
+# Code Style Guide
+
+This guide defines the code formatting and style standards for all Vora platform code.
+
+---
+
+## Formatting Tools
+
+### ESLint Configuration
+
+```javascript
+// .eslintrc.js
+module.exports = {
+  root: true,
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module',
+    project: './tsconfig.json',
+  },
+  plugins: ['@typescript-eslint', 'import', 'prettier'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    'plugin:import/typescript',
+    'prettier',
+  ],
+  rules: {
+    // TypeScript
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/explicit-function-return-type': 'warn',
+    '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/prefer-nullish-coalescing': 'error',
+    '@typescript-eslint/prefer-optional-chain': 'error',
+
+    // Imports
+    'import/order': [
+      'error',
+      {
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        'newlines-between': 'always',
+        alphabetize: { order: 'asc' },
+      },
+    ],
+    'import/no-duplicates': 'error',
+
+    // General
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'prefer-const': 'error',
+    'no-var': 'error',
+  },
+};
+```
+
+### Prettier Configuration
+
+```json
+// .prettierrc
+{
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 100,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf"
+}
+```
+
+---
+
+## TypeScript Standards
+
+### Type Annotations
+
+```typescript
+// ✅ Good - Explicit return types
+function calculateTotal(items: CartItem[]): number {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+
+// ❌ Bad - No return type
+function calculateTotal(items: CartItem[]) {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+```
+
+### Avoid `any`
+
+```typescript
+// ✅ Good - Use unknown for truly unknown types
+function parseJSON(input: string): unknown {
+  return JSON.parse(input);
+}
+
+// ❌ Bad - Using any
+function parseJSON(input: string): any {
+  return JSON.parse(input);
+}
+```
+
+### Type Inference
+
+```typescript
+// ✅ Good - Let TypeScript infer simple types
+const name = 'John';
+const count = 42;
+const items = ['a', 'b', 'c'];
+
+// ✅ Good - Explicit types for complex structures
+const config: AppConfig = {
+  apiUrl: 'https://api.vora.io',
+  timeout: 5000,
+};
+
+// ❌ Bad - Redundant type annotation
+const name: string = 'John';
+```
+
+### Interfaces vs Types
+
+```typescript
+// ✅ Use interfaces for object shapes (extendable)
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface AdminUser extends User {
+  permissions: string[];
+}
+
+// ✅ Use types for unions, intersections, and utilities
+type Status = 'pending' | 'active' | 'completed';
+type UserWithRole = User & { role: string };
+type Nullable<T> = T | null;
+```
+
+---
+
+## React Standards
+
+### Component Structure
+
+```tsx
+// ✅ Good - Consistent component structure
+import { useState, useEffect } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { useAgents } from '@/hooks/useAgents';
+import type { Agent } from '@/types';
+
+interface AgentCardProps {
+  agent: Agent;
+  onSelect: (agent: Agent) => void;
+}
+
+export function AgentCard({ agent, onSelect }: AgentCardProps) {
+  // 1. Hooks first
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { data: relatedAgents } = useAgents();
+
+  // 2. Effects
+  useEffect(() => {
+    // Side effects
+  }, [agent.id]);
+
+  // 3. Event handlers
+  const handleClick = () => {
+    onSelect(agent);
+  };
+
+  // 4. Render helpers (if needed)
+  const renderStatus = () => {
+    return <Badge>{agent.status}</Badge>;
+  };
+
+  // 5. Main render
+  return (
+    <Card onClick={handleClick}>
+      <CardHeader>
+        <CardTitle>{agent.name}</CardTitle>
+        {renderStatus()}
+      </CardHeader>
+    </Card>
+  );
+}
+```
+
+### Props Interface Naming
+
+```tsx
+// ✅ Good - ComponentNameProps pattern
+interface AgentCardProps {
+  agent: Agent;
+}
+
+interface VoiceControlsProps {
+  isRecording: boolean;
+  onToggle: () => void;
+}
+
+// ❌ Bad - Inconsistent naming
+interface IAgentCard {
+  agent: Agent;
+}
+
+interface VoiceControlPropsType {
+  isRecording: boolean;
+}
+```
+
+### Event Handler Naming
+
+```tsx
+// ✅ Good - handle* for handlers, on* for props
+interface ButtonProps {
+  onClick: () => void;  // Prop: on* prefix
+}
+
+function MyComponent({ onClick }: ButtonProps) {
+  const handleClick = () => {  // Handler: handle* prefix
+    // Internal logic
+    onClick();
+  };
+
+  return <Button onClick={handleClick}>Click</Button>;
+}
+```
+
+---
+
+## Backend Standards
+
+### Route Handler Pattern
+
+```typescript
+// ✅ Good - Thin route, logic in service
+router.post('/', requireAuth, zodValidation(createAgentSchema), async (req, res, next) => {
+  try {
+    const agent = await agentService.create(req.auth.userId, req.body);
+    res.status(201).json(agent);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ❌ Bad - Business logic in route
+router.post('/', async (req, res) => {
+  const { name, config } = req.body;
+
+  // Validation in route
+  if (!name) {
+    return res.status(400).json({ error: 'Name required' });
+  }
+
+  // Business logic in route
+  const agent = await prisma.agent.create({
+    data: { name, config, userId: req.auth.userId },
+  });
+
+  // Side effects in route
+  await sendWelcomeEmail(req.auth.userId);
+
+  res.json(agent);
+});
+```
+
+### Service Method Structure
+
+```typescript
+// ✅ Good - Clear service method structure
+export class AgentService {
+  async create(userId: string, data: CreateAgentInput): Promise<Agent> {
+    // 1. Validation
+    await this.validateConfiguration(data);
+
+    // 2. Main operation
+    const agent = await prisma.agent.create({
+      data: { ...data, userId, status: 'draft' },
+    });
+
+    // 3. Side effects
+    await this.queueWelcomeEmail(userId, agent);
+
+    // 4. Logging
+    logger.info('Agent created', { agentId: agent.id, userId });
+
+    return agent;
+  }
+}
+```
+
+### Error Handling
+
+```typescript
+// ✅ Good - Use custom error classes
+if (!agent) {
+  throw new NotFoundError('Agent');
+}
+
+if (!user.canEdit(agent)) {
+  throw new ForbiddenError('Not authorized to edit this agent');
+}
+
+// ❌ Bad - Generic errors or HTTP responses in services
+if (!agent) {
+  throw new Error('Not found');
+}
+
+// ❌ Bad - HTTP concerns in service layer
+if (!agent) {
+  return { status: 404, error: 'Not found' };
+}
+```
+
+---
+
+## Naming Conventions
+
+### Files and Directories
+
+| Type | Convention | Example |
+|------|------------|---------|
+| React components | PascalCase | `AgentCard.tsx` |
+| Hooks | camelCase with use prefix | `useAgents.ts` |
+| Services | camelCase with .service suffix | `agent.service.ts` |
+| Routes | camelCase | `agents.ts` |
+| Types | camelCase with .types suffix | `agent.types.ts` |
+| Utils | camelCase | `formatDate.ts` |
+| Constants | camelCase | `constants.ts` |
+
+### Variables and Functions
+
+```typescript
+// Variables: camelCase
+const agentCount = 10;
+const isLoading = false;
+const hasPermission = true;
+
+// Functions: camelCase, verb prefix
+function createAgent() {}
+function validateInput() {}
+function calculateTotal() {}
+
+// Constants: SCREAMING_SNAKE_CASE
+const MAX_RETRY_COUNT = 3;
+const API_BASE_URL = 'https://api.vora.io';
+const DEFAULT_TIMEOUT_MS = 5000;
+
+// Types/Interfaces: PascalCase
+interface UserProfile {}
+type AgentStatus = 'active' | 'inactive';
+enum Permission { READ, WRITE, ADMIN }
+```
+
+---
+
+## Comments
+
+### When to Comment
+
+```typescript
+// ✅ Good - Explain WHY, not WHAT
+// Using exponential backoff to avoid overwhelming the API during outages
+const delay = Math.pow(2, retryCount) * 1000;
+
+// ✅ Good - Document non-obvious behavior
+// LiveKit requires tracks to be unpublished before room disconnect
+// otherwise the server keeps the track alive for 30s
+await room.localParticipant.unpublishAllTracks();
+await room.disconnect();
+
+// ❌ Bad - Obvious comments
+// Increment the counter
+counter++;
+
+// Loop through users
+for (const user of users) {}
+```
+
+### TODO Comments
+
+```typescript
+// ✅ Good - Actionable TODO with context
+// TODO(AUTH-123): Replace with Clerk webhook once available in production
+
+// ❌ Bad - Vague TODO
+// TODO: fix this later
+```
+
+---
+
+## Code Organization
+
+### File Length
+
+- **Maximum**: 300 lines per file
+- **Ideal**: 100-200 lines per file
+- **Action**: If a file exceeds 300 lines, split into smaller modules
+
+### Function Length
+
+- **Maximum**: 50 lines per function
+- **Ideal**: 10-25 lines per function
+- **Action**: Extract helper functions for complex logic
+
+### Complexity
+
+```typescript
+// ✅ Good - Early returns reduce nesting
+function processAgent(agent: Agent | null): Result {
+  if (!agent) {
+    return { success: false, error: 'Agent not found' };
+  }
+
+  if (agent.status !== 'active') {
+    return { success: false, error: 'Agent not active' };
+  }
+
+  // Main logic with less nesting
+  const result = doProcessing(agent);
+  return { success: true, data: result };
+}
+
+// ❌ Bad - Deep nesting
+function processAgent(agent: Agent | null): Result {
+  if (agent) {
+    if (agent.status === 'active') {
+      const result = doProcessing(agent);
+      return { success: true, data: result };
+    } else {
+      return { success: false, error: 'Agent not active' };
+    }
+  } else {
+    return { success: false, error: 'Agent not found' };
+  }
+}
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Naming Conventions" icon="tag" href="/internal/standards/naming">
+    Detailed naming standards
+  </Card>
+  <Card title="Import Organization" icon="layer-group" href="/internal/standards/imports">
+    Import ordering rules
+  </Card>
+  <Card title="JSDoc Guidelines" icon="book" href="/internal/standards/jsdoc">
+    Documentation comments
+  </Card>
+  <Card title="Git Workflow" icon="code-branch" href="/internal/standards/git">
+    Commit and branch standards
+  </Card>
+</CardGroup>

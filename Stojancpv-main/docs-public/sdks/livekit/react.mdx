@@ -1,0 +1,623 @@
+---
+title: React Integration
+description: LiveKit integration for React web applications
+---
+
+# React Integration
+
+Complete guide to integrating LiveKit with React for Vora voice sessions.
+
+---
+
+## Installation
+
+```bash
+npm install @livekit/components-react livekit-client @vora-ai/react
+```
+
+---
+
+## Quick Start
+
+The fastest way to add voice to your React app:
+
+```tsx
+import { VoraRoom, VoiceAssistant, AudioRenderer } from '@vora-ai/react';
+
+function VoiceChat({ session }) {
+  return (
+    <VoraRoom
+      token={session.token}
+      serverUrl={session.roomUrl}
+      connect={true}
+      audio={true}
+    >
+      <VoiceAssistant />
+      <AudioRenderer />
+    </VoraRoom>
+  );
+}
+```
+
+---
+
+## Using LiveKit Components Directly
+
+For more control, use LiveKit's React components:
+
+```tsx
+import { LiveKitRoom, useRoomContext, useParticipants } from '@livekit/components-react';
+import '@livekit/components-styles';
+
+function VoiceSession({ token, roomUrl }) {
+  return (
+    <LiveKitRoom
+      token={token}
+      serverUrl={roomUrl}
+      connect={true}
+      audio={true}
+      video={false}
+    >
+      <VoiceUI />
+    </LiveKitRoom>
+  );
+}
+
+function VoiceUI() {
+  const room = useRoomContext();
+  const participants = useParticipants();
+
+  return (
+    <div className="voice-session">
+      <ConnectionStatus room={room} />
+      <AgentAudio participants={participants} />
+      <MicrophoneControls room={room} />
+    </div>
+  );
+}
+```
+
+---
+
+## Connection Management
+
+### Connection State Hook
+
+```tsx
+import { useConnectionState } from '@livekit/components-react';
+import { ConnectionState } from 'livekit-client';
+
+function ConnectionStatus() {
+  const connectionState = useConnectionState();
+
+  switch (connectionState) {
+    case ConnectionState.Connecting:
+      return <div className="status">Connecting...</div>;
+    case ConnectionState.Connected:
+      return <div className="status connected">Connected</div>;
+    case ConnectionState.Reconnecting:
+      return <div className="status reconnecting">Reconnecting...</div>;
+    case ConnectionState.Disconnected:
+      return <div className="status disconnected">Disconnected</div>;
+    default:
+      return null;
+  }
+}
+```
+
+### Manual Connection Control
+
+```tsx
+import { useRoomContext } from '@livekit/components-react';
+
+function ConnectionControls() {
+  const room = useRoomContext();
+
+  const connect = async () => {
+    await room.connect(serverUrl, token);
+  };
+
+  const disconnect = () => {
+    room.disconnect();
+  };
+
+  return (
+    <div>
+      <button onClick={connect}>Connect</button>
+      <button onClick={disconnect}>Disconnect</button>
+    </div>
+  );
+}
+```
+
+---
+
+## Audio Handling
+
+### Audio Renderer
+
+Automatically renders audio from all remote participants:
+
+```tsx
+import { RoomAudioRenderer } from '@livekit/components-react';
+
+function App() {
+  return (
+    <LiveKitRoom ...>
+      <RoomAudioRenderer />
+      {/* Your UI */}
+    </LiveKitRoom>
+  );
+}
+```
+
+### Custom Audio Handling
+
+```tsx
+import { useRemoteParticipants, useTracks } from '@livekit/components-react';
+import { Track } from 'livekit-client';
+
+function AgentAudio() {
+  const tracks = useTracks([Track.Source.Microphone]);
+
+  // Find agent's audio track
+  const agentTrack = tracks.find(
+    track => track.participant.identity === 'agent'
+  );
+
+  if (!agentTrack?.publication?.track) {
+    return null;
+  }
+
+  return (
+    <audio
+      ref={(el) => {
+        if (el) {
+          agentTrack.publication.track?.attach(el);
+        }
+      }}
+      autoPlay
+    />
+  );
+}
+```
+
+### Audio Level Visualization
+
+```tsx
+import { useTrackVolume } from '@livekit/components-react';
+
+function AudioVisualizer({ track }) {
+  const volume = useTrackVolume(track);
+
+  return (
+    <div className="visualizer">
+      <div
+        className="bar"
+        style={{ height: `${volume * 100}%` }}
+      />
+    </div>
+  );
+}
+```
+
+---
+
+## Microphone Controls
+
+### Basic Microphone Toggle
+
+```tsx
+import { useLocalParticipant } from '@livekit/components-react';
+
+function MicrophoneButton() {
+  const { localParticipant } = useLocalParticipant();
+  const isMuted = !localParticipant.isMicrophoneEnabled;
+
+  const toggleMic = async () => {
+    await localParticipant.setMicrophoneEnabled(!localParticipant.isMicrophoneEnabled);
+  };
+
+  return (
+    <button onClick={toggleMic} className={isMuted ? 'muted' : 'active'}>
+      {isMuted ? 'Unmute' : 'Mute'}
+    </button>
+  );
+}
+```
+
+### Microphone with Device Selection
+
+```tsx
+import { useMediaDevices, useLocalParticipant } from '@livekit/components-react';
+
+function MicrophoneSelector() {
+  const devices = useMediaDevices({ kind: 'audioinput' });
+  const { localParticipant } = useLocalParticipant();
+  const [selectedDevice, setSelectedDevice] = useState('');
+
+  const handleDeviceChange = async (deviceId: string) => {
+    setSelectedDevice(deviceId);
+    await localParticipant.setMicrophoneEnabled(true, {
+      deviceId: { exact: deviceId }
+    });
+  };
+
+  return (
+    <select
+      value={selectedDevice}
+      onChange={(e) => handleDeviceChange(e.target.value)}
+    >
+      {devices.map((device) => (
+        <option key={device.deviceId} value={device.deviceId}>
+          {device.label || 'Microphone'}
+        </option>
+      ))}
+    </select>
+  );
+}
+```
+
+---
+
+## Data Channel
+
+### Receiving Agent Events
+
+```tsx
+import { useDataChannel } from '@livekit/components-react';
+import { useCallback, useState } from 'react';
+
+function AgentEvents() {
+  const [transcript, setTranscript] = useState<Message[]>([]);
+  const [agentState, setAgentState] = useState('idle');
+
+  const onData = useCallback((data: Uint8Array) => {
+    const message = JSON.parse(new TextDecoder().decode(data));
+
+    switch (message.type) {
+      case 'transcript':
+        setTranscript(prev => [...prev, {
+          speaker: message.speaker,
+          text: message.text,
+          timestamp: new Date()
+        }]);
+        break;
+
+      case 'agent_state':
+        setAgentState(message.state);
+        break;
+
+      case 'function_call':
+        console.log('Function called:', message.name);
+        break;
+    }
+  }, []);
+
+  useDataChannel(onData);
+
+  return (
+    <div>
+      <div className={`agent-state ${agentState}`}>{agentState}</div>
+      <div className="transcript">
+        {transcript.map((msg, i) => (
+          <div key={i} className={msg.speaker}>
+            <strong>{msg.speaker}:</strong> {msg.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+### Sending Data to Agent
+
+```tsx
+import { useRoomContext } from '@livekit/components-react';
+
+function VariableUpdater() {
+  const room = useRoomContext();
+
+  const updateVariables = (variables: Record<string, any>) => {
+    const data = new TextEncoder().encode(JSON.stringify({
+      type: 'update_variables',
+      variables
+    }));
+
+    room.localParticipant.publishData(data, { reliable: true });
+  };
+
+  return (
+    <button onClick={() => updateVariables({ step: 'checkout' })}>
+      Update Context
+    </button>
+  );
+}
+```
+
+---
+
+## Complete Example
+
+Full voice chat component with all features:
+
+```tsx
+import React, { useState, useCallback } from 'react';
+import {
+  LiveKitRoom,
+  useRoomContext,
+  useConnectionState,
+  useLocalParticipant,
+  useDataChannel,
+  RoomAudioRenderer,
+  useTracks
+} from '@livekit/components-react';
+import { ConnectionState, Track } from 'livekit-client';
+import '@livekit/components-styles';
+
+interface Message {
+  speaker: 'agent' | 'user';
+  text: string;
+  timestamp: Date;
+}
+
+function VoiceChat({ agentId }: { agentId: string }) {
+  const [session, setSession] = useState<{ token: string; roomUrl: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const startSession = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/voice-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId })
+      });
+      const data = await response.json();
+      setSession(data);
+    } catch (error) {
+      console.error('Failed to create session:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!session) {
+    return (
+      <button onClick={startSession} disabled={loading}>
+        {loading ? 'Connecting...' : 'Start Voice Chat'}
+      </button>
+    );
+  }
+
+  return (
+    <LiveKitRoom
+      token={session.token}
+      serverUrl={session.roomUrl}
+      connect={true}
+      audio={true}
+      video={false}
+      onDisconnected={() => setSession(null)}
+    >
+      <VoiceChatUI />
+      <RoomAudioRenderer />
+    </LiveKitRoom>
+  );
+}
+
+function VoiceChatUI() {
+  const room = useRoomContext();
+  const connectionState = useConnectionState();
+  const { localParticipant } = useLocalParticipant();
+
+  const [transcript, setTranscript] = useState<Message[]>([]);
+  const [agentState, setAgentState] = useState('idle');
+
+  // Handle incoming data
+  const onData = useCallback((data: Uint8Array) => {
+    const message = JSON.parse(new TextDecoder().decode(data));
+
+    if (message.type === 'transcript') {
+      setTranscript(prev => [...prev, {
+        speaker: message.speaker,
+        text: message.text,
+        timestamp: new Date()
+      }]);
+    } else if (message.type === 'agent_state') {
+      setAgentState(message.state);
+    }
+  }, []);
+
+  useDataChannel(onData);
+
+  const isMuted = !localParticipant?.isMicrophoneEnabled;
+
+  const toggleMic = async () => {
+    if (localParticipant) {
+      await localParticipant.setMicrophoneEnabled(isMuted);
+    }
+  };
+
+  const endCall = () => {
+    room.disconnect();
+  };
+
+  if (connectionState === ConnectionState.Connecting) {
+    return <div className="loading">Connecting to voice session...</div>;
+  }
+
+  return (
+    <div className="voice-chat">
+      {/* Header */}
+      <header className="voice-chat-header">
+        <ConnectionIndicator state={connectionState} />
+        <AgentStateIndicator state={agentState} />
+      </header>
+
+      {/* Transcript */}
+      <div className="transcript">
+        {transcript.map((msg, i) => (
+          <div key={i} className={`message ${msg.speaker}`}>
+            <span className="speaker">{msg.speaker === 'agent' ? 'Agent' : 'You'}:</span>
+            <span className="text">{msg.text}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Controls */}
+      <footer className="voice-chat-controls">
+        <button onClick={toggleMic} className={`mic-button ${isMuted ? 'muted' : ''}`}>
+          {isMuted ? '🔇 Unmute' : '🎤 Mute'}
+        </button>
+        <button onClick={endCall} className="end-button">
+          📞 End Call
+        </button>
+      </footer>
+    </div>
+  );
+}
+
+function ConnectionIndicator({ state }: { state: ConnectionState }) {
+  const labels: Record<ConnectionState, string> = {
+    [ConnectionState.Connecting]: 'Connecting...',
+    [ConnectionState.Connected]: 'Connected',
+    [ConnectionState.Reconnecting]: 'Reconnecting...',
+    [ConnectionState.Disconnected]: 'Disconnected'
+  };
+
+  return (
+    <span className={`connection-indicator ${state}`}>
+      {labels[state]}
+    </span>
+  );
+}
+
+function AgentStateIndicator({ state }: { state: string }) {
+  const labels: Record<string, string> = {
+    idle: '⏳ Waiting',
+    listening: '👂 Listening',
+    thinking: '🤔 Thinking',
+    speaking: '🗣️ Speaking'
+  };
+
+  return (
+    <span className={`agent-state ${state}`}>
+      {labels[state] || state}
+    </span>
+  );
+}
+
+export default VoiceChat;
+```
+
+---
+
+## Styling
+
+### CSS Variables
+
+```css
+:root {
+  --lk-bg: #1a1a1a;
+  --lk-fg: #ffffff;
+  --lk-accent: #0066ff;
+  --lk-border: #333333;
+  --lk-focus-ring: rgba(0, 102, 255, 0.5);
+}
+
+.voice-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--lk-bg);
+  color: var(--lk-fg);
+}
+
+.voice-chat-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--lk-border);
+}
+
+.transcript {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.message {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.message.agent {
+  background: var(--lk-border);
+}
+
+.message.user {
+  background: var(--lk-accent);
+  margin-left: auto;
+  max-width: 80%;
+}
+
+.voice-chat-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-top: 1px solid var(--lk-border);
+}
+
+.mic-button, .end-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.mic-button {
+  background: var(--lk-accent);
+  color: white;
+}
+
+.mic-button.muted {
+  background: #666;
+}
+
+.end-button {
+  background: #dc3545;
+  color: white;
+}
+```
+
+---
+
+## Hooks Reference
+
+| Hook | Description |
+|------|-------------|
+| `useRoomContext` | Access the Room instance |
+| `useConnectionState` | Current connection state |
+| `useLocalParticipant` | Local participant info and controls |
+| `useRemoteParticipants` | List of remote participants |
+| `useTracks` | Audio/video tracks |
+| `useDataChannel` | Data channel for messages |
+| `useMediaDevices` | Available audio/video devices |
+| `useTrackVolume` | Audio level for a track |
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Voice Components" icon="microphone" href="/sdks/javascript/voice">
+    Pre-built Vora components
+  </Card>
+  <Card title="React Native" icon="mobile" href="/sdks/livekit/react-native">
+    Mobile integration
+  </Card>
+</CardGroup>

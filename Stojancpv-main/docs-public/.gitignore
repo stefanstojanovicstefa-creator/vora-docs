@@ -1,0 +1,17 @@
+# Mintlify local development cache
+.mintlify/
+
+# Node modules (if using custom components)
+node_modules/
+
+# Next.js build output (if using custom build)
+.next/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~

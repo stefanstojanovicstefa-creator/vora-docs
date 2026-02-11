@@ -1,0 +1,443 @@
+---
+title: Create Session
+description: Start a new voice call session with an agent
+api: POST /sessions
+---
+
+# Create Session
+
+Create a new voice call session to connect a user with an agent. Returns connection details for joining the voice room.
+
+<Info>
+  The agent must be [deployed](/api/agents/deploy) before you can create sessions with it.
+</Info>
+
+## Request
+
+```
+POST https://api.voicevora.com/v1/sessions
+```
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_KEY` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Body Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `agent_id` | string | Yes | ID of the agent to use |
+| `participant` | object | No | Information about the caller |
+| `test_mode` | boolean | No | Create a test session (default: `false`) |
+| `timeout_seconds` | number | No | Session timeout (default: `300`) |
+| `metadata` | object | No | Custom session metadata |
+| `variables` | object | No | Template variables for the agent prompt |
+
+### Participant Object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `phone_number` | string | No | Caller's phone number |
+| `name` | string | No | Caller's display name |
+| `metadata` | object | No | Custom participant data |
+
+## Response
+
+<Tabs>
+  <Tab title="Success (201)">
+    ```json
+    {
+      "data": {
+        "id": "session_abc123xyz",
+        "agent_id": "agent_def456uvw",
+        "status": "pending",
+        "participant": {
+          "phone_number": null,
+          "name": "John Doe",
+          "metadata": {
+            "customer_id": "cust_123",
+            "plan": "premium"
+          }
+        },
+        "room": {
+          "name": "room_xyz789",
+          "url": "wss://livekit.voicevora.com",
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "timeout_seconds": 300,
+        "test_mode": false,
+        "variables": {},
+        "metadata": {},
+        "created_at": "2024-01-15T10:29:55Z",
+        "expires_at": "2024-01-15T10:34:55Z"
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Agent Not Found (404)">
+    ```json
+    {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Agent not found",
+        "details": {
+          "resource_type": "agent",
+          "resource_id": "agent_invalid"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Agent Not Deployed (422)">
+    ```json
+    {
+      "error": {
+        "code": "AGENT_NOT_DEPLOYED",
+        "message": "Agent must be deployed to create sessions",
+        "details": {
+          "agent_id": "agent_abc123xyz",
+          "agent_status": "draft",
+          "hint": "Deploy the agent first with POST /agents/:id/deploy"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Quota Exceeded (403)">
+    ```json
+    {
+      "error": {
+        "code": "QUOTA_EXCEEDED",
+        "message": "Concurrent session limit reached",
+        "details": {
+          "limit": 2,
+          "active": 2,
+          "hint": "Upgrade your plan or wait for active sessions to complete"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Examples
+
+### Basic Session
+
+<CodeGroup>
+```javascript JavaScript
+const session = await vora.sessions.create({
+  agent_id: 'agent_abc123xyz'
+});
+
+console.log(`Session ID: ${session.id}`);
+console.log(`Connect to: ${session.room.url}`);
+```
+
+```python Python
+session = vora.sessions.create(agent_id='agent_abc123xyz')
+
+print(f"Session ID: {session.id}")
+print(f"Connect to: {session.room['url']}")
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/sessions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id": "agent_abc123xyz"}'
+```
+</CodeGroup>
+
+### Session with Participant Info
+
+<CodeGroup>
+```javascript JavaScript
+const session = await vora.sessions.create({
+  agent_id: 'agent_abc123xyz',
+  participant: {
+    name: 'Jane Smith',
+    phone_number: '+1234567890',
+    metadata: {
+      customer_id: 'cust_456',
+      account_type: 'enterprise',
+      last_purchase: '2024-01-10'
+    }
+  }
+});
+```
+
+```python Python
+session = vora.sessions.create(
+    agent_id='agent_abc123xyz',
+    participant={
+        'name': 'Jane Smith',
+        'phone_number': '+1234567890',
+        'metadata': {
+            'customer_id': 'cust_456',
+            'account_type': 'enterprise'
+        }
+    }
+)
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/sessions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_id": "agent_abc123xyz",
+    "participant": {
+      "name": "Jane Smith",
+      "phone_number": "+1234567890",
+      "metadata": {
+        "customer_id": "cust_456"
+      }
+    }
+  }'
+```
+</CodeGroup>
+
+### Session with Variables
+
+Use variables to customize the agent's behavior per session:
+
+<CodeGroup>
+```javascript JavaScript
+// Agent prompt template:
+// "You are helping {{customer_name}} with their {{product}} order"
+
+const session = await vora.sessions.create({
+  agent_id: 'agent_abc123xyz',
+  variables: {
+    customer_name: 'Jane',
+    product: 'Premium Widget',
+    order_id: 'ORD-12345'
+  }
+});
+```
+
+```python Python
+session = vora.sessions.create(
+    agent_id='agent_abc123xyz',
+    variables={
+        'customer_name': 'Jane',
+        'product': 'Premium Widget',
+        'order_id': 'ORD-12345'
+    }
+)
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/sessions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_id": "agent_abc123xyz",
+    "variables": {
+      "customer_name": "Jane",
+      "product": "Premium Widget"
+    }
+  }'
+```
+</CodeGroup>
+
+### Test Session
+
+<CodeGroup>
+```javascript JavaScript
+const testSession = await vora.sessions.create({
+  agent_id: 'agent_abc123xyz',
+  test_mode: true,
+  participant: {
+    name: 'QA Tester'
+  }
+});
+
+// Test sessions don't affect billing or metrics
+console.log(`Test session: ${testSession.test_mode}`); // true
+```
+
+```python Python
+test_session = vora.sessions.create(
+    agent_id='agent_abc123xyz',
+    test_mode=True,
+    participant={'name': 'QA Tester'}
+)
+
+print(f"Test session: {test_session.test_mode}")  # True
+```
+
+```bash cURL
+curl -X POST https://api.voicevora.com/v1/sessions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_id": "agent_abc123xyz",
+    "test_mode": true
+  }'
+```
+</CodeGroup>
+
+### Session with Extended Timeout
+
+<CodeGroup>
+```javascript JavaScript
+// For long conversations, extend the timeout
+const session = await vora.sessions.create({
+  agent_id: 'agent_abc123xyz',
+  timeout_seconds: 600 // 10 minutes
+});
+```
+
+```python Python
+session = vora.sessions.create(
+    agent_id='agent_abc123xyz',
+    timeout_seconds=600  # 10 minutes
+)
+```
+</CodeGroup>
+
+## Connecting to the Session
+
+After creating a session, connect using the LiveKit client:
+
+### Browser / React
+
+```javascript
+import { Room, RoomEvent } from 'livekit-client';
+
+async function connectToSession(session) {
+  const room = new Room({
+    // Optional: Configure audio settings
+    audioCaptureDefaults: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    }
+  });
+
+  // Handle connection events
+  room.on(RoomEvent.Connected, () => {
+    console.log('Connected to voice room');
+  });
+
+  room.on(RoomEvent.Disconnected, (reason) => {
+    console.log(`Disconnected: ${reason}`);
+  });
+
+  room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+    if (track.kind === 'audio') {
+      // This is the agent's voice
+      const audioElement = track.attach();
+      document.body.appendChild(audioElement);
+    }
+  });
+
+  // Connect to the room
+  await room.connect(session.room.url, session.room.token);
+
+  // Enable microphone
+  await room.localParticipant.setMicrophoneEnabled(true);
+
+  return room;
+}
+```
+
+### React Components
+
+```jsx
+import {
+  LiveKitRoom,
+  useVoiceAssistant,
+  BarVisualizer,
+  RoomAudioRenderer
+} from '@livekit/components-react';
+
+function VoiceSession({ session }) {
+  return (
+    <LiveKitRoom
+      serverUrl={session.room.url}
+      token={session.room.token}
+      connect={true}
+      audio={true}
+    >
+      <VoiceUI />
+      <RoomAudioRenderer />
+    </LiveKitRoom>
+  );
+}
+
+function VoiceUI() {
+  const { state, audioTrack } = useVoiceAssistant();
+
+  return (
+    <div className="voice-container">
+      <div className="status">
+        {state === 'listening' && '🎤 Listening...'}
+        {state === 'thinking' && '🤔 Thinking...'}
+        {state === 'speaking' && '🔊 Speaking...'}
+      </div>
+
+      {audioTrack && (
+        <BarVisualizer
+          state={state}
+          trackRef={audioTrack}
+          barCount={5}
+        />
+      )}
+    </div>
+  );
+}
+```
+
+## Session Timeout
+
+Sessions automatically expire if:
+- No connection is made within `timeout_seconds`
+- The session is idle for extended periods
+
+<Warning>
+  The default timeout is 5 minutes (300 seconds). Adjust based on your use case.
+</Warning>
+
+| Scenario | Recommended Timeout |
+|----------|---------------------|
+| Quick interactions | 120 seconds |
+| Standard support calls | 300 seconds (default) |
+| Complex consultations | 600 seconds |
+| Long-form interviews | 1800 seconds |
+
+## Session Limits by Plan
+
+| Plan | Concurrent Sessions | Session Duration |
+|------|---------------------|------------------|
+| Free | 2 | 5 minutes |
+| Pro | 10 | 30 minutes |
+| Enterprise | Custom | Custom |
+
+## Error Codes
+
+| Code | Description | Resolution |
+|------|-------------|------------|
+| `NOT_FOUND` | Agent doesn't exist | Verify agent ID |
+| `AGENT_NOT_DEPLOYED` | Agent not deployed | Deploy the agent first |
+| `QUOTA_EXCEEDED` | Session limit reached | Wait or upgrade plan |
+| `RATE_LIMIT_EXCEEDED` | Too many session requests | Implement backoff |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get Sessions" icon="list" href="/api/sessions/get">
+    List and retrieve sessions
+  </Card>
+  <Card title="Transcripts" icon="file-lines" href="/api/sessions/transcripts">
+    Access conversation history
+  </Card>
+</CardGroup>

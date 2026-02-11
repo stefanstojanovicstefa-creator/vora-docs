@@ -1,0 +1,810 @@
+---
+title: React Native Integration
+description: LiveKit integration for iOS and Android mobile apps
+---
+
+# React Native Integration
+
+Complete guide to integrating LiveKit with React Native for Vora voice sessions on iOS and Android.
+
+---
+
+## Installation
+
+```bash
+npm install @livekit/react-native @livekit/react-native-webrtc
+```
+
+### iOS Setup
+
+Add to your `Podfile`:
+
+```ruby
+platform :ios, '13.0'
+
+# Required for microphone access
+pod 'livekit-react-native-webrtc', :path => '../node_modules/@livekit/react-native-webrtc'
+```
+
+Add to `Info.plist`:
+
+```xml
+<key>NSMicrophoneUsageDescription</key>
+<string>We need microphone access for voice calls</string>
+<key>UIBackgroundModes</key>
+<array>
+  <string>audio</string>
+</array>
+```
+
+Install pods:
+
+```bash
+cd ios && pod install
+```
+
+### Android Setup
+
+Add permissions to `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+<uses-permission android:name="android.permission.BLUETOOTH" />
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+```
+
+Update `android/build.gradle`:
+
+```groovy
+buildscript {
+    ext {
+        minSdkVersion = 24
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+    }
+}
+```
+
+---
+
+## Initialization
+
+Register the LiveKit plugin on app start:
+
+```tsx
+// App.tsx or index.js
+import { registerGlobals } from '@livekit/react-native';
+
+// Call before any LiveKit usage
+registerGlobals();
+```
+
+---
+
+## Quick Start
+
+```tsx
+import React, { useState, useEffect } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import {
+  LiveKitRoom,
+  useRoom,
+  useLocalParticipant,
+  AudioSession,
+  useDataChannel
+} from '@livekit/react-native';
+
+function VoiceChat({ agentId }) {
+  const [session, setSession] = useState(null);
+
+  const startSession = async () => {
+    const response = await fetch('/api/voice-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId })
+    });
+    setSession(await response.json());
+  };
+
+  if (!session) {
+    return (
+      <TouchableOpacity style={styles.startButton} onPress={startSession}>
+        <Text style={styles.buttonText}>Start Voice Chat</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <LiveKitRoom
+      serverUrl={session.roomUrl}
+      token={session.token}
+      connect={true}
+      audio={true}
+      video={false}
+    >
+      <VoiceChatUI onEnd={() => setSession(null)} />
+    </LiveKitRoom>
+  );
+}
+```
+
+---
+
+## Audio Session Management
+
+Configure audio session for voice calls:
+
+```tsx
+import { AudioSession } from '@livekit/react-native';
+
+// Configure before connecting
+async function setupAudioSession() {
+  await AudioSession.configure({
+    // Use voice chat mode for better echo cancellation
+    mode: 'voiceChat',
+
+    // Allow Bluetooth devices
+    allowBluetooth: true,
+    allowBluetoothA2DP: true,
+
+    // Speaker or earpiece
+    defaultOutput: 'speaker',
+
+    // Handle interruptions (calls, alarms)
+    handleInterruptions: true
+  });
+
+  await AudioSession.start();
+}
+
+// Call when session ends
+async function teardownAudioSession() {
+  await AudioSession.stop();
+}
+```
+
+### Audio Routing
+
+```tsx
+import { AudioSession } from '@livekit/react-native';
+
+function AudioRouteSelector() {
+  const [outputDevice, setOutputDevice] = useState('speaker');
+
+  const toggleOutput = async () => {
+    const newDevice = outputDevice === 'speaker' ? 'earpiece' : 'speaker';
+    await AudioSession.setOutput(newDevice);
+    setOutputDevice(newDevice);
+  };
+
+  return (
+    <TouchableOpacity onPress={toggleOutput}>
+      <Text>{outputDevice === 'speaker' ? '🔊 Speaker' : '📱 Earpiece'}</Text>
+    </TouchableOpacity>
+  );
+}
+```
+
+---
+
+## Microphone Controls
+
+```tsx
+import { useLocalParticipant } from '@livekit/react-native';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+
+function MicrophoneControl() {
+  const { localParticipant, isMicrophoneEnabled } = useLocalParticipant();
+
+  const toggleMic = async () => {
+    await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+  };
+
+  return (
+    <TouchableOpacity
+      style={[styles.micButton, !isMicrophoneEnabled && styles.muted]}
+      onPress={toggleMic}
+    >
+      <Text style={styles.buttonText}>
+        {isMicrophoneEnabled ? '🎤 Mute' : '🔇 Unmute'}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  micButton: {
+    backgroundColor: '#0066FF',
+    padding: 16,
+    borderRadius: 32,
+    alignItems: 'center',
+  },
+  muted: {
+    backgroundColor: '#666',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
+```
+
+---
+
+## Connection State
+
+```tsx
+import { useConnectionState } from '@livekit/react-native';
+import { ConnectionState } from 'livekit-client';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+
+function ConnectionIndicator() {
+  const connectionState = useConnectionState();
+
+  const getStatusInfo = () => {
+    switch (connectionState) {
+      case ConnectionState.Connecting:
+        return { color: '#FFA500', text: 'Connecting...', showSpinner: true };
+      case ConnectionState.Connected:
+        return { color: '#00CC88', text: 'Connected', showSpinner: false };
+      case ConnectionState.Reconnecting:
+        return { color: '#FFA500', text: 'Reconnecting...', showSpinner: true };
+      case ConnectionState.Disconnected:
+        return { color: '#FF4444', text: 'Disconnected', showSpinner: false };
+      default:
+        return { color: '#666', text: 'Unknown', showSpinner: false };
+    }
+  };
+
+  const status = getStatusInfo();
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.dot, { backgroundColor: status.color }]} />
+      <Text style={styles.text}>{status.text}</Text>
+      {status.showSpinner && <ActivityIndicator size="small" color={status.color} />}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  text: {
+    fontSize: 14,
+    color: '#fff',
+  },
+});
+```
+
+---
+
+## Data Channel
+
+Receive and send events:
+
+```tsx
+import { useDataChannel } from '@livekit/react-native';
+import { useCallback, useState } from 'react';
+
+function AgentInteraction() {
+  const [transcript, setTranscript] = useState([]);
+  const [agentState, setAgentState] = useState('idle');
+
+  const onData = useCallback((data) => {
+    const message = JSON.parse(new TextDecoder().decode(data));
+
+    switch (message.type) {
+      case 'transcript':
+        setTranscript(prev => [...prev, {
+          speaker: message.speaker,
+          text: message.text
+        }]);
+        break;
+
+      case 'agent_state':
+        setAgentState(message.state);
+        break;
+
+      case 'function_call':
+        console.log('Function:', message.name, message.parameters);
+        break;
+    }
+  }, []);
+
+  const { send } = useDataChannel(onData);
+
+  const updateContext = (variables) => {
+    send(JSON.stringify({
+      type: 'update_variables',
+      variables
+    }));
+  };
+
+  return (
+    <View>
+      <AgentStateIndicator state={agentState} />
+      <TranscriptView messages={transcript} />
+    </View>
+  );
+}
+```
+
+---
+
+## Complete Example
+
+```tsx
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+} from 'react-native';
+import {
+  LiveKitRoom,
+  useRoom,
+  useConnectionState,
+  useLocalParticipant,
+  useDataChannel,
+  AudioSession,
+  registerGlobals,
+} from '@livekit/react-native';
+import { ConnectionState } from 'livekit-client';
+
+// Register globals at module level
+registerGlobals();
+
+interface Message {
+  id: string;
+  speaker: 'agent' | 'user';
+  text: string;
+}
+
+export default function VoiceChatScreen({ route }) {
+  const { agentId } = route.params;
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Setup audio session
+    AudioSession.configure({
+      mode: 'voiceChat',
+      allowBluetooth: true,
+      defaultOutput: 'speaker',
+      handleInterruptions: true,
+    });
+
+    return () => {
+      AudioSession.stop();
+    };
+  }, []);
+
+  const startSession = async () => {
+    setLoading(true);
+    try {
+      await AudioSession.start();
+
+      const response = await fetch('https://api.yourapp.com/voice-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId }),
+      });
+
+      const data = await response.json();
+      setSession(data);
+    } catch (error) {
+      console.error('Failed to start session:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const endSession = async () => {
+    await AudioSession.stop();
+    setSession(null);
+  };
+
+  if (!session) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.startContainer}>
+          <Text style={styles.title}>Voice Assistant</Text>
+          <Text style={styles.subtitle}>Tap to start a conversation</Text>
+          <TouchableOpacity
+            style={[styles.startButton, loading && styles.disabled]}
+            onPress={startSession}
+            disabled={loading}
+          >
+            <Text style={styles.startButtonText}>
+              {loading ? 'Connecting...' : 'Start Call'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <LiveKitRoom
+      serverUrl={session.roomUrl}
+      token={session.token}
+      connect={true}
+      audio={true}
+      video={false}
+      onDisconnected={endSession}
+    >
+      <VoiceChatUI onEnd={endSession} />
+    </LiveKitRoom>
+  );
+}
+
+function VoiceChatUI({ onEnd }) {
+  const room = useRoom();
+  const connectionState = useConnectionState();
+  const { localParticipant, isMicrophoneEnabled } = useLocalParticipant();
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [agentState, setAgentState] = useState('idle');
+
+  const onData = useCallback((data) => {
+    try {
+      const message = JSON.parse(new TextDecoder().decode(data));
+
+      if (message.type === 'transcript') {
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          speaker: message.speaker,
+          text: message.text,
+        }]);
+      } else if (message.type === 'agent_state') {
+        setAgentState(message.state);
+      }
+    } catch (error) {
+      console.error('Failed to parse message:', error);
+    }
+  }, []);
+
+  useDataChannel(onData);
+
+  const toggleMic = async () => {
+    await localParticipant?.setMicrophoneEnabled(!isMicrophoneEnabled);
+  };
+
+  const endCall = () => {
+    room?.disconnect();
+    onEnd();
+  };
+
+  const getAgentStateLabel = () => {
+    switch (agentState) {
+      case 'listening': return '👂 Listening';
+      case 'thinking': return '🤔 Thinking';
+      case 'speaking': return '🗣️ Speaking';
+      default: return '⏳ Waiting';
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <ConnectionIndicator state={connectionState} />
+        <Text style={styles.agentState}>{getAgentStateLabel()}</Text>
+      </View>
+
+      {/* Transcript */}
+      <FlatList
+        data={messages}
+        keyExtractor={(item) => item.id}
+        style={styles.transcript}
+        renderItem={({ item }) => (
+          <View style={[
+            styles.message,
+            item.speaker === 'user' ? styles.userMessage : styles.agentMessage
+          ]}>
+            <Text style={styles.messageText}>{item.text}</Text>
+          </View>
+        )}
+        inverted={false}
+        contentContainerStyle={styles.transcriptContent}
+      />
+
+      {/* Controls */}
+      <View style={styles.controls}>
+        <TouchableOpacity
+          style={[styles.micButton, !isMicrophoneEnabled && styles.muted]}
+          onPress={toggleMic}
+        >
+          <Text style={styles.buttonIcon}>
+            {isMicrophoneEnabled ? '🎤' : '🔇'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.endButton} onPress={endCall}>
+          <Text style={styles.buttonIcon}>📞</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function ConnectionIndicator({ state }) {
+  const getInfo = () => {
+    switch (state) {
+      case ConnectionState.Connecting:
+        return { color: '#FFA500', text: 'Connecting' };
+      case ConnectionState.Connected:
+        return { color: '#00CC88', text: 'Connected' };
+      case ConnectionState.Reconnecting:
+        return { color: '#FFA500', text: 'Reconnecting' };
+      default:
+        return { color: '#FF4444', text: 'Disconnected' };
+    }
+  };
+
+  const info = getInfo();
+
+  return (
+    <View style={styles.connectionIndicator}>
+      <View style={[styles.dot, { backgroundColor: info.color }]} />
+      <Text style={styles.connectionText}>{info.text}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#1A1A1A',
+  },
+  startContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#888',
+    marginBottom: 32,
+  },
+  startButton: {
+    backgroundColor: '#0066FF',
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    borderRadius: 32,
+  },
+  startButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  disabled: {
+    opacity: 0.6,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  connectionIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  connectionText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  agentState: {
+    color: '#888',
+    fontSize: 14,
+  },
+  transcript: {
+    flex: 1,
+  },
+  transcriptContent: {
+    padding: 16,
+    gap: 12,
+  },
+  message: {
+    maxWidth: '80%',
+    padding: 12,
+    borderRadius: 16,
+  },
+  agentMessage: {
+    backgroundColor: '#333',
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4,
+  },
+  userMessage: {
+    backgroundColor: '#0066FF',
+    alignSelf: 'flex-end',
+    borderBottomRightRadius: 4,
+  },
+  messageText: {
+    color: '#fff',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 24,
+    padding: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+  },
+  micButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#0066FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  muted: {
+    backgroundColor: '#666',
+  },
+  endButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonIcon: {
+    fontSize: 24,
+  },
+});
+```
+
+---
+
+## Platform-Specific Considerations
+
+### iOS
+
+<AccordionGroup>
+  <Accordion title="Background Audio">
+    Ensure `audio` is in UIBackgroundModes to continue playing when app is backgrounded:
+
+    ```xml
+    <key>UIBackgroundModes</key>
+    <array>
+      <string>audio</string>
+    </array>
+    ```
+  </Accordion>
+
+  <Accordion title="CallKit Integration">
+    For a native phone call experience:
+
+    ```tsx
+    import { CallKit } from '@livekit/react-native';
+
+    // Report incoming call
+    await CallKit.reportNewIncomingCall({
+      uuid: session.id,
+      handle: 'Vora Assistant',
+      hasVideo: false
+    });
+
+    // End call
+    await CallKit.endCall(session.id);
+    ```
+  </Accordion>
+
+  <Accordion title="Bluetooth Support">
+    Configure audio session for Bluetooth:
+
+    ```tsx
+    await AudioSession.configure({
+      allowBluetooth: true,
+      allowBluetoothA2DP: true
+    });
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Android
+
+<AccordionGroup>
+  <Accordion title="Foreground Service">
+    For background audio on Android, create a foreground service:
+
+    ```java
+    // Create notification channel and service
+    // Required for Android 8+ to maintain audio in background
+    ```
+  </Accordion>
+
+  <Accordion title="Audio Focus">
+    Handle audio focus changes:
+
+    ```tsx
+    import { AudioSession } from '@livekit/react-native';
+
+    AudioSession.on('audioFocusChange', (focusChange) => {
+      if (focusChange === 'loss') {
+        // Pause or mute
+        localParticipant.setMicrophoneEnabled(false);
+      } else if (focusChange === 'gain') {
+        // Resume
+        localParticipant.setMicrophoneEnabled(true);
+      }
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="Permissions">
+    Request permissions at runtime:
+
+    ```tsx
+    import { PermissionsAndroid, Platform } from 'react-native';
+
+    async function requestMicPermission() {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'Microphone Permission',
+            message: 'This app needs microphone access for voice calls.',
+            buttonPositive: 'OK'
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      }
+      return true;
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="React Web" icon="react" href="/sdks/livekit/react">
+    Web integration guide
+  </Card>
+  <Card title="Voice Components" icon="microphone" href="/sdks/javascript/voice">
+    Pre-built components
+  </Card>
+</CardGroup>

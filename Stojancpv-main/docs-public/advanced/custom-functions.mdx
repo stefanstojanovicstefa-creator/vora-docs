@@ -1,0 +1,122 @@
+---
+title: Custom Functions
+description: Build custom tool calls and actions for your voice agents
+---
+
+# Custom Functions
+
+Custom Functions let you extend your agent's capabilities by writing code that runs during conversations. When the AI determines a function should be called, Vora executes your code and returns the result.
+
+<Info>
+  Custom Functions are available in **Advanced Mode** only. In Simple Mode, use built-in functions from the Functions tab.
+</Info>
+
+---
+
+## Creating a Function
+
+<Steps>
+  <Step title="Navigate to Custom Functions">
+    Go to **Custom Functions** in the sidebar (Advanced Mode).
+  </Step>
+  <Step title="Create New Function">
+    Click **Create Function** and define:
+    - **Name** - Function identifier (e.g., `check_order_status`)
+    - **Description** - What the function does (the LLM uses this to decide when to call it)
+    - **Parameters** - Input schema the LLM extracts from conversation
+  </Step>
+  <Step title="Write the Code">
+    Write your function logic in JavaScript. The code runs in a sandboxed environment.
+
+    ```javascript
+    async function handler(params) {
+      const response = await fetch(`https://api.yourservice.com/orders/${params.order_id}`);
+      const order = await response.json();
+      return {
+        status: order.status,
+        estimated_delivery: order.delivery_date
+      };
+    }
+    ```
+  </Step>
+  <Step title="Test">
+    Use the built-in test runner to verify your function works with sample inputs.
+  </Step>
+  <Step title="Attach to Agent">
+    Go to your agent's Command Center → Functions tab and attach the function.
+  </Step>
+</Steps>
+
+---
+
+## Function Types
+
+| Type | Description |
+|------|-------------|
+| **Code Function** | JavaScript code that runs on Vora's sandbox |
+| **Webhook Function** | Calls an external URL and returns the response |
+| **Template Function** | Pre-built function from the template library |
+
+---
+
+## Parameter Schema
+
+Define parameters using JSON Schema format:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "customer_name": {
+      "type": "string",
+      "description": "The customer's full name"
+    },
+    "appointment_date": {
+      "type": "string",
+      "description": "Requested appointment date in YYYY-MM-DD format"
+    },
+    "appointment_time": {
+      "type": "string",
+      "description": "Requested appointment time in HH:MM format"
+    }
+  },
+  "required": ["customer_name", "appointment_date"]
+}
+```
+
+<Tip>
+  Write clear, detailed parameter descriptions. The LLM uses these to extract the right information from the conversation.
+</Tip>
+
+---
+
+## Templates
+
+Vora provides function templates for common use cases:
+- **Appointment Booking** - Google Calendar integration
+- **Order Lookup** - Query order management systems
+- **CRM Update** - Update HubSpot or Salesforce records
+- **Email Send** - Send confirmation or follow-up emails
+- **Transfer Call** - Route to a specific phone number or queue
+
+Click **Use Template** to start from a pre-built function and customize it for your needs.
+
+---
+
+## Testing Functions
+
+Test your functions before attaching them to agents:
+
+1. **Unit Test** - Run the function with sample parameters directly
+2. **Live Test** - Test via a test call in the agent's Testing tab
+3. **Log Review** - Check function execution logs for errors
+
+---
+
+## Best Practices
+
+- Keep functions focused - one function per action
+- Return structured data - the LLM formats it for the caller
+- Handle errors gracefully - return a helpful error message, not a stack trace
+- Set appropriate timeouts - callers are waiting on the line
+- Write descriptive function names and descriptions - helps the LLM decide when to use them

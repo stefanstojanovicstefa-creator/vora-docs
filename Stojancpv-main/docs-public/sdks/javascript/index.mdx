@@ -1,0 +1,316 @@
+---
+title: JavaScript SDK
+description: Official JavaScript/TypeScript SDK for Vora
+---
+
+# JavaScript SDK
+
+The official Vora JavaScript SDK provides a type-safe way to integrate voice AI into your Node.js and browser applications.
+
+---
+
+## Features
+
+- **Full TypeScript support** with comprehensive type definitions
+- **Promise-based API** for async/await usage
+- **Automatic retries** with exponential backoff
+- **Built-in error handling** with typed exceptions
+- **Browser and Node.js** compatible
+- **Tree-shakeable** for minimal bundle size
+
+---
+
+## Quick Links
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="#installation">
+    Get started in seconds
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/developers/quickstarts/javascript">
+    Build your first agent
+  </Card>
+  <Card title="API Reference" icon="code" href="/sdks/javascript/reference">
+    Complete SDK reference
+  </Card>
+  <Card title="Examples" icon="github" href="https://github.com/vora-ai/examples">
+    Sample applications
+  </Card>
+</CardGroup>
+
+---
+
+## Installation
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @vora-ai/sdk
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @vora-ai/sdk
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @vora-ai/sdk
+    ```
+  </Tab>
+</Tabs>
+
+For voice features, also install the LiveKit components:
+
+```bash
+npm install @livekit/components-react livekit-client
+```
+
+---
+
+## Basic Usage
+
+### Initialize the Client
+
+```typescript
+import { VoraClient } from '@vora-ai/sdk';
+
+const vora = new VoraClient({
+  apiKey: process.env.VORA_API_KEY
+});
+```
+
+### Create an Agent
+
+```typescript
+const agent = await vora.agents.create({
+  name: 'Support Agent',
+  systemPrompt: 'You are a helpful customer support agent.',
+  voice: {
+    provider: 'elevenlabs',
+    voiceId: 'EXAVITQu4vr4xnSDxMaL'
+  }
+});
+
+console.log(`Created agent: ${agent.id}`);
+```
+
+### Start a Voice Session
+
+```typescript
+const session = await vora.sessions.create({
+  agentId: agent.id,
+  userId: 'user_123',
+  variables: {
+    customerName: 'John'
+  }
+});
+
+// Use session.token and session.roomUrl to connect via LiveKit
+```
+
+---
+
+## SDK Structure
+
+The SDK is organized into resource namespaces:
+
+| Namespace | Description |
+|-----------|-------------|
+| `vora.agents` | Manage voice agents |
+| `vora.sessions` | Handle voice sessions |
+| `vora.knowledgeBases` | Knowledge base operations |
+| `vora.phoneNumbers` | Phone number management |
+| `vora.widgets` | Web widget configuration |
+| `vora.analytics` | Access metrics and reports |
+| `vora.webhooks` | Webhook management |
+
+---
+
+## Configuration Options
+
+```typescript
+const vora = new VoraClient({
+  // Required
+  apiKey: 'sk_live_your_api_key',
+
+  // Optional
+  baseUrl: 'https://api.vora.ai/v1',  // Custom API endpoint
+  timeout: 30000,                      // Request timeout in ms
+  maxRetries: 3,                       // Retry count for failures
+  retryDelay: 1000,                    // Base delay between retries
+
+  // Custom fetch implementation (for special environments)
+  fetch: customFetch
+});
+```
+
+---
+
+## TypeScript Support
+
+The SDK includes comprehensive TypeScript definitions:
+
+```typescript
+import {
+  VoraClient,
+  Agent,
+  Session,
+  KnowledgeBase,
+  VoiceConfig,
+  ModelConfig,
+  FunctionDefinition
+} from '@vora-ai/sdk';
+
+// All methods are fully typed
+const agent: Agent = await vora.agents.create({
+  name: 'Support',
+  systemPrompt: '...'
+});
+
+// Autocomplete for all properties
+console.log(agent.id);      // string
+console.log(agent.status);  // 'draft' | 'active' | 'paused' | 'archived'
+console.log(agent.voice);   // VoiceConfig | undefined
+```
+
+---
+
+## Error Handling
+
+The SDK provides typed exceptions for different error scenarios:
+
+```typescript
+import {
+  VoraError,
+  AuthenticationError,
+  RateLimitError,
+  ValidationError,
+  NotFoundError
+} from '@vora-ai/sdk';
+
+try {
+  await vora.agents.get('invalid_id');
+} catch (error) {
+  if (error instanceof AuthenticationError) {
+    console.log('Check your API key');
+  } else if (error instanceof NotFoundError) {
+    console.log('Agent not found');
+  } else if (error instanceof RateLimitError) {
+    console.log(`Retry after ${error.retryAfter}s`);
+  } else if (error instanceof VoraError) {
+    console.log(`Error: ${error.code} - ${error.message}`);
+  }
+}
+```
+
+---
+
+## Browser Usage
+
+The SDK works in browsers with proper bundling:
+
+```typescript
+// Browser-safe initialization
+const vora = new VoraClient({
+  apiKey: 'sk_live_...'  // Use a backend proxy in production!
+});
+```
+
+<Warning>
+  Never expose your API key in client-side code in production. Use a backend proxy to create sessions and pass only the session token to the client.
+</Warning>
+
+### Backend Proxy Pattern
+
+```typescript
+// Backend (Express)
+app.post('/api/session', async (req, res) => {
+  const session = await vora.sessions.create({
+    agentId: req.body.agentId,
+    userId: req.user.id
+  });
+
+  res.json({
+    token: session.token,
+    roomUrl: session.roomUrl
+  });
+});
+
+// Frontend
+const { token, roomUrl } = await fetch('/api/session', {
+  method: 'POST',
+  body: JSON.stringify({ agentId: 'agent_123' })
+}).then(r => r.json());
+
+// Connect with LiveKit using token
+```
+
+---
+
+## Next.js Integration
+
+### Server Component
+
+```typescript
+// app/agents/[id]/page.tsx
+import { VoraClient } from '@vora-ai/sdk';
+
+const vora = new VoraClient({
+  apiKey: process.env.VORA_API_KEY!
+});
+
+export default async function AgentPage({ params }: { params: { id: string } }) {
+  const agent = await vora.agents.get(params.id);
+
+  return (
+    <div>
+      <h1>{agent.name}</h1>
+      <p>Status: {agent.status}</p>
+    </div>
+  );
+}
+```
+
+### API Route
+
+```typescript
+// app/api/session/route.ts
+import { VoraClient } from '@vora-ai/sdk';
+import { NextRequest, NextResponse } from 'next/server';
+
+const vora = new VoraClient({
+  apiKey: process.env.VORA_API_KEY!
+});
+
+export async function POST(request: NextRequest) {
+  const { agentId } = await request.json();
+
+  const session = await vora.sessions.create({
+    agentId
+  });
+
+  return NextResponse.json({
+    token: session.token,
+    roomUrl: session.roomUrl
+  });
+}
+```
+
+---
+
+## More Resources
+
+<CardGroup cols={2}>
+  <Card title="Agents API" icon="robot" href="/sdks/javascript/agents">
+    Create and manage voice agents
+  </Card>
+  <Card title="Sessions API" icon="comments" href="/sdks/javascript/sessions">
+    Handle voice sessions
+  </Card>
+  <Card title="Voice Components" icon="microphone" href="/sdks/javascript/voice">
+    React voice components
+  </Card>
+  <Card title="API Reference" icon="book" href="/sdks/javascript/reference">
+    Complete method reference
+  </Card>
+</CardGroup>

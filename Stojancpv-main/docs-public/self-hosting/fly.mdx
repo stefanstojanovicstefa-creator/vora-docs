@@ -1,0 +1,631 @@
+---
+title: Fly.io Deployment
+description: Deploy Vora to Fly.io with global edge
+---
+
+# Fly.io Deployment
+
+Deploy Vora to Fly.io for a managed container platform with global edge deployment, automatic SSL, and easy scaling.
+
+---
+
+## Why Fly.io?
+
+<CardGroup cols={2}>
+  <Card title="Global Edge" icon="globe">
+    Deploy close to users worldwide
+  </Card>
+  <Card title="Auto SSL" icon="lock">
+    Automatic HTTPS certificates
+  </Card>
+  <Card title="Easy Scaling" icon="arrows-alt">
+    Scale with a single command
+  </Card>
+  <Card title="Managed Postgres" icon="database">
+    Built-in database hosting
+  </Card>
+</CardGroup>
+
+---
+
+## Prerequisites
+
+- [Fly.io account](https://fly.io/app/sign-up)
+- [flyctl CLI](https://fly.io/docs/flyctl/installing/) installed
+- API keys for providers (OpenAI, Deepgram, ElevenLabs)
+
+### Install flyctl
+
+```bash
+# macOS
+brew install flyctl
+
+# Linux
+curl -L https://fly.io/install.sh | sh
+
+# Windows
+powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"
+```
+
+### Authenticate
+
+```bash
+fly auth login
+```
+
+---
+
+## Quick Start
+
+### 1. Clone and Initialize
+
+```bash
+# Clone the repository
+git clone https://github.com/vorahq/vora-self-hosted.git
+cd vora-self-hosted
+
+# Initialize Fly app
+fly launch --no-deploy
+```
+
+### 2. Create Database
+
+```bash
+# Create managed PostgreSQL
+fly postgres create --name vora-db
+
+# Attach to your app
+fly postgres attach vora-db
+```
+
+### 3. Create Redis
+
+```bash
+# Create Upstash Redis (Fly.io integration)
+fly redis create --name vora-redis
+
+# Or use external Redis (Upstash, Redis Cloud)
+```
+
+### 4. Set Secrets
+
+```bash
+# Authentication
+fly secrets set CLERK_SECRET_KEY=sk_live_...
+fly secrets set CLERK_PUBLISHABLE_KEY=pk_live_...
+
+# AI Providers
+fly secrets set OPENAI_API_KEY=sk-...
+fly secrets set DEEPGRAM_API_KEY=...
+fly secrets set ELEVENLABS_API_KEY=...
+
+# LiveKit
+fly secrets set LIVEKIT_API_KEY=...
+fly secrets set LIVEKIT_API_SECRET=...
+fly secrets set LIVEKIT_URL=wss://your-livekit.livekit.cloud
+
+# Redis (use the URL from fly redis create)
+fly secrets set REDIS_URL=redis://...
+```
+
+### 5. Deploy
+
+```bash
+fly deploy
+```
+
+### 6. Run Migrations
+
+```bash
+fly ssh console -C "npx prisma migrate deploy"
+```
+
+---
+
+## Fly.io Configuration
+
+### fly.toml
+
+```toml
+app = "vora-backend"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 1000
+    soft_limit = 800
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = 10000
+    grace_period = "10s"
+    method = "get"
+    path = "/health"
+    protocol = "http"
+    timeout = 2000
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 2
+  memory_mb = 2048
+```
+
+### Multi-Region Deployment
+
+Deploy to multiple regions for lower latency:
+
+```toml
+primary_region = "iad"
+
+[env]
+  # Backend will be deployed to all regions
+  FLY_REGION = "${FLY_REGION}"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 2
+  memory_mb = 2048
+```
+
+```bash
+# Scale to additional regions
+fly scale count 2 --region iad
+fly scale count 2 --region lhr
+fly scale count 2 --region sin
+```
+
+---
+
+## Database Setup
+
+### Managed PostgreSQL
+
+```bash
+# Create with specific configuration
+fly postgres create \
+  --name vora-db \
+  --region iad \
+  --vm-size shared-cpu-2x \
+  --volume-size 10 \
+  --initial-cluster-size 2
+
+# Attach to app (sets DATABASE_URL automatically)
+fly postgres attach vora-db --app vora-backend
+
+# Connect directly
+fly postgres connect -a vora-db
+```
+
+### High Availability
+
+```bash
+# Add read replicas
+fly postgres create \
+  --name vora-db \
+  --initial-cluster-size 3
+
+# Scale existing cluster
+fly machine clone <machine-id> --region lhr
+```
+
+---
+
+## Redis Setup
+
+### Option 1: Upstash Redis (Recommended)
+
+```bash
+# Create via Fly.io
+fly redis create --name vora-redis --region iad
+
+# Or create at upstash.com and set manually
+fly secrets set REDIS_URL=rediss://default:xxx@xxx.upstash.io:6379
+```
+
+### Option 2: Self-Hosted Redis
+
+Create a separate Fly app for Redis:
+
+```toml
+# redis/fly.toml
+app = "vora-redis"
+
+[build]
+  image = "redis:7-alpine"
+
+[mounts]
+  source = "redis_data"
+  destination = "/data"
+
+[[services]]
+  internal_port = 6379
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 6379
+```
+
+---
+
+## Worker Deployment
+
+Deploy background workers separately:
+
+### worker/fly.toml
+
+```toml
+app = "vora-worker"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.worker"
+
+[env]
+  NODE_ENV = "production"
+
+# No HTTP service for workers
+[processes]
+  worker = "node dist/worker.js"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 1024
+```
+
+```bash
+# Deploy worker
+cd worker
+fly deploy
+```
+
+---
+
+## Frontend Deployment
+
+### Static Site (Recommended)
+
+```bash
+# Build frontend
+cd frontend
+npm run build
+
+# Deploy to Fly.io static hosting
+fly launch --dockerfile Dockerfile.static
+fly deploy
+```
+
+### Dockerfile.static
+
+```dockerfile
+FROM nginx:alpine
+
+COPY dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### Or Use Vercel/Netlify
+
+For the React frontend, consider using Vercel or Netlify:
+
+```bash
+# Vercel
+vercel --prod
+
+# Netlify
+netlify deploy --prod
+```
+
+---
+
+## Scaling
+
+### Horizontal Scaling
+
+```bash
+# Scale to 3 machines
+fly scale count 3
+
+# Scale by region
+fly scale count 2 --region iad
+fly scale count 2 --region lhr
+
+# View current scale
+fly scale show
+```
+
+### Vertical Scaling
+
+```bash
+# Upgrade machine size
+fly scale vm shared-cpu-4x
+
+# With more memory
+fly scale memory 4096
+```
+
+### Autoscaling
+
+```toml
+[http_service]
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 2
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 100
+    hard_limit = 150
+```
+
+---
+
+## Monitoring
+
+### Built-in Metrics
+
+```bash
+# View metrics
+fly dashboard
+
+# Real-time logs
+fly logs
+
+# Specific app logs
+fly logs -a vora-backend
+```
+
+### Prometheus Integration
+
+```bash
+# Enable Prometheus
+fly metrics enable
+
+# Access metrics endpoint
+curl https://vora-backend.fly.dev/metrics
+```
+
+### Health Checks
+
+```toml
+[[services.http_checks]]
+  interval = 10000
+  grace_period = "10s"
+  method = "get"
+  path = "/health"
+  protocol = "http"
+  timeout = 2000
+  tls_skip_verify = false
+```
+
+---
+
+## Secrets Management
+
+### Set Secrets
+
+```bash
+# Single secret
+fly secrets set API_KEY=value
+
+# Multiple secrets
+fly secrets set \
+  OPENAI_API_KEY=sk-... \
+  DEEPGRAM_API_KEY=...
+
+# From file
+fly secrets import < .env.production
+```
+
+### List Secrets
+
+```bash
+fly secrets list
+```
+
+### Update Secrets
+
+```bash
+# Update triggers redeployment
+fly secrets set API_KEY=new_value
+
+# Unset
+fly secrets unset OLD_KEY
+```
+
+---
+
+## Custom Domains
+
+### Add Domain
+
+```bash
+# Add custom domain
+fly certs add api.yourdomain.com
+
+# Verify DNS
+fly certs show api.yourdomain.com
+```
+
+### DNS Configuration
+
+Add these records to your DNS:
+
+| Type | Name | Value |
+|------|------|-------|
+| A | api | 66.241.124.x (from fly ips list) |
+| AAAA | api | 2a09:8280:x::x (from fly ips list) |
+
+---
+
+## Deployment Strategies
+
+### Blue-Green Deployment
+
+```bash
+# Deploy new version
+fly deploy --strategy bluegreen
+
+# Rollback if needed
+fly releases list
+fly deploy --image <previous-image>
+```
+
+### Canary Deployment
+
+```bash
+# Deploy with traffic split
+fly deploy --strategy canary
+
+# Gradually shift traffic
+fly scale count 1 --group canary
+fly scale count 9 --group default
+```
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="App won't start">
+    **Check logs:**
+    ```bash
+    fly logs
+    fly status
+    ```
+
+    **Check machine status:**
+    ```bash
+    fly machine list
+    fly machine status <machine-id>
+    ```
+
+    **SSH into machine:**
+    ```bash
+    fly ssh console
+    ```
+  </Accordion>
+
+  <Accordion title="Database connection issues">
+    **Verify database is attached:**
+    ```bash
+    fly postgres list
+    fly postgres attach vora-db
+    ```
+
+    **Check connection:**
+    ```bash
+    fly ssh console -C "nc -zv vora-db.internal 5432"
+    ```
+
+    **Verify DATABASE_URL:**
+    ```bash
+    fly ssh console -C "echo \$DATABASE_URL"
+    ```
+  </Accordion>
+
+  <Accordion title="Out of memory">
+    **Check memory usage:**
+    ```bash
+    fly status
+    ```
+
+    **Scale up:**
+    ```bash
+    fly scale memory 4096
+    ```
+
+    **Or scale out:**
+    ```bash
+    fly scale count 3
+    ```
+  </Accordion>
+
+  <Accordion title="SSL certificate issues">
+    **Check certificate status:**
+    ```bash
+    fly certs list
+    fly certs show yourdomain.com
+    ```
+
+    **Retry certificate issuance:**
+    ```bash
+    fly certs remove yourdomain.com
+    fly certs add yourdomain.com
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Cost Optimization
+
+### Machine Sizing
+
+| Use Case | Recommended VM | Memory |
+|----------|----------------|--------|
+| Development | shared-cpu-1x | 512MB |
+| Staging | shared-cpu-2x | 1GB |
+| Production | shared-cpu-4x | 2GB |
+| High Traffic | performance-2x | 4GB |
+
+### Auto-Stop for Dev/Staging
+
+```toml
+[http_service]
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+```
+
+### Reserved Pricing
+
+For production, consider [reserved pricing](https://fly.io/docs/about/pricing/) for significant discounts.
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="key" href="/self-hosting/environment">
+    Complete configuration reference
+  </Card>
+  <Card title="Scaling Guide" icon="arrows-alt" href="/self-hosting/scaling">
+    Advanced scaling strategies
+  </Card>
+  <Card title="Monitoring" icon="chart-area" href="/self-hosting/monitoring">
+    Set up observability
+  </Card>
+  <Card title="Database Setup" icon="database" href="/self-hosting/database">
+    PostgreSQL optimization
+  </Card>
+</CardGroup>

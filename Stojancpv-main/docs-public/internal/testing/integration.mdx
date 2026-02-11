@@ -1,0 +1,654 @@
+---
+title: Integration Testing
+description: Integration testing patterns for API and service interactions
+---
+
+# Integration Testing
+
+Integration tests verify that multiple components work together correctly. This guide covers testing patterns for API endpoints, database interactions, and service integrations.
+
+---
+
+## API Testing
+
+### Supertest Setup
+
+```typescript
+// tests/integration/setup.ts
+import express from 'express';
+import { createApp } from '@/app';
+import { prisma } from '@/lib/prisma';
+
+let app: express.Application;
+
+export async function setupTestApp() {
+  app = await createApp();
+  return app;
+}
+
+export async function teardownTestApp() {
+  await prisma.$disconnect();
+}
+
+export { app };
+```
+
+### Basic API Test
+
+```typescript
+// tests/integration/api/agents.test.ts
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+
+import { setupTestApp, teardownTestApp, app } from '../setup';
+import { prisma } from '@/lib/prisma';
+import { generateTestToken } from '../helpers/auth';
+
+describe('POST /api/agents', () => {
+  let authToken: string;
+
+  beforeAll(async () => {
+    await setupTestApp();
+    authToken = await generateTestToken('user_test123');
+  });
+
+  afterAll(async () => {
+    await teardownTestApp();
+  });
+
+  beforeEach(async () => {
+    // Clean up test data
+    await prisma.agent.deleteMany({
+      where: { userId: 'user_test123' },
+    });
+  });
+
+  it('creates agent with valid input', async () => {
+    const response = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        name: 'Test Agent',
+        systemPrompt: 'You are a helpful assistant',
+        llm: { provider: 'openai', model: 'gpt-4' },
+        stt: { provider: 'deepgram', language: 'en-US' },
+        tts: { provider: 'elevenlabs', voiceId: 'rachel' },
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      id: expect.stringMatching(/^ag_/),
+      name: 'Test Agent',
+      status: 'draft',
+    });
+
+    // Verify in database
+    const agent = await prisma.agent.findUnique({
+      where: { id: response.body.id },
+    });
+    expect(agent).not.toBeNull();
+  });
+
+  it('returns 400 for invalid input', async () => {
+    const response = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        name: '', // Invalid: empty name
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('returns 401 without auth token', async () => {
+    const response = await request(app)
+      .post('/api/agents')
+      .send({
+        name: 'Test Agent',
+      });
+
+    expect(response.status).toBe(401);
+  });
+});
+```
+
+### Testing CRUD Operations
+
+```typescript
+describe('Agent API', () => {
+  let agentId: string;
+
+  describe('POST /api/agents', () => {
+    it('creates agent', async () => {
+      const res = await request(app)
+        .post('/api/agents')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(validAgentInput);
+
+      expect(res.status).toBe(201);
+      agentId = res.body.id;
+    });
+  });
+
+  describe('GET /api/agents/:id', () => {
+    it('returns agent by ID', async () => {
+      const res = await request(app)
+        .get(`/api/agents/${agentId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.id).toBe(agentId);
+    });
+
+    it('returns 404 for non-existent agent', async () => {
+      const res = await request(app)
+        .get('/api/agents/ag_nonexistent')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('PATCH /api/agents/:id', () => {
+    it('updates agent fields', async () => {
+      const res = await request(app)
+        .patch(`/api/agents/${agentId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ name: 'Updated Name' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.name).toBe('Updated Name');
+    });
+  });
+
+  describe('DELETE /api/agents/:id', () => {
+    it('deletes agent', async () => {
+      const res = await request(app)
+        .delete(`/api/agents/${agentId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(204);
+
+      // Verify deletion
+      const agent = await prisma.agent.findUnique({
+        where: { id: agentId },
+      });
+      expect(agent?.status).toBe('archived');
+    });
+  });
+});
+```
+
+---
+
+## Database Testing
+
+### Test Database Setup
+
+```typescript
+// tests/integration/db-setup.ts
+import { PrismaClient } from '@prisma/client';
+import { execFileNoThrow } from '@/utils/execFileNoThrow';
+
+const prisma = new PrismaClient();
+
+export async function setupTestDatabase() {
+  // Run migrations on test database using safe command execution
+  await execFileNoThrow('npx', ['prisma', 'migrate', 'deploy'], {
+    env: {
+      ...process.env,
+      DATABASE_URL: process.env.TEST_DATABASE_URL,
+    },
+  });
+}
+
+export async function cleanupTestDatabase() {
+  // Delete all data in correct order (respect foreign keys)
+  await prisma.$transaction([
+    prisma.session.deleteMany(),
+    prisma.document.deleteMany(),
+    prisma.knowledgeBase.deleteMany(),
+    prisma.agent.deleteMany(),
+  ]);
+}
+
+export async function disconnectTestDatabase() {
+  await prisma.$disconnect();
+}
+```
+
+### Transaction Testing
+
+```typescript
+describe('AgentService transactions', () => {
+  it('creates agent with knowledge base atomically', async () => {
+    const result = await agentService.createWithKnowledgeBase({
+      name: 'Agent with KB',
+      knowledgeBaseName: 'Product Docs',
+    });
+
+    expect(result.agent.id).toBeDefined();
+    expect(result.knowledgeBase.id).toBeDefined();
+
+    // Both should exist
+    const agent = await prisma.agent.findUnique({
+      where: { id: result.agent.id },
+    });
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: result.knowledgeBase.id },
+    });
+
+    expect(agent).not.toBeNull();
+    expect(kb).not.toBeNull();
+  });
+
+  it('rolls back on failure', async () => {
+    // Mock KB creation to fail
+    vi.spyOn(knowledgeBaseService, 'create').mockRejectedValue(
+      new Error('Failed')
+    );
+
+    await expect(
+      agentService.createWithKnowledgeBase({
+        name: 'Should Fail',
+        knowledgeBaseName: 'KB',
+      })
+    ).rejects.toThrow();
+
+    // Agent should not exist
+    const agents = await prisma.agent.findMany({
+      where: { name: 'Should Fail' },
+    });
+    expect(agents).toHaveLength(0);
+  });
+});
+```
+
+---
+
+## External Service Testing
+
+### Using MSW (Mock Service Worker)
+
+```typescript
+// tests/integration/mocks/handlers.ts
+import { http, HttpResponse } from 'msw';
+
+export const handlers = [
+  // Mock OpenAI API
+  http.post('https://api.openai.com/v1/chat/completions', () => {
+    return HttpResponse.json({
+      id: 'chatcmpl-123',
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: 'Hello! How can I help you today?',
+          },
+        },
+      ],
+      usage: {
+        prompt_tokens: 10,
+        completion_tokens: 20,
+        total_tokens: 30,
+      },
+    });
+  }),
+
+  // Mock Deepgram API
+  http.post('https://api.deepgram.com/v1/listen', () => {
+    return HttpResponse.json({
+      results: {
+        channels: [
+          {
+            alternatives: [
+              {
+                transcript: 'Hello world',
+                confidence: 0.98,
+              },
+            ],
+          },
+        ],
+      },
+    });
+  }),
+];
+```
+
+```typescript
+// tests/integration/mocks/server.ts
+import { setupServer } from 'msw/node';
+import { handlers } from './handlers';
+
+export const server = setupServer(...handlers);
+```
+
+```typescript
+// tests/integration/setup.ts
+import { beforeAll, afterAll, afterEach } from 'vitest';
+import { server } from './mocks/server';
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+```
+
+### Testing External Integrations
+
+```typescript
+describe('LLM Provider Integration', () => {
+  it('sends chat request to OpenAI', async () => {
+    const provider = new OpenAIProvider({
+      apiKey: 'test-key',
+      model: 'gpt-4',
+    });
+
+    const response = await provider.chat({
+      messages: [{ role: 'user', content: 'Hello' }],
+    });
+
+    expect(response.content).toBe('Hello! How can I help you today?');
+    expect(response.usage.totalTokens).toBe(30);
+  });
+
+  it('handles rate limit errors', async () => {
+    // Override handler for this test
+    server.use(
+      http.post('https://api.openai.com/v1/chat/completions', () => {
+        return HttpResponse.json(
+          { error: { message: 'Rate limit exceeded' } },
+          { status: 429 }
+        );
+      })
+    );
+
+    const provider = new OpenAIProvider({ apiKey: 'test-key' });
+
+    await expect(
+      provider.chat({ messages: [{ role: 'user', content: 'Hi' }] })
+    ).rejects.toThrow('Rate limit');
+  });
+});
+```
+
+---
+
+## Queue Integration Testing
+
+### Testing Job Processing
+
+```typescript
+import { Queue, Worker } from 'bullmq';
+
+describe('Knowledge Base Indexing', () => {
+  let testQueue: Queue;
+  let testWorker: Worker;
+
+  beforeAll(async () => {
+    testQueue = new Queue('test-knowledge', {
+      connection: { host: 'localhost', port: 6379 },
+    });
+  });
+
+  afterAll(async () => {
+    await testQueue.close();
+    await testWorker?.close();
+  });
+
+  it('processes document indexing job', async () => {
+    const processedJobs: string[] = [];
+
+    testWorker = new Worker(
+      'test-knowledge',
+      async (job) => {
+        processedJobs.push(job.data.documentId);
+        return { success: true };
+      },
+      { connection: { host: 'localhost', port: 6379 } }
+    );
+
+    // Add job
+    const job = await testQueue.add('index-document', {
+      documentId: 'doc_123',
+    });
+
+    // Wait for completion
+    await job.waitUntilFinished(testQueue.getJobScheduler());
+
+    expect(processedJobs).toContain('doc_123');
+  });
+
+  it('retries failed jobs', async () => {
+    let attempts = 0;
+
+    testWorker = new Worker(
+      'test-knowledge',
+      async () => {
+        attempts++;
+        if (attempts < 3) {
+          throw new Error('Temporary failure');
+        }
+        return { success: true };
+      },
+      { connection: { host: 'localhost', port: 6379 } }
+    );
+
+    const job = await testQueue.add(
+      'index-document',
+      { documentId: 'doc_456' },
+      { attempts: 3 }
+    );
+
+    await job.waitUntilFinished(testQueue.getJobScheduler());
+
+    expect(attempts).toBe(3);
+  });
+});
+```
+
+---
+
+## Testcontainers
+
+### Using Docker for Dependencies
+
+```typescript
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { RedisContainer, StartedRedisContainer } from '@testcontainers/redis';
+
+describe('Full Integration', () => {
+  let postgresContainer: StartedPostgreSqlContainer;
+  let redisContainer: StartedRedisContainer;
+
+  beforeAll(async () => {
+    // Start containers
+    postgresContainer = await new PostgreSqlContainer()
+      .withDatabase('test')
+      .start();
+
+    redisContainer = await new RedisContainer().start();
+
+    // Configure environment
+    process.env.DATABASE_URL = postgresContainer.getConnectionUri();
+    process.env.REDIS_URL = redisContainer.getConnectionUrl();
+
+    // Run migrations
+    await runMigrations();
+  }, 60000);
+
+  afterAll(async () => {
+    await postgresContainer.stop();
+    await redisContainer.stop();
+  });
+
+  it('processes full workflow', async () => {
+    // Create agent
+    const agent = await agentService.create('user_123', {
+      name: 'Integration Test Agent',
+    });
+
+    // Create session
+    const session = await sessionService.create(agent.id, 'user_123');
+
+    // Verify session created
+    expect(session.agentId).toBe(agent.id);
+    expect(session.status).toBe('pending');
+  });
+});
+```
+
+---
+
+## Authentication Testing
+
+### Generating Test Tokens
+
+```typescript
+// tests/integration/helpers/auth.ts
+import jwt from 'jsonwebtoken';
+
+export function generateTestToken(
+  userId: string,
+  options: { expired?: boolean; role?: string } = {}
+): string {
+  const payload = {
+    sub: userId,
+    role: options.role || 'user',
+    iat: Math.floor(Date.now() / 1000),
+    exp: options.expired
+      ? Math.floor(Date.now() / 1000) - 3600
+      : Math.floor(Date.now() / 1000) + 3600,
+  };
+
+  return jwt.sign(payload, process.env.JWT_SECRET || 'test-secret');
+}
+```
+
+### Testing Auth Scenarios
+
+```typescript
+describe('Authentication', () => {
+  it('allows access with valid token', async () => {
+    const token = generateTestToken('user_123');
+
+    const res = await request(app)
+      .get('/api/agents')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects expired token', async () => {
+    const token = generateTestToken('user_123', { expired: true });
+
+    const res = await request(app)
+      .get('/api/agents')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('TOKEN_EXPIRED');
+  });
+
+  it('rejects malformed token', async () => {
+    const res = await request(app)
+      .get('/api/agents')
+      .set('Authorization', 'Bearer invalid-token');
+
+    expect(res.status).toBe(401);
+  });
+
+  it('enforces resource authorization', async () => {
+    // Create agent as user_1
+    const user1Token = generateTestToken('user_1');
+    const createRes = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `Bearer ${user1Token}`)
+      .send(validAgentInput);
+
+    const agentId = createRes.body.id;
+
+    // Try to access as user_2
+    const user2Token = generateTestToken('user_2');
+    const accessRes = await request(app)
+      .get(`/api/agents/${agentId}`)
+      .set('Authorization', `Bearer ${user2Token}`);
+
+    expect(accessRes.status).toBe(403);
+  });
+});
+```
+
+---
+
+## Best Practices
+
+### Test Isolation
+
+```typescript
+// Good - Each test is independent
+beforeEach(async () => {
+  await cleanupTestData();
+});
+
+it('test 1', async () => {
+  // Creates its own data
+  const agent = await createTestAgent();
+});
+
+it('test 2', async () => {
+  // Also creates its own data
+  const agent = await createTestAgent();
+});
+
+// Bad - Tests depend on each other
+let sharedAgentId: string;
+
+it('creates agent', async () => {
+  sharedAgentId = await createTestAgent();
+});
+
+it('uses created agent', async () => {
+  // Depends on previous test
+  const agent = await getAgent(sharedAgentId);
+});
+```
+
+### Parallel Execution
+
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    // Run test files in parallel
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false,
+      },
+    },
+    // But isolate database per file
+    fileParallelism: true,
+    isolate: true,
+  },
+});
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Testing Overview" icon="flask" href="/internal/testing/overview">
+    Testing philosophy
+  </Card>
+  <Card title="Unit Testing" icon="cube" href="/internal/testing/unit">
+    Unit test patterns
+  </Card>
+  <Card title="E2E Testing" icon="browser" href="/internal/testing/e2e">
+    End-to-end testing
+  </Card>
+  <Card title="Mocking Guide" icon="masks-theater" href="/internal/testing/mocking">
+    Mock strategies
+  </Card>
+</CardGroup>

@@ -1,0 +1,406 @@
+---
+title: Prompt Mode
+description: Create agents with full control using custom system prompts
+---
+
+# Prompt Mode
+
+Prompt Mode gives you complete control over your agent's behavior by writing the system prompt directly. This is the most powerful creation method, ideal for developers and advanced users.
+
+---
+
+## When to Use Prompt Mode
+
+Choose Prompt Mode when you:
+
+- Need precise control over agent behavior
+- Have complex logic or conditional responses
+- Want to implement specific conversation patterns
+- Are experienced with prompt engineering
+- Need to replicate an existing agent from another platform
+
+---
+
+## Getting Started
+
+<Steps>
+  <Step title="Navigate to Create Agent">
+    Go to **Agents** → **Create Agent** → **Prompt Mode**.
+  </Step>
+  <Step title="Write Your System Prompt">
+    Enter your system prompt in the editor. This defines everything about your agent.
+  </Step>
+  <Step title="Configure Settings">
+    Set voice, model, and other options.
+  </Step>
+  <Step title="Test and Iterate">
+    Use the simulator to test and refine your prompt.
+  </Step>
+</Steps>
+
+---
+
+## System Prompt Structure
+
+A well-structured system prompt includes:
+
+```markdown
+# Role and Identity
+You are [name], a [role] for [company/purpose].
+
+# Personality and Tone
+- [Personality trait 1]
+- [Personality trait 2]
+- [Communication style]
+
+# Capabilities
+You can:
+- [Capability 1]
+- [Capability 2]
+
+# Knowledge
+You have access to:
+- [Knowledge source 1]
+- [Knowledge source 2]
+
+# Limitations
+You cannot:
+- [Limitation 1]
+- [Limitation 2]
+
+# Instructions
+[Specific behavioral instructions]
+
+# Examples (optional)
+[Example conversations]
+```
+
+---
+
+## Prompt Components
+
+### Role and Identity
+
+Define who the agent is:
+
+```
+You are Maya, a customer success specialist at CloudTech Solutions.
+You help customers get the most value from our cloud infrastructure products.
+```
+
+<Tip>
+  Giving your agent a name and specific role improves consistency and user experience.
+</Tip>
+
+### Personality and Tone
+
+Set the communication style:
+
+```
+Your personality:
+- Friendly and approachable, but professional
+- Patient when explaining technical concepts
+- Empathetic when customers are frustrated
+- Concise - respect the caller's time
+
+Communication style:
+- Use simple language, avoid jargon
+- Speak in short sentences
+- Ask one question at a time
+- Confirm understanding before proceeding
+```
+
+### Capabilities
+
+Define what the agent can do:
+
+```
+You can help with:
+- Account questions (billing, plans, upgrades)
+- Technical support (troubleshooting, how-to guides)
+- Product information (features, pricing, comparisons)
+- Scheduling demos with our sales team
+
+You have access to:
+- The customer's account information
+- Our product documentation
+- A calendar booking system
+```
+
+### Limitations
+
+Set clear boundaries:
+
+```
+You cannot:
+- Process refunds (transfer to billing team)
+- Provide legal or compliance advice
+- Access other customers' data
+- Make promises about future features
+
+When unsure:
+- Say "I'm not certain about that, let me connect you with someone who can help"
+- Offer to create a support ticket
+```
+
+### Behavioral Instructions
+
+Add specific rules:
+
+```
+Instructions:
+1. Always greet the customer warmly and ask how you can help
+2. Verify the customer's identity before discussing account details
+3. Summarize the resolution before ending the call
+4. If the customer seems frustrated, acknowledge their feelings before problem-solving
+5. Never interrupt the customer while they're speaking
+```
+
+---
+
+## Variable Injection
+
+Use variables to personalize responses:
+
+### Available Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{{user_name}}` | Caller's name if known | "John" |
+| `{{user_phone}}` | Caller's phone number | "+1234567890" |
+| `{{user_email}}` | Caller's email if known | "john@example.com" |
+| `{{agent_name}}` | Your agent's name | "Maya" |
+| `{{company_name}}` | Your company name | "CloudTech" |
+| `{{current_time}}` | Current time | "2:30 PM" |
+| `{{current_date}}` | Current date | "January 15, 2024" |
+
+### Using Variables
+
+```
+Hello {{user_name}}! This is {{agent_name}} from {{company_name}}.
+I see you're calling from {{user_phone}}. How can I help you today?
+```
+
+### Custom Variables
+
+Pass custom variables when starting a session:
+
+```javascript
+const session = await vora.sessions.create({
+  agentId: 'agent_abc123',
+  participant: {
+    name: 'John Doe',
+  },
+  variables: {
+    account_tier: 'enterprise',
+    account_manager: 'Sarah',
+    last_login: '2024-01-10',
+  },
+});
+```
+
+Access in prompt:
+```
+The customer is on the {{account_tier}} plan.
+Their account manager is {{account_manager}}.
+They last logged in on {{last_login}}.
+```
+
+---
+
+## Prompt Patterns
+
+### Question Answering Agent
+
+```
+You are a helpful assistant that answers questions about Acme Corp products.
+
+Your knowledge comes from our product documentation. Only answer questions
+you can answer from the documentation. If the answer isn't in the documentation,
+say "I don't have information about that in my knowledge base."
+
+Guidelines:
+- Be concise but complete
+- Provide specific product names and features
+- Suggest related topics when relevant
+- Offer to clarify if the question is ambiguous
+```
+
+### Appointment Scheduling Agent
+
+```
+You are a scheduling assistant for Dr. Smith's dental office.
+
+Your job is to help patients book, reschedule, or cancel appointments.
+
+Office hours: Monday-Friday, 9am-5pm
+Appointment types:
+- Checkup (30 min)
+- Cleaning (45 min)
+- Consultation (60 min)
+
+Process:
+1. Greet the patient and ask what they need
+2. For new bookings: Ask for preferred date/time, check availability, confirm
+3. For changes: Verify identity, find existing appointment, make changes
+4. For cancellations: Verify identity, confirm cancellation, offer rebooking
+
+Rules:
+- Require 24-hour notice for cancellations
+- No same-day bookings for non-emergencies
+- Maximum 2 reschedulings per appointment
+```
+
+### Sales Qualification Agent
+
+```
+You are Alex, a sales development rep at TechStart.
+
+Your goal is to qualify inbound leads for our sales team by understanding:
+1. Company size and industry
+2. Current pain points
+3. Timeline for decision
+4. Budget range
+5. Decision-making process
+
+Approach:
+- Be consultative, not pushy
+- Listen more than you talk
+- Take notes on key details
+- Qualify interest level: Hot, Warm, or Cold
+
+Qualification criteria (must meet 3+):
+- Company size: 50+ employees
+- Budget: $10k+/year
+- Timeline: Within 6 months
+- Decision maker or influencer
+- Clear pain point we solve
+
+End of call:
+- Hot leads: Book demo with sales
+- Warm leads: Send information, schedule follow-up
+- Cold leads: Thank them, add to nurture sequence
+```
+
+### Support Escalation Agent
+
+```
+You are a tier-1 support agent for TechCorp.
+
+Your job is to:
+1. Understand the customer's issue
+2. Attempt basic troubleshooting
+3. Resolve or escalate appropriately
+
+Troubleshooting steps (always try first):
+1. Verify the customer's account status
+2. Check for known outages
+3. Guide through basic fixes (restart, clear cache, etc.)
+
+Escalation triggers (transfer immediately):
+- Billing disputes
+- Security concerns
+- Data loss
+- Legal requests
+- Repeat issues (3+ contacts)
+
+Escalation process:
+1. Explain why you're transferring
+2. Summarize the issue for the next agent
+3. Thank the customer for their patience
+```
+
+---
+
+## Testing Your Prompt
+
+After writing your prompt:
+
+<Steps>
+  <Step title="Use the Simulator">
+    Test various scenarios in the built-in simulator.
+  </Step>
+  <Step title="Try Edge Cases">
+    Test unusual or challenging situations:
+    - Ambiguous questions
+    - Off-topic requests
+    - Frustrated customers
+    - Silence / no response
+  </Step>
+  <Step title="Check Boundaries">
+    Verify the agent respects limitations:
+    - Try to get forbidden information
+    - Test escalation triggers
+    - Verify refusals are polite
+  </Step>
+  <Step title="Iterate">
+    Refine the prompt based on test results:
+    - Add clarifying instructions
+    - Adjust tone
+    - Add examples for common cases
+  </Step>
+</Steps>
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Be specific, not vague">
+    **Less effective:**
+    > "Be helpful and professional"
+
+    **More effective:**
+    > "Answer questions concisely. Use simple language. Confirm understanding before providing solutions."
+  </Accordion>
+
+  <Accordion title="Use positive instructions">
+    **Less effective:**
+    > "Don't be rude"
+
+    **More effective:**
+    > "Remain calm and empathetic, even when the customer is frustrated"
+  </Accordion>
+
+  <Accordion title="Include examples">
+    Show the agent what you want:
+
+    ```
+    Example interaction:
+    Customer: "My order hasn't arrived"
+    Agent: "I'm sorry to hear that. Let me look up your order.
+           Can you provide your order number or the email
+           address on the order?"
+    ```
+  </Accordion>
+
+  <Accordion title="Structure with sections">
+    Use clear sections and formatting:
+    - Headers for different topics
+    - Bullet points for lists
+    - Numbered steps for processes
+  </Accordion>
+
+  <Accordion title="Test with real scenarios">
+    Use actual customer questions and scenarios from your support history to test the agent.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configure Settings" icon="sliders" href="/platform/agents/configuration">
+    Choose model, voice, and other options
+  </Card>
+  <Card title="Add Functions" icon="code" href="/platform/functions">
+    Enable actions like CRM updates or bookings
+  </Card>
+  <Card title="Test Your Agent" icon="flask" href="/platform/agents/testing">
+    Thoroughly test before going live
+  </Card>
+  <Card title="Deploy" icon="rocket" href="/platform/agents/deployment">
+    Launch your agent
+  </Card>
+</CardGroup>

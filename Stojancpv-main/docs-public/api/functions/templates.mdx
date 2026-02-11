@@ -1,0 +1,647 @@
+---
+title: Function Templates
+description: Pre-built function templates for common use cases
+---
+
+# Function Templates
+
+Copy and customize these pre-built function templates for common integration scenarios.
+
+## E-Commerce
+
+### Order Status Lookup
+
+```javascript
+const orderStatus = await vora.functions.create({
+  name: 'get_order_status',
+  description: 'Look up order status, shipping information, and estimated delivery by order ID',
+  parameters: {
+    type: 'object',
+    properties: {
+      order_id: {
+        type: 'string',
+        description: 'Order ID or tracking number (e.g., ORD-12345)'
+      }
+    },
+    required: ['order_id']
+  },
+  endpoint: {
+    url: 'https://your-api.com/orders/{{order_id}}',
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer {{ORDER_API_KEY}}'
+    }
+  },
+  response_template: `Order {{order_id}} is {{status}}.
+{{#if tracking_number}}Tracking: {{tracking_number}}.{{/if}}
+{{#if estimated_delivery}}Expected delivery: {{estimated_delivery}}.{{/if}}`,
+  error_response: "I couldn't find that order. Please verify the order ID.",
+  timeout_ms: 5000
+});
+```
+
+### Return / Refund Request
+
+```javascript
+const createReturn = await vora.functions.create({
+  name: 'create_return',
+  description: 'Initiate a return or refund request for an order',
+  parameters: {
+    type: 'object',
+    properties: {
+      order_id: {
+        type: 'string',
+        description: 'Order ID to return'
+      },
+      reason: {
+        type: 'string',
+        enum: ['damaged', 'wrong_item', 'not_as_described', 'changed_mind', 'defective'],
+        description: 'Reason for return'
+      },
+      items: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Specific item IDs to return (optional, all items if not specified)'
+      }
+    },
+    required: ['order_id', 'reason']
+  },
+  endpoint: {
+    url: 'https://your-api.com/returns',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer {{ORDER_API_KEY}}',
+      'Content-Type': 'application/json'
+    },
+    body_template: '{"order_id":"{{order_id}}","reason":"{{reason}}","items":{{items}}}'
+  },
+  response_template: `Your return request is confirmed. Return ID: {{return_id}}.
+Print your return label at {{label_url}}.
+Refund will process within 5-7 business days after we receive the items.`,
+  timeout_ms: 8000
+});
+```
+
+### Product Availability
+
+```javascript
+const checkStock = await vora.functions.create({
+  name: 'check_product_availability',
+  description: 'Check if a product is in stock and available for purchase',
+  parameters: {
+    type: 'object',
+    properties: {
+      product_name: {
+        type: 'string',
+        description: 'Product name or SKU'
+      },
+      quantity: {
+        type: 'integer',
+        default: 1,
+        description: 'Quantity needed'
+      },
+      zip_code: {
+        type: 'string',
+        description: 'Delivery zip code (optional)'
+      }
+    },
+    required: ['product_name']
+  },
+  endpoint: {
+    url: 'https://your-api.com/inventory/check',
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer {{INVENTORY_API_KEY}}'
+    },
+    query_template: {
+      'product': '{{product_name}}',
+      'qty': '{{quantity}}',
+      'zip': '{{zip_code}}'
+    }
+  },
+  response_template: `{{product_name}}: {{#if available}}In stock! {{quantity_available}} available.{{else}}Currently out of stock. {{#if restock_date}}Expected back {{restock_date}}.{{/if}}{{/if}}`,
+  timeout_ms: 3000
+});
+```
+
+---
+
+## Scheduling & Appointments
+
+### Book Appointment
+
+```javascript
+const bookAppointment = await vora.functions.create({
+  name: 'book_appointment',
+  description: 'Schedule an appointment for a specific date, time, and service type',
+  parameters: {
+    type: 'object',
+    properties: {
+      service: {
+        type: 'string',
+        enum: ['consultation', 'follow-up', 'new-patient', 'procedure'],
+        description: 'Type of appointment'
+      },
+      date: {
+        type: 'string',
+        format: 'date',
+        description: 'Preferred date (YYYY-MM-DD)'
+      },
+      time: {
+        type: 'string',
+        description: 'Preferred time (HH:MM)'
+      },
+      patient_name: {
+        type: 'string',
+        description: 'Patient full name'
+      },
+      phone: {
+        type: 'string',
+        description: 'Contact phone number'
+      },
+      notes: {
+        type: 'string',
+        description: 'Special requests or notes'
+      }
+    },
+    required: ['service', 'date', 'time', 'patient_name', 'phone']
+  },
+  endpoint: {
+    url: 'https://your-api.com/appointments',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer {{SCHEDULING_API_KEY}}',
+      'Content-Type': 'application/json'
+    },
+    body_template: '{"service":"{{service}}","date":"{{date}}","time":"{{time}}","patient":{"name":"{{patient_name}}","phone":"{{phone}}"},"notes":"{{notes}}"}'
+  },
+  response_template: `Your {{service}} appointment is confirmed for {{date}} at {{time}}.
+Confirmation number: {{confirmation_id}}.
+We'll send a reminder to {{phone}} the day before.`,
+  error_response: "That time slot isn't available. Would you like to try a different time?",
+  timeout_ms: 10000
+});
+```
+
+### Check Availability
+
+```javascript
+const checkAvailability = await vora.functions.create({
+  name: 'check_appointment_availability',
+  description: 'Check available appointment slots for a given date and service',
+  parameters: {
+    type: 'object',
+    properties: {
+      service: {
+        type: 'string',
+        description: 'Type of appointment'
+      },
+      date: {
+        type: 'string',
+        format: 'date',
+        description: 'Date to check (YYYY-MM-DD)'
+      },
+      provider: {
+        type: 'string',
+        description: 'Specific provider name (optional)'
+      }
+    },
+    required: ['service', 'date']
+  },
+  endpoint: {
+    url: 'https://your-api.com/availability',
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer {{SCHEDULING_API_KEY}}'
+    },
+    query_template: {
+      'service': '{{service}}',
+      'date': '{{date}}',
+      'provider': '{{provider}}'
+    }
+  },
+  response_template: `Available times on {{date}}: {{#each slots}}{{time}}{{#unless @last}}, {{/unless}}{{/each}}.
+Would you like me to book one of these?`,
+  timeout_ms: 5000
+});
+```
+
+### Cancel Appointment
+
+```javascript
+const cancelAppointment = await vora.functions.create({
+  name: 'cancel_appointment',
+  description: 'Cancel an existing appointment by confirmation number',
+  parameters: {
+    type: 'object',
+    properties: {
+      confirmation_id: {
+        type: 'string',
+        description: 'Appointment confirmation number'
+      },
+      reason: {
+        type: 'string',
+        description: 'Reason for cancellation'
+      }
+    },
+    required: ['confirmation_id']
+  },
+  endpoint: {
+    url: 'https://your-api.com/appointments/{{confirmation_id}}/cancel',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer {{SCHEDULING_API_KEY}}',
+      'Content-Type': 'application/json'
+    },
+    body_template: '{"reason":"{{reason}}"}'
+  },
+  response_template: 'Your appointment {{confirmation_id}} has been cancelled. Would you like to reschedule?',
+  timeout_ms: 5000
+});
+```
+
+---
+
+## Customer Support
+
+### Create Support Ticket
+
+```javascript
+const createTicket = await vora.functions.create({
+  name: 'create_support_ticket',
+  description: 'Create a support ticket for issues that need follow-up',
+  parameters: {
+    type: 'object',
+    properties: {
+      subject: {
+        type: 'string',
+        description: 'Brief description of the issue'
+      },
+      description: {
+        type: 'string',
+        description: 'Detailed description of the problem'
+      },
+      priority: {
+        type: 'string',
+        enum: ['low', 'medium', 'high', 'urgent'],
+        default: 'medium',
+        description: 'Ticket priority'
+      },
+      category: {
+        type: 'string',
+        enum: ['billing', 'technical', 'account', 'general'],
+        description: 'Issue category'
+      },
+      customer_email: {
+        type: 'string',
+        description: 'Customer email for follow-up'
+      }
+    },
+    required: ['subject', 'description', 'customer_email']
+  },
+  endpoint: {
+    url: 'https://your-api.com/tickets',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer {{SUPPORT_API_KEY}}',
+      'Content-Type': 'application/json'
+    },
+    body_template: '{"subject":"{{subject}}","description":"{{description}}","priority":"{{priority}}","category":"{{category}}","requester_email":"{{customer_email}}"}'
+  },
+  response_template: `I've created a support ticket for you.
+Ticket number: {{ticket_id}}.
+Our team will respond within {{sla_hours}} hours to {{customer_email}}.`,
+  timeout_ms: 5000
+});
+```
+
+### Lookup Ticket Status
+
+```javascript
+const ticketStatus = await vora.functions.create({
+  name: 'get_ticket_status',
+  description: 'Check the status of an existing support ticket',
+  parameters: {
+    type: 'object',
+    properties: {
+      ticket_id: {
+        type: 'string',
+        description: 'Support ticket number'
+      }
+    },
+    required: ['ticket_id']
+  },
+  endpoint: {
+    url: 'https://your-api.com/tickets/{{ticket_id}}',
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer {{SUPPORT_API_KEY}}'
+    }
+  },
+  response_template: `Ticket {{ticket_id}}: {{status}}.
+{{#if assignee}}Assigned to {{assignee}}.{{/if}}
+{{#if last_update}}Last update: {{last_update}}.{{/if}}`,
+  timeout_ms: 5000
+});
+```
+
+---
+
+## Weather & Location
+
+### Current Weather
+
+```javascript
+const getWeather = await vora.functions.create({
+  name: 'get_weather',
+  description: 'Get current weather conditions for a city or location',
+  parameters: {
+    type: 'object',
+    properties: {
+      location: {
+        type: 'string',
+        description: 'City name, zip code, or coordinates'
+      },
+      units: {
+        type: 'string',
+        enum: ['celsius', 'fahrenheit'],
+        default: 'fahrenheit',
+        description: 'Temperature units'
+      }
+    },
+    required: ['location']
+  },
+  endpoint: {
+    url: 'https://api.weatherapi.com/v1/current.json',
+    method: 'GET',
+    headers: {
+      'X-API-Key': '{{WEATHER_API_KEY}}'
+    },
+    query_template: {
+      'q': '{{location}}'
+    }
+  },
+  response_template: `In {{location.name}}, it's currently {{current.temp_f}}°F with {{current.condition.text}}.
+Humidity: {{current.humidity}}%.
+Wind: {{current.wind_mph}} mph.`,
+  timeout_ms: 3000
+});
+```
+
+### Weather Forecast
+
+```javascript
+const getForecast = await vora.functions.create({
+  name: 'get_weather_forecast',
+  description: 'Get weather forecast for the next few days',
+  parameters: {
+    type: 'object',
+    properties: {
+      location: {
+        type: 'string',
+        description: 'City name or zip code'
+      },
+      days: {
+        type: 'integer',
+        default: 3,
+        minimum: 1,
+        maximum: 7,
+        description: 'Number of days to forecast'
+      }
+    },
+    required: ['location']
+  },
+  endpoint: {
+    url: 'https://api.weatherapi.com/v1/forecast.json',
+    method: 'GET',
+    headers: {
+      'X-API-Key': '{{WEATHER_API_KEY}}'
+    },
+    query_template: {
+      'q': '{{location}}',
+      'days': '{{days}}'
+    }
+  },
+  response_template: `Forecast for {{location.name}}:
+{{#each forecast.forecastday}}
+{{date}}: High {{day.maxtemp_f}}°, Low {{day.mintemp_f}}°. {{day.condition.text}}.
+{{/each}}`,
+  timeout_ms: 3000
+});
+```
+
+---
+
+## CRM & Sales
+
+### Customer Lookup
+
+```javascript
+const lookupCustomer = await vora.functions.create({
+  name: 'lookup_customer',
+  description: 'Find customer information by email, phone, or account number',
+  parameters: {
+    type: 'object',
+    properties: {
+      identifier: {
+        type: 'string',
+        description: 'Email, phone number, or account ID'
+      },
+      type: {
+        type: 'string',
+        enum: ['email', 'phone', 'account_id'],
+        description: 'Type of identifier'
+      }
+    },
+    required: ['identifier', 'type']
+  },
+  endpoint: {
+    url: 'https://your-api.com/customers/search',
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer {{CRM_API_KEY}}'
+    },
+    query_template: {
+      '{{type}}': '{{identifier}}'
+    }
+  },
+  response_template: `Found {{name}}'s account.
+Account status: {{status}}.
+Member since: {{created_at}}.
+{{#if account_manager}}Account manager: {{account_manager}}.{{/if}}`,
+  timeout_ms: 5000
+});
+```
+
+### Log Interaction
+
+```javascript
+const logInteraction = await vora.functions.create({
+  name: 'log_customer_interaction',
+  description: 'Log a note or interaction on a customer account',
+  parameters: {
+    type: 'object',
+    properties: {
+      customer_id: {
+        type: 'string',
+        description: 'Customer ID or account number'
+      },
+      note: {
+        type: 'string',
+        description: 'Interaction note or summary'
+      },
+      type: {
+        type: 'string',
+        enum: ['call', 'email', 'chat', 'meeting', 'note'],
+        default: 'call',
+        description: 'Interaction type'
+      }
+    },
+    required: ['customer_id', 'note']
+  },
+  endpoint: {
+    url: 'https://your-api.com/customers/{{customer_id}}/interactions',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer {{CRM_API_KEY}}',
+      'Content-Type': 'application/json'
+    },
+    body_template: '{"type":"{{type}}","note":"{{note}}","channel":"voice_agent"}'
+  },
+  response_template: "I've logged that on the account.",
+  timeout_ms: 3000
+});
+```
+
+---
+
+## Notifications
+
+### Send SMS
+
+```javascript
+const sendSMS = await vora.functions.create({
+  name: 'send_sms_notification',
+  description: 'Send an SMS message to the customer',
+  parameters: {
+    type: 'object',
+    properties: {
+      phone_number: {
+        type: 'string',
+        description: 'Phone number to send to'
+      },
+      message: {
+        type: 'string',
+        maxLength: 160,
+        description: 'SMS message content'
+      }
+    },
+    required: ['phone_number', 'message']
+  },
+  endpoint: {
+    url: 'https://api.twilio.com/2010-04-01/Accounts/{{TWILIO_ACCOUNT_SID}}/Messages.json',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic {{TWILIO_AUTH}}',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body_template: 'To={{phone_number}}&From={{TWILIO_FROM_NUMBER}}&Body={{message}}'
+  },
+  response_template: "I've sent that information to your phone.",
+  timeout_ms: 5000
+});
+```
+
+### Send Email
+
+```javascript
+const sendEmail = await vora.functions.create({
+  name: 'send_email',
+  description: 'Send an email to the customer with information they requested',
+  parameters: {
+    type: 'object',
+    properties: {
+      to_email: {
+        type: 'string',
+        format: 'email',
+        description: 'Recipient email address'
+      },
+      subject: {
+        type: 'string',
+        description: 'Email subject'
+      },
+      content: {
+        type: 'string',
+        description: 'Email body content'
+      }
+    },
+    required: ['to_email', 'subject', 'content']
+  },
+  endpoint: {
+    url: 'https://api.sendgrid.com/v3/mail/send',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer {{SENDGRID_API_KEY}}',
+      'Content-Type': 'application/json'
+    },
+    body_template: '{"personalizations":[{"to":[{"email":"{{to_email}}"}]}],"from":{"email":"{{FROM_EMAIL}}"},"subject":"{{subject}}","content":[{"type":"text/plain","value":"{{content}}"}]}'
+  },
+  response_template: "I've sent that email to {{to_email}}.",
+  timeout_ms: 5000
+});
+```
+
+---
+
+## Using Templates
+
+### 1. Copy the Template
+
+Select a template that matches your use case.
+
+### 2. Customize the Endpoint
+
+Replace placeholder URLs and add your API details:
+
+```javascript
+endpoint: {
+  url: 'https://YOUR-ACTUAL-API.com/endpoint',  // Your API URL
+  headers: {
+    'Authorization': 'Bearer {{YOUR_SECRET_NAME}}'  // Reference your secret
+  }
+}
+```
+
+### 3. Store Required Secrets
+
+```javascript
+await vora.secrets.set('YOUR_SECRET_NAME', 'your-actual-api-key');
+```
+
+### 4. Test the Function
+
+```javascript
+const result = await vora.functions.test(fn.id, {
+  // Sample parameters
+});
+console.log(result);
+```
+
+### 5. Attach to Agent
+
+```javascript
+await vora.agents.update('agent_id', {
+  functions: [fn.id]
+});
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Function" icon="plus" href="/api/functions/create">
+    Build custom functions
+  </Card>
+  <Card title="Functions Overview" icon="bolt" href="/api/functions">
+    Learn about functions
+  </Card>
+</CardGroup>

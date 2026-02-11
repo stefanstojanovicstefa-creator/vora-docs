@@ -1,0 +1,67 @@
+---
+title: Vietnamese
+description: Vietnamese voice AI support - providers, configuration, and best practices
+---
+
+# Vietnamese
+
+<Tabs>
+  <Tab title="Simple">
+    Vora fully supports **Vietnamese** for voice AI agents. ~85M speakers in Vietnam.
+
+    ### Setting Up a Vietnamese Agent
+
+    <Steps>
+      <Step title="Create your agent">
+        Use any creation method (Interview, URL Import, etc.)
+      </Step>
+      <Step title="Set language to Vietnamese">
+        In voice settings, select **Vietnamese** from the language dropdown.
+      </Step>
+      <Step title="Choose a voice">
+        Select from available Vietnamese voices in the voice library.
+      </Step>
+      <Step title="Test and deploy">
+        Test with the simulator, then deploy as usual.
+      </Step>
+    </Steps>
+
+    <Tip>
+      For best results with Vietnamese, we recommend Murf AI voices for the most natural speech.
+    </Tip>
+  </Tab>
+  <Tab title="Advanced">
+    ## Provider Matrix
+
+    | Detail | Value |
+    |--------|-------|
+    | **Code** | vi-VN |
+    | **Region** | Vietnam |
+    | **Speakers** | ~85M |
+    | **Best ASR** | Valsea / Deepgram |
+    | **Best TTS** | Murf AI |
+    | **Best LLM** | Qwen |
+
+    ### Available Providers
+
+    | Type | Providers |
+    |------|-----------|
+    | **ASR** | Valsea (SEA-optimized), Google, Azure, AWS, Deepgram, Soniox, AssemblyAI, ElevenLabs, Speechmatics, iFLYTEK |
+    | **TTS** | Google, Azure, AWS Polly, ElevenLabs, Murf AI, Speechify |
+    | **LLM** | Qwen (Best), GPT-4o, Gemini, Claude, Cohere Aya |
+
+    ### Recommended Stack
+
+    For the best Vietnamese voice experience:
+    - **STT**: Valsea / Deepgram (best accuracy for Vietnamese)
+    - **LLM**: Qwen (best Vietnamese understanding)
+    - **TTS**: Murf AI (most natural Vietnamese speech)
+
+    ### Configuration
+
+    In the Command Center:
+    1. **Ears Tab** → Set STT provider to Valsea or Deepgram, language to `vi-VN`
+    2. **Brain Tab** → Set LLM to Qwen
+    3. **Voice Tab** → Set TTS to Murf AI, select a Vietnamese voice
+  </Tab>
+</Tabs>

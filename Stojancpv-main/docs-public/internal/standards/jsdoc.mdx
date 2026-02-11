@@ -1,0 +1,433 @@
+---
+title: JSDoc Guidelines
+description: Documentation comment standards for the Vora codebase
+---
+
+# JSDoc Guidelines
+
+JSDoc comments provide inline documentation that improves code understanding and enables better IDE support. This guide covers when and how to write effective documentation comments.
+
+---
+
+## When to Document
+
+### Always Document
+
+- Public API functions and methods
+- Exported classes and interfaces
+- Complex algorithms or business logic
+- Non-obvious workarounds or hacks
+- Configuration options
+- Error handling behavior
+
+### Skip Documentation
+
+- Self-explanatory functions with clear names
+- Simple getters/setters
+- Internal implementation details
+- Code that the types already explain
+
+---
+
+## Function Documentation
+
+### Basic Format
+
+```typescript
+/**
+ * Creates a new voice agent with the specified configuration.
+ *
+ * @param userId - The ID of the user creating the agent
+ * @param config - Agent configuration including LLM, STT, and TTS settings
+ * @returns The created agent with generated ID
+ * @throws {ValidationError} If the configuration is invalid
+ * @throws {QuotaError} If the user has reached their agent limit
+ *
+ * @example
+ * ```typescript
+ * const agent = await createAgent('user_123', {
+ *   name: 'Support Agent',
+ *   llm: { provider: 'openai', model: 'gpt-4' },
+ * });
+ * ```
+ */
+async function createAgent(userId: string, config: AgentConfig): Promise<Agent> {
+  // Implementation
+}
+```
+
+### Parameter Documentation
+
+```typescript
+/**
+ * Processes voice audio through the STT pipeline.
+ *
+ * @param audio - Raw audio buffer in WAV format (16kHz, 16-bit, mono)
+ * @param options - Processing options
+ * @param options.language - ISO language code (default: 'en-US')
+ * @param options.punctuate - Whether to add punctuation (default: true)
+ * @param options.profanityFilter - Whether to filter profanity (default: false)
+ */
+async function transcribeAudio(
+  audio: Buffer,
+  options?: TranscribeOptions
+): Promise<Transcript> {}
+```
+
+### Return Value Documentation
+
+```typescript
+/**
+ * Retrieves agent usage statistics for billing.
+ *
+ * @returns Usage statistics object containing:
+ *   - `totalMinutes` - Total voice minutes used
+ *   - `totalTokens` - Total LLM tokens consumed
+ *   - `sessionCount` - Number of completed sessions
+ *   - `periodStart` - Start of the billing period
+ *   - `periodEnd` - End of the billing period
+ */
+function getUsageStats(agentId: string): Promise<UsageStats> {}
+```
+
+---
+
+## Class Documentation
+
+### Class-Level Documentation
+
+```typescript
+/**
+ * Manages voice sessions between users and AI agents.
+ *
+ * The SessionManager handles:
+ * - Session lifecycle (create, maintain, terminate)
+ * - Audio routing through LiveKit
+ * - Conversation context persistence
+ * - Usage tracking for billing
+ *
+ * @example
+ * ```typescript
+ * const manager = new SessionManager(config);
+ * const session = await manager.createSession(agentId, userId);
+ * await session.start();
+ * ```
+ *
+ * @see {@link Agent} for agent configuration
+ * @see {@link LiveKitRoom} for WebRTC handling
+ */
+class SessionManager {
+  /**
+   * Creates a new SessionManager instance.
+   *
+   * @param config - Manager configuration
+   * @param config.maxConcurrent - Maximum concurrent sessions (default: 100)
+   * @param config.idleTimeout - Session idle timeout in ms (default: 300000)
+   */
+  constructor(config: SessionManagerConfig) {}
+}
+```
+
+### Method Documentation
+
+```typescript
+class AgentService {
+  /**
+   * Deploys an agent to production, making it available for voice sessions.
+   *
+   * Deployment includes:
+   * 1. Validating agent configuration
+   * 2. Provisioning LiveKit resources
+   * 3. Warming up LLM connections
+   * 4. Updating agent status to 'active'
+   *
+   * @param agentId - The agent to deploy
+   * @returns The updated agent with deployment metadata
+   * @throws {NotFoundError} If agent doesn't exist
+   * @throws {InvalidStateError} If agent is already deployed
+   * @throws {ProviderError} If provider initialization fails
+   */
+  async deploy(agentId: string): Promise<Agent> {}
+}
+```
+
+---
+
+## Interface Documentation
+
+### Interface with Property Descriptions
+
+```typescript
+/**
+ * Configuration for a voice AI agent.
+ *
+ * @example
+ * ```typescript
+ * const config: AgentConfig = {
+ *   name: 'Support Agent',
+ *   systemPrompt: 'You are a helpful support agent...',
+ *   llm: { provider: 'openai', model: 'gpt-4' },
+ *   stt: { provider: 'deepgram', language: 'en-US' },
+ *   tts: { provider: 'elevenlabs', voiceId: 'rachel' },
+ * };
+ * ```
+ */
+interface AgentConfig {
+  /** Display name shown in the dashboard */
+  name: string;
+
+  /** Optional description of the agent's purpose */
+  description?: string;
+
+  /**
+   * System prompt that defines the agent's behavior.
+   * Should include personality, capabilities, and constraints.
+   * Maximum 10,000 characters.
+   */
+  systemPrompt: string;
+
+  /** LLM provider configuration */
+  llm: LLMConfig;
+
+  /** Speech-to-text provider configuration */
+  stt: STTConfig;
+
+  /** Text-to-speech provider configuration */
+  tts: TTSConfig;
+
+  /**
+   * Maximum tokens allowed in conversation context.
+   * Older messages are pruned when limit is reached.
+   * @default 4000
+   */
+  maxContextTokens?: number;
+}
+```
+
+### Enum Documentation
+
+```typescript
+/**
+ * Possible states for a voice session.
+ */
+enum SessionStatus {
+  /** Session created but not yet connected */
+  Pending = 'pending',
+
+  /** User is connected and session is active */
+  Active = 'active',
+
+  /** Session paused by user or system */
+  Paused = 'paused',
+
+  /** Session ended normally */
+  Completed = 'completed',
+
+  /** Session ended due to error */
+  Failed = 'failed',
+}
+```
+
+---
+
+## Type Alias Documentation
+
+```typescript
+/**
+ * Unique identifier for an agent, prefixed with 'ag_'.
+ *
+ * @example 'ag_abc123def456'
+ */
+type AgentId = string;
+
+/**
+ * LLM provider supported by the platform.
+ *
+ * - `openai` - OpenAI GPT models (GPT-4, GPT-3.5-turbo)
+ * - `anthropic` - Anthropic Claude models
+ * - `google` - Google Gemini models
+ * - `groq` - Groq-hosted models for low latency
+ */
+type LLMProvider = 'openai' | 'anthropic' | 'google' | 'groq';
+
+/**
+ * Result type for operations that can fail.
+ *
+ * @template T - The success value type
+ * @template E - The error type (defaults to Error)
+ */
+type Result<T, E = Error> =
+  | { success: true; data: T }
+  | { success: false; error: E };
+```
+
+---
+
+## Specialized Tags
+
+### Deprecation
+
+```typescript
+/**
+ * Creates a voice session.
+ *
+ * @deprecated Use {@link SessionManager.createSession} instead.
+ * Will be removed in v3.0.
+ *
+ * @param agentId - The agent ID
+ * @param userId - The user ID
+ */
+async function createSession(agentId: string, userId: string): Promise<Session> {}
+```
+
+### Internal/Private
+
+```typescript
+/**
+ * Internal helper for token counting.
+ *
+ * @internal
+ * @remarks This is an implementation detail and may change without notice.
+ */
+function countTokens(text: string): number {}
+```
+
+### See Also and Links
+
+```typescript
+/**
+ * Generates embeddings for a text document.
+ *
+ * @see {@link https://docs.vora.io/embeddings | Embeddings Guide}
+ * @see {@link storeEmbeddings} for storing generated embeddings
+ * @see {@link VectorStore} for the underlying storage
+ */
+async function generateEmbeddings(text: string): Promise<number[]> {}
+```
+
+### Since and Version
+
+```typescript
+/**
+ * Enables real-time streaming for agent responses.
+ *
+ * @since 2.0.0
+ * @version 2.1.0 Added support for custom chunk sizes
+ */
+function enableStreaming(options?: StreamOptions): void {}
+```
+
+---
+
+## Examples Section
+
+### Simple Example
+
+```typescript
+/**
+ * Formats a duration in milliseconds to human-readable string.
+ *
+ * @param ms - Duration in milliseconds
+ * @returns Formatted string like "2m 30s"
+ *
+ * @example
+ * ```typescript
+ * formatDuration(150000); // "2m 30s"
+ * formatDuration(3600000); // "1h 0m 0s"
+ * formatDuration(500); // "0s"
+ * ```
+ */
+function formatDuration(ms: number): string {}
+```
+
+### Complex Example
+
+```typescript
+/**
+ * Configures and returns an agent with custom tools.
+ *
+ * @example Basic agent
+ * ```typescript
+ * const agent = await configureAgent({
+ *   name: 'Simple Agent',
+ *   llm: { provider: 'openai', model: 'gpt-4' },
+ * });
+ * ```
+ *
+ * @example Agent with custom tools
+ * ```typescript
+ * const agent = await configureAgent({
+ *   name: 'Calendar Agent',
+ *   llm: { provider: 'openai', model: 'gpt-4' },
+ *   tools: [
+ *     {
+ *       name: 'check_availability',
+ *       description: 'Check calendar availability',
+ *       parameters: {
+ *         type: 'object',
+ *         properties: {
+ *           date: { type: 'string', format: 'date' },
+ *         },
+ *       },
+ *       handler: async ({ date }) => {
+ *         return await calendar.getSlots(date);
+ *       },
+ *     },
+ *   ],
+ * });
+ * ```
+ *
+ * @example Agent with knowledge base
+ * ```typescript
+ * const agent = await configureAgent({
+ *   name: 'Support Agent',
+ *   llm: { provider: 'openai', model: 'gpt-4' },
+ *   knowledgeBase: 'kb_product_docs',
+ *   ragOptions: {
+ *     topK: 5,
+ *     minScore: 0.7,
+ *   },
+ * });
+ * ```
+ */
+async function configureAgent(config: AgentConfig): Promise<Agent> {}
+```
+
+---
+
+## Best Practices
+
+### Do
+
+- Write documentation that explains **why**, not just **what**
+- Include examples for complex APIs
+- Document edge cases and error conditions
+- Keep descriptions concise but complete
+- Update docs when code changes
+
+### Don't
+
+- State the obvious (e.g., `@returns The result`)
+- Document obvious parameter types already in TypeScript
+- Write essays - keep it scannable
+- Leave outdated documentation
+- Document internal implementation details in public APIs
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Style Guide" icon="paint-brush" href="/internal/standards/style-guide">
+    Code formatting standards
+  </Card>
+  <Card title="Naming Conventions" icon="tag" href="/internal/standards/naming">
+    Naming patterns
+  </Card>
+  <Card title="Import Organization" icon="layer-group" href="/internal/standards/imports">
+    Import ordering rules
+  </Card>
+  <Card title="Git Workflow" icon="code-branch" href="/internal/standards/git">
+    Commit and branch standards
+  </Card>
+</CardGroup>

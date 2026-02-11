@@ -1,0 +1,570 @@
+---
+title: Session Transcripts
+description: Retrieve conversation transcripts with speaker identification
+api: GET /sessions/:id/transcript
+---
+
+# Session Transcripts
+
+Retrieve the full transcript of a voice session, including speaker identification, timestamps, and confidence scores.
+
+## Request
+
+```
+GET https://api.voicevora.com/v1/sessions/:id/transcript
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | The session ID |
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `format` | string | `json` | Response format: `json`, `text`, `srt`, `vtt` |
+| `include_metadata` | boolean | `false` | Include word-level metadata |
+| `language` | string | - | Translate transcript to specified language |
+
+## Response
+
+<Tabs>
+  <Tab title="JSON Format">
+    ```json
+    {
+      "data": {
+        "session_id": "session_abc123xyz",
+        "agent_id": "agent_def456uvw",
+        "duration_seconds": 330,
+        "language": "en",
+        "messages": [
+          {
+            "id": "msg_001",
+            "speaker": "agent",
+            "text": "Hello! Welcome to Acme Support. How can I help you today?",
+            "timestamp_start": 0.5,
+            "timestamp_end": 3.2,
+            "confidence": 0.98
+          },
+          {
+            "id": "msg_002",
+            "speaker": "user",
+            "text": "Hi, I'm having trouble with my recent order. It hasn't arrived yet.",
+            "timestamp_start": 4.1,
+            "timestamp_end": 7.8,
+            "confidence": 0.95
+          },
+          {
+            "id": "msg_003",
+            "speaker": "agent",
+            "text": "I'm sorry to hear that. Let me look up your order. Could you please provide your order number?",
+            "timestamp_start": 8.5,
+            "timestamp_end": 12.3,
+            "confidence": 0.97
+          },
+          {
+            "id": "msg_004",
+            "speaker": "user",
+            "text": "Sure, it's ORD-12345.",
+            "timestamp_start": 13.0,
+            "timestamp_end": 14.5,
+            "confidence": 0.99
+          },
+          {
+            "id": "msg_005",
+            "speaker": "agent",
+            "text": "Thank you. I found your order. It looks like it was shipped yesterday and should arrive by tomorrow. Would you like me to send you the tracking link?",
+            "timestamp_start": 16.2,
+            "timestamp_end": 23.5,
+            "confidence": 0.96
+          }
+        ],
+        "summary": "Customer inquired about a delayed order. Agent looked up order ORD-12345 and confirmed it was shipped and will arrive tomorrow.",
+        "topics": ["order status", "shipping", "tracking"],
+        "sentiment": {
+          "overall": 0.7,
+          "user": 0.5,
+          "agent": 0.9
+        }
+      },
+      "meta": {
+        "request_id": "req_xyz789"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Text Format">
+    ```text
+    Agent: Hello! Welcome to Acme Support. How can I help you today?
+
+    User: Hi, I'm having trouble with my recent order. It hasn't arrived yet.
+
+    Agent: I'm sorry to hear that. Let me look up your order. Could you please provide your order number?
+
+    User: Sure, it's ORD-12345.
+
+    Agent: Thank you. I found your order. It looks like it was shipped yesterday and should arrive by tomorrow. Would you like me to send you the tracking link?
+    ```
+  </Tab>
+  <Tab title="SRT Format">
+    ```srt
+    1
+    00:00:00,500 --> 00:00:03,200
+    [Agent] Hello! Welcome to Acme Support. How can I help you today?
+
+    2
+    00:00:04,100 --> 00:00:07,800
+    [User] Hi, I'm having trouble with my recent order. It hasn't arrived yet.
+
+    3
+    00:00:08,500 --> 00:00:12,300
+    [Agent] I'm sorry to hear that. Let me look up your order. Could you please provide your order number?
+
+    4
+    00:00:13,000 --> 00:00:14,500
+    [User] Sure, it's ORD-12345.
+
+    5
+    00:00:16,200 --> 00:00:23,500
+    [Agent] Thank you. I found your order. It looks like it was shipped yesterday and should arrive by tomorrow. Would you like me to send you the tracking link?
+    ```
+  </Tab>
+  <Tab title="VTT Format">
+    ```vtt
+    WEBVTT
+
+    00:00:00.500 --> 00:00:03.200
+    <v Agent>Hello! Welcome to Acme Support. How can I help you today?
+
+    00:00:04.100 --> 00:00:07.800
+    <v User>Hi, I'm having trouble with my recent order. It hasn't arrived yet.
+
+    00:00:08.500 --> 00:00:12.300
+    <v Agent>I'm sorry to hear that. Let me look up your order. Could you please provide your order number?
+
+    00:00:13.000 --> 00:00:14.500
+    <v User>Sure, it's ORD-12345.
+
+    00:00:16.200 --> 00:00:23.500
+    <v Agent>Thank you. I found your order. It looks like it was shipped yesterday and should arrive by tomorrow.
+    ```
+  </Tab>
+  <Tab title="Not Found (404)">
+    ```json
+    {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Session not found",
+        "details": {
+          "resource_type": "session",
+          "resource_id": "session_invalid"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Not Ready (202)">
+    ```json
+    {
+      "data": {
+        "session_id": "session_abc123xyz",
+        "status": "processing",
+        "message": "Transcript is still being processed",
+        "estimated_ready_at": "2024-01-15T10:40:00Z"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Transcript Fields
+
+### Message Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique message identifier |
+| `speaker` | string | Speaker: `agent` or `user` |
+| `text` | string | Transcribed text |
+| `timestamp_start` | number | Start time in seconds |
+| `timestamp_end` | number | End time in seconds |
+| `confidence` | number | Transcription confidence (0-1) |
+
+### Summary Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `summary` | string | AI-generated conversation summary |
+| `topics` | array | Detected conversation topics |
+| `sentiment` | object | Sentiment analysis scores |
+
+## Examples
+
+### Get JSON Transcript
+
+<CodeGroup>
+```javascript JavaScript
+const transcript = await vora.sessions.getTranscript('session_abc123xyz');
+
+console.log(`Session duration: ${transcript.duration_seconds}s`);
+console.log(`Messages: ${transcript.messages.length}`);
+console.log(`Summary: ${transcript.summary}`);
+
+// Print conversation
+transcript.messages.forEach(msg => {
+  const speaker = msg.speaker === 'agent' ? '🤖 Agent' : '👤 User';
+  console.log(`${speaker}: ${msg.text}`);
+});
+```
+
+```python Python
+transcript = vora.sessions.get_transcript('session_abc123xyz')
+
+print(f"Session duration: {transcript.duration_seconds}s")
+print(f"Messages: {len(transcript.messages)}")
+print(f"Summary: {transcript.summary}")
+
+# Print conversation
+for msg in transcript.messages:
+    speaker = '🤖 Agent' if msg.speaker == 'agent' else '👤 User'
+    print(f"{speaker}: {msg.text}")
+```
+
+```bash cURL
+curl https://api.voicevora.com/v1/sessions/session_abc123xyz/transcript \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+### Get Plain Text Format
+
+<CodeGroup>
+```javascript JavaScript
+const text = await vora.sessions.getTranscript('session_abc123xyz', {
+  format: 'text'
+});
+
+console.log(text);
+```
+
+```python Python
+text = vora.sessions.get_transcript('session_abc123xyz', format='text')
+print(text)
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/sessions/session_abc123xyz/transcript?format=text" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+### Get SRT Subtitles
+
+<CodeGroup>
+```javascript JavaScript
+const srt = await vora.sessions.getTranscript('session_abc123xyz', {
+  format: 'srt'
+});
+
+// Save to file
+fs.writeFileSync('conversation.srt', srt);
+```
+
+```python Python
+srt = vora.sessions.get_transcript('session_abc123xyz', format='srt')
+
+# Save to file
+with open('conversation.srt', 'w') as f:
+    f.write(srt)
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/sessions/session_abc123xyz/transcript?format=srt" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -o conversation.srt
+```
+</CodeGroup>
+
+### Get Word-Level Metadata
+
+<CodeGroup>
+```javascript JavaScript
+const transcript = await vora.sessions.getTranscript('session_abc123xyz', {
+  include_metadata: true
+});
+
+// Access word-level data
+transcript.messages.forEach(msg => {
+  if (msg.words) {
+    msg.words.forEach(word => {
+      console.log(`"${word.text}" at ${word.start}s - ${word.end}s (${word.confidence})`);
+    });
+  }
+});
+```
+
+```python Python
+transcript = vora.sessions.get_transcript(
+    'session_abc123xyz',
+    include_metadata=True
+)
+
+# Access word-level data
+for msg in transcript.messages:
+    if hasattr(msg, 'words') and msg.words:
+        for word in msg.words:
+            print(f'"{word.text}" at {word.start}s - {word.end}s ({word.confidence})')
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/sessions/session_abc123xyz/transcript?include_metadata=true" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+With `include_metadata=true`, each message includes a `words` array:
+
+```json
+{
+  "id": "msg_001",
+  "speaker": "agent",
+  "text": "Hello! How can I help?",
+  "words": [
+    { "text": "Hello!", "start": 0.5, "end": 0.9, "confidence": 0.99 },
+    { "text": "How", "start": 1.0, "end": 1.15, "confidence": 0.98 },
+    { "text": "can", "start": 1.2, "end": 1.35, "confidence": 0.97 },
+    { "text": "I", "start": 1.4, "end": 1.45, "confidence": 0.99 },
+    { "text": "help?", "start": 1.5, "end": 1.8, "confidence": 0.96 }
+  ]
+}
+```
+
+### Translate Transcript
+
+<CodeGroup>
+```javascript JavaScript
+// Get transcript translated to Spanish
+const spanishTranscript = await vora.sessions.getTranscript('session_abc123xyz', {
+  language: 'es'
+});
+
+console.log(spanishTranscript.messages[0].text);
+// "¡Hola! Bienvenido al soporte de Acme. ¿Cómo puedo ayudarte hoy?"
+```
+
+```python Python
+# Get transcript translated to Spanish
+spanish = vora.sessions.get_transcript('session_abc123xyz', language='es')
+
+print(spanish.messages[0].text)
+# "¡Hola! Bienvenido al soporte de Acme. ¿Cómo puedo ayudarte hoy?"
+```
+
+```bash cURL
+curl "https://api.voicevora.com/v1/sessions/session_abc123xyz/transcript?language=es" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+</CodeGroup>
+
+Supported languages: `en`, `es`, `fr`, `de`, `pt`, `it`, `nl`, `ja`, `ko`, `zh`
+
+## Waiting for Transcript
+
+Transcripts may take a few seconds to process after a session ends. Handle the processing state:
+
+<CodeGroup>
+```javascript JavaScript
+async function getTranscriptWithRetry(sessionId, maxRetries = 10) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const transcript = await vora.sessions.getTranscript(sessionId);
+
+      if (transcript.status === 'processing') {
+        console.log('Transcript still processing, waiting...');
+        await sleep(3000);
+        continue;
+      }
+
+      return transcript;
+    } catch (error) {
+      if (error.code === 'TRANSCRIPT_NOT_READY') {
+        await sleep(3000);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw new Error('Transcript not ready after max retries');
+}
+
+const transcript = await getTranscriptWithRetry('session_abc123xyz');
+```
+
+```python Python
+import time
+
+def get_transcript_with_retry(session_id: str, max_retries: int = 10):
+    for i in range(max_retries):
+        try:
+            transcript = vora.sessions.get_transcript(session_id)
+
+            if transcript.status == 'processing':
+                print('Transcript still processing, waiting...')
+                time.sleep(3)
+                continue
+
+            return transcript
+
+        except VoraError as error:
+            if error.code == 'TRANSCRIPT_NOT_READY':
+                time.sleep(3)
+                continue
+            raise
+
+    raise Exception('Transcript not ready after max retries')
+
+transcript = get_transcript_with_retry('session_abc123xyz')
+```
+</CodeGroup>
+
+## Use Cases
+
+### Export for Review
+
+<CodeGroup>
+```javascript JavaScript
+async function exportTranscripts(agentId, startDate, endDate) {
+  const sessions = [];
+
+  for await (const session of getAllSessions({
+    agent_id: agentId,
+    status: 'completed',
+    started_after: startDate,
+    started_before: endDate
+  })) {
+    const transcript = await vora.sessions.getTranscript(session.id);
+
+    sessions.push({
+      session_id: session.id,
+      started_at: session.started_at,
+      duration: session.duration_seconds,
+      summary: transcript.summary,
+      sentiment: transcript.sentiment.overall,
+      messages: transcript.messages.map(m => ({
+        speaker: m.speaker,
+        text: m.text
+      }))
+    });
+  }
+
+  return sessions;
+}
+
+const exports = await exportTranscripts(
+  'agent_abc123xyz',
+  '2024-01-01T00:00:00Z',
+  '2024-01-31T23:59:59Z'
+);
+
+fs.writeFileSync('transcripts.json', JSON.stringify(exports, null, 2));
+```
+</CodeGroup>
+
+### Search Transcripts
+
+<CodeGroup>
+```javascript JavaScript
+async function searchTranscripts(agentId, searchTerm) {
+  const results = [];
+
+  for await (const session of getAllSessions({
+    agent_id: agentId,
+    status: 'completed'
+  })) {
+    const transcript = await vora.sessions.getTranscript(session.id);
+
+    const matches = transcript.messages.filter(m =>
+      m.text.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (matches.length > 0) {
+      results.push({
+        session_id: session.id,
+        started_at: session.started_at,
+        matches: matches.map(m => ({
+          speaker: m.speaker,
+          text: m.text,
+          timestamp: m.timestamp_start
+        }))
+      });
+    }
+  }
+
+  return results;
+}
+
+const results = await searchTranscripts('agent_abc123xyz', 'refund');
+console.log(`Found ${results.length} sessions mentioning "refund"`);
+```
+</CodeGroup>
+
+### Analyze Sentiment Trends
+
+<CodeGroup>
+```javascript JavaScript
+async function analyzeSentimentTrends(agentId, days = 7) {
+  const endDate = new Date().toISOString();
+  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  const dailySentiments = {};
+
+  for await (const session of getAllSessions({
+    agent_id: agentId,
+    status: 'completed',
+    started_after: startDate,
+    started_before: endDate
+  })) {
+    const transcript = await vora.sessions.getTranscript(session.id);
+    const date = session.started_at.split('T')[0];
+
+    if (!dailySentiments[date]) {
+      dailySentiments[date] = { total: 0, count: 0 };
+    }
+
+    dailySentiments[date].total += transcript.sentiment.overall;
+    dailySentiments[date].count += 1;
+  }
+
+  return Object.entries(dailySentiments).map(([date, data]) => ({
+    date,
+    avgSentiment: data.total / data.count,
+    sessionCount: data.count
+  }));
+}
+
+const trends = await analyzeSentimentTrends('agent_abc123xyz', 7);
+console.table(trends);
+```
+</CodeGroup>
+
+## Error Codes
+
+| Code | Description | Resolution |
+|------|-------------|------------|
+| `NOT_FOUND` | Session doesn't exist | Verify session ID |
+| `TRANSCRIPT_NOT_READY` | Still processing | Retry after a few seconds |
+| `SESSION_ACTIVE` | Session still in progress | Wait for session to end |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Sessions API" icon="list" href="/api/sessions">
+    Back to Sessions overview
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/api/webhooks">
+    Get notified when transcripts are ready
+  </Card>
+</CardGroup>

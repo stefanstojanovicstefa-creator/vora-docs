@@ -1,0 +1,98 @@
+---
+title: Deploy Tab
+description: Configure deployment channels, phone numbers, and web embeds
+---
+
+# Deploy Tab
+
+The Deploy tab configures how users connect to your agent - phone numbers, web widgets, and SIP trunks.
+
+---
+
+## Greeting Message
+
+Set the first message your agent says when a call connects:
+
+```
+Hi, thanks for calling Acme Corp! I'm Sarah, your virtual assistant. How can I help you today?
+```
+
+<Tip>
+  Keep greetings under 2 sentences. Long greetings delay the caller's ability to ask their question.
+</Tip>
+
+---
+
+## Deployment Channels
+
+### Phone Numbers
+
+Provision a phone number or connect your existing number:
+- **New number** - Vora provisions a number for you (US, UK, and 40+ countries)
+- **Port existing number** - Transfer your current number to Vora
+- **SIP trunk** - Connect your PBX or telephony system
+
+### Web Widget
+
+Add a voice button to your website with a simple embed script:
+
+```html
+<script src="https://cdn.voicevora.com/widget.js"></script>
+<script>
+  VoraWidget.init({
+    agentId: "your-agent-id",
+    position: "bottom-right",
+    theme: "dark"
+  });
+</script>
+```
+
+Widget customization options:
+- **Position** - bottom-right, bottom-left, or custom
+- **Theme** - light, dark, or custom colors
+- **Button text** - Customize the call-to-action
+- **Auto-open** - Open widget automatically after a delay
+
+### API
+
+Create sessions programmatically via the REST API:
+
+```bash
+curl -X POST https://api.voicevora.com/v1/sessions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"agentId": "your-agent-id"}'
+```
+
+See the [API Reference](/api/sessions/create) for full details.
+
+---
+
+## Webhook Configuration
+
+Receive notifications for session events:
+
+| Event | When It Fires |
+|-------|--------------|
+| `session.started` | A new call/session begins |
+| `session.ended` | A call/session ends |
+| `function.called` | A function is executed |
+| `transfer.initiated` | Call transfer begins |
+
+```json
+{
+  "webhookUrl": "https://your-server.com/vora-webhook",
+  "events": ["session.started", "session.ended"]
+}
+```
+
+---
+
+## Status
+
+The Deploy tab shows the current deployment status:
+- **Active** - Agent is live and accepting calls
+- **Paused** - Agent is configured but not accepting calls
+- **Draft** - Agent is not yet deployed
+
+Click **Activate** to go live or **Pause** to temporarily stop accepting calls.

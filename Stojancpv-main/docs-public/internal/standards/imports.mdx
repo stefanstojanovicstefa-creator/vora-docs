@@ -1,0 +1,428 @@
+---
+title: Import Organization
+description: Import ordering and module resolution standards
+---
+
+# Import Organization
+
+Consistent import organization improves code readability and reduces merge conflicts. This guide defines the import patterns used across the Vora codebase.
+
+---
+
+## Import Order
+
+Imports should be organized in the following groups, separated by blank lines:
+
+```typescript
+// 1. Node built-in modules
+import fs from 'fs';
+import path from 'path';
+
+// 2. External packages (node_modules)
+import express from 'express';
+import { z } from 'zod';
+import { PrismaClient } from '@prisma/client';
+
+// 3. Internal aliases (@/)
+import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
+
+// 4. Parent imports (..)
+import { config } from '../config';
+import { validateAuth } from '../middleware/auth';
+
+// 5. Sibling imports (.)
+import { agentSchema } from './schemas';
+import { AgentError } from './errors';
+
+// 6. Type imports (always last within each group or separate)
+import type { Agent, AgentConfig } from '@/types';
+import type { Request, Response } from 'express';
+```
+
+---
+
+## ESLint Configuration
+
+```javascript
+// .eslintrc.js
+{
+  rules: {
+    'import/order': [
+      'error',
+      {
+        groups: [
+          'builtin',     // Node built-ins
+          'external',    // npm packages
+          'internal',    // @ aliased imports
+          'parent',      // ../ imports
+          'sibling',     // ./ imports
+          'index',       // index file imports
+          'type',        // type imports
+        ],
+        'newlines-between': 'always',
+        alphabetize: {
+          order: 'asc',
+          caseInsensitive: true,
+        },
+        pathGroups: [
+          {
+            pattern: '@/**',
+            group: 'internal',
+            position: 'before',
+          },
+        ],
+        pathGroupsExcludedImportTypes: ['type'],
+      },
+    ],
+    'import/no-duplicates': 'error',
+    'import/no-cycle': 'error',
+  },
+}
+```
+
+---
+
+## Path Aliases
+
+### Backend Aliases
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/routes/*": ["src/routes/*"],
+      "@/services/*": ["src/services/*"],
+      "@/middleware/*": ["src/middleware/*"],
+      "@/providers/*": ["src/providers/*"],
+      "@/lib/*": ["src/lib/*"],
+      "@/types/*": ["src/types/*"]
+    }
+  }
+}
+```
+
+### Frontend Aliases
+
+```json
+// tsconfig.json (Vite)
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/components/*": ["src/components/*"],
+      "@/hooks/*": ["src/hooks/*"],
+      "@/services/*": ["src/services/*"],
+      "@/lib/*": ["src/lib/*"],
+      "@/types/*": ["src/types/*"]
+    }
+  }
+}
+```
+
+```typescript
+// vite.config.ts
+import { defineConfig } from 'vite';
+import path from 'path';
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+});
+```
+
+---
+
+## Import Patterns
+
+### Named vs Default Imports
+
+```typescript
+// ✅ Good - Prefer named exports
+import { AgentService } from '@/services/agent.service';
+import { createAgent, updateAgent } from '@/services/agent.service';
+import { Button, Card, Input } from '@/components/ui';
+
+// ✅ Acceptable - Default for React components and main exports
+import AgentCard from '@/components/AgentCard';
+import express from 'express';
+
+// ❌ Avoid - Namespace imports (except for specific cases)
+import * as agentService from '@/services/agent.service';
+```
+
+### Type Imports
+
+```typescript
+// ✅ Good - Separate type imports
+import { AgentService } from '@/services/agent.service';
+import type { Agent, AgentConfig } from '@/types';
+
+// ✅ Good - Inline type imports (TypeScript 4.5+)
+import { AgentService, type Agent, type AgentConfig } from '@/services';
+
+// ❌ Bad - Mixed without type keyword
+import { Agent, AgentConfig, AgentService } from '@/services';
+```
+
+### Barrel Exports
+
+```typescript
+// types/index.ts - Barrel file for types
+export type { Agent, AgentConfig, CreateAgentInput } from './agent.types';
+export type { Session, SessionConfig } from './session.types';
+export type { User, UserRole } from './user.types';
+
+// Usage - Clean single import
+import type { Agent, Session, User } from '@/types';
+```
+
+---
+
+## Common Import Groups
+
+### Backend Route Files
+
+```typescript
+// routes/agents.ts
+import { Router } from 'express';
+
+import { agentService } from '@/services/agent.service';
+import { requireAuth, resourceAuthorization } from '@/middleware/auth';
+import { zodValidation } from '@/middleware/validation';
+import { createAgentSchema, updateAgentSchema } from '@/schemas/agent.schema';
+
+import type { AuthenticatedRequest } from '@/types';
+```
+
+### Backend Service Files
+
+```typescript
+// services/agent.service.ts
+import { Prisma } from '@prisma/client';
+
+import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
+import { getLLMProvider } from '@/providers/llm';
+import { NotFoundError, ValidationError } from '@/lib/errors';
+
+import type { Agent, CreateAgentInput } from '@/types';
+```
+
+### React Component Files
+
+```typescript
+// components/AgentCard.tsx
+import { useState, useCallback } from 'react';
+
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useAgent, useDeleteAgent } from '@/hooks/useAgents';
+import { formatDate } from '@/lib/utils';
+
+import type { Agent } from '@/types';
+```
+
+### React Hook Files
+
+```typescript
+// hooks/useAgents.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import { agentsApi } from '@/services/agents.api';
+
+import type { Agent, CreateAgentInput, AgentFilters } from '@/types';
+```
+
+---
+
+## Avoiding Circular Dependencies
+
+### Problem Detection
+
+```typescript
+// ❌ Circular dependency
+// file: a.ts
+import { B } from './b';
+export class A {
+  b: B;
+}
+
+// file: b.ts
+import { A } from './a';  // Circular!
+export class B {
+  a: A;
+}
+```
+
+### Solutions
+
+**1. Extract shared types:**
+
+```typescript
+// file: types.ts
+export interface AInterface { ... }
+export interface BInterface { ... }
+
+// file: a.ts
+import type { BInterface } from './types';
+export class A implements AInterface {
+  b: BInterface;
+}
+
+// file: b.ts
+import type { AInterface } from './types';
+export class B implements BInterface {
+  a: AInterface;
+}
+```
+
+**2. Use dependency injection:**
+
+```typescript
+// file: a.ts
+export class A {
+  constructor(private getB: () => B) {}
+}
+
+// file: b.ts
+export class B {
+  constructor(private a: A) {}
+}
+
+// file: container.ts
+import { A } from './a';
+import { B } from './b';
+
+const a = new A(() => b);
+const b = new B(a);
+```
+
+**3. Use barrel files carefully:**
+
+```typescript
+// ✅ Good - Leaf modules in barrel
+// components/ui/index.ts
+export { Button } from './Button';
+export { Card } from './Card';
+
+// ❌ Bad - Modules that import each other
+// services/index.ts
+export { agentService } from './agent.service';  // imports sessionService
+export { sessionService } from './session.service';  // imports agentService
+```
+
+---
+
+## Dynamic Imports
+
+### Code Splitting
+
+```typescript
+// ✅ Good - Lazy load heavy components
+const VoiceVisualizer = lazy(() => import('@/components/VoiceVisualizer'));
+const MarkdownEditor = lazy(() => import('@/components/MarkdownEditor'));
+
+// Usage with Suspense
+<Suspense fallback={<Skeleton />}>
+  <VoiceVisualizer />
+</Suspense>
+```
+
+### Conditional Imports
+
+```typescript
+// ✅ Good - Load based on environment
+async function getProvider() {
+  if (process.env.NODE_ENV === 'test') {
+    const { MockProvider } = await import('./providers/mock');
+    return new MockProvider();
+  }
+  const { RealProvider } = await import('./providers/real');
+  return new RealProvider();
+}
+```
+
+---
+
+## Re-exports
+
+### Index Files
+
+```typescript
+// services/index.ts
+export { agentService } from './agent.service';
+export { sessionService } from './session.service';
+export { userService } from './user.service';
+
+// Usage
+import { agentService, sessionService } from '@/services';
+```
+
+### Selective Re-exports
+
+```typescript
+// components/ui/index.ts
+// Only export public components
+export { Button } from './Button';
+export { Card, CardHeader, CardContent, CardFooter } from './Card';
+export { Input } from './Input';
+
+// Don't export internal components
+// BaseButton, CardBase are internal only
+```
+
+---
+
+## Import Linting
+
+### Auto-fix on Save
+
+```json
+// .vscode/settings.json
+{
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative"
+}
+```
+
+### Remove Unused Imports
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "noUnusedLocals": true
+  }
+}
+```
+
+---
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Style Guide" icon="paint-brush" href="/internal/standards/style-guide">
+    Code formatting standards
+  </Card>
+  <Card title="Naming Conventions" icon="tag" href="/internal/standards/naming">
+    Naming patterns
+  </Card>
+  <Card title="JSDoc Guidelines" icon="book" href="/internal/standards/jsdoc">
+    Documentation comments
+  </Card>
+  <Card title="Git Workflow" icon="code-branch" href="/internal/standards/git">
+    Commit and branch standards
+  </Card>
+</CardGroup>
