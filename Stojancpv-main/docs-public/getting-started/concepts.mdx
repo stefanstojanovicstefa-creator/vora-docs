@@ -25,7 +25,7 @@ An **Agent** is a voice AI assistant that can handle phone calls, web chats, or 
     - **System Prompt** - Instructions that define agent behavior
     - **LLM Provider** - The AI model powering responses (Gemini, GPT-4, Claude, etc.)
     - **STT Provider** - Speech-to-text engine (Deepgram, Google, AssemblyAI)
-    - **TTS Provider** - Text-to-speech voice (ElevenLabs, Cartesia, Google)
+    - **TTS Provider** - Text-to-speech voice (ElevenLabs, Google)
     - **Knowledge Base** - RAG-powered document retrieval
     - **Functions** - Custom tool calls the agent can execute
     - **Deployment Config** - Phone numbers, web embeds, SIP trunks
@@ -48,7 +48,7 @@ Every voice conversation flows through a pipeline:
   </Tab>
   <Tab title="Advanced">
     ```
-    Audio In → STT (Deepgram/Google) → LLM (Gemini/GPT-4) → TTS (ElevenLabs/Cartesia) → Audio Out
+    Audio In → STT (Deepgram/Google) → LLM (Gemini/GPT-4) → TTS (ElevenLabs/Google) → Audio Out
                                           ↕
                                     Knowledge Base (RAG)
                                           ↕

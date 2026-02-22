@@ -1,101 +1,97 @@
 ---
 title: Language Support
-description: Vora supports 100+ languages across multiple ASR, TTS, and LLM providers
+description: Vora supports 15+ languages with dedicated STT, TTS, and LLM provider configurations
 ---
 
 # Language Support
 
-Vora supports over 100 languages across 12 ASR providers, 11 TTS providers, and 15 LLM providers. Whether your users speak Arabic, Hindi, Vietnamese, or Thai - Vora has you covered.
+Vora supports 15+ languages using combinations of Deepgram, Google, AssemblyAI, ElevenLabs, and Gemini. Each language page shows which providers work best.
 
 <Tabs>
   <Tab title="Simple">
     ## Supported Languages
 
-    Vora supports all major world languages. Here are our **17 priority languages** with the best provider coverage:
+    | Language | Region | Voice Calls |
+    |----------|--------|:-----------:|
+    | Arabic | Middle East, North Africa | Yes |
+    | English (Indian accent) | India | Yes |
+    | Hindi | India | Yes |
+    | Bengali | India, Bangladesh | Yes |
+    | Tamil | India, Sri Lanka | Yes |
+    | Telugu | India | Yes |
+    | Gujarati | India | Yes |
+    | Kannada | India | Yes |
+    | Malayalam | India | Yes |
+    | Marathi | India | Yes |
+    | Punjabi | India, Pakistan | Yes |
+    | Odia | India | Yes |
+    | Indonesian | Indonesia | Yes |
+    | Vietnamese | Vietnam | Yes |
+    | Tagalog | Philippines | Yes |
+    | Malay | Malaysia, Singapore | Yes |
+    | Thai | Thailand | Yes |
 
-    | Language | Region | Voice Calls | Chat |
-    |----------|--------|:-----------:|:----:|
-    | Arabic | MENA | Yes | Yes |
-    | English (Indian) | India | Yes | Yes |
-    | Hindi | India | Yes | Yes |
-    | Bengali | India, Bangladesh | Yes | Yes |
-    | Tamil | India, Sri Lanka | Yes | Yes |
-    | Telugu | India | Yes | Yes |
-    | Gujarati | India | Yes | Yes |
-    | Kannada | India | Yes | Yes |
-    | Malayalam | India | Yes | Yes |
-    | Marathi | India | Yes | Yes |
-    | Punjabi | India, Pakistan | Yes | Yes |
-    | Odia | India | Yes | Yes |
-    | Indonesian | Indonesia | Yes | Yes |
-    | Vietnamese | Vietnam | Yes | Yes |
-    | Tagalog | Philippines | Yes | Yes |
-    | Malay | Malaysia, Singapore | Yes | Yes |
-    | Thai | Thailand | Yes | Yes |
+    Other world languages (English, Spanish, French, German, Portuguese, Japanese, Korean, Chinese, etc.) are supported via Google and Deepgram — check the [STT](/providers/stt) and [TTS](/providers/tts) provider pages for coverage.
 
-    Plus **80+ additional languages** including Spanish, French, German, Portuguese, Japanese, Korean, Chinese, and more.
-
-    ### How to Set Your Agent's Language
+    ### Set Your Agent's Language
 
     <Steps>
       <Step title="Open your agent">
-        Go to Agents and select your agent.
+        Go to **Agents** and select your agent.
       </Step>
-      <Step title="Choose language">
+      <Step title="Choose a language">
         In the voice settings, select the language from the dropdown.
       </Step>
       <Step title="Save">
-        Click Save. Your agent now understands and speaks in the selected language.
+        Click **Save**. Your agent now understands and responds in the selected language.
       </Step>
     </Steps>
-
-    <Tip>
-      Most agents work best with a single primary language. For multilingual support, contact us about our multi-language agent configuration.
-    </Tip>
   </Tab>
   <Tab title="Advanced">
-    ## Provider Coverage Matrix
+    ## Provider Coverage by Language
 
-    Vora integrates with **12 ASR**, **11 TTS**, and **15 LLM** providers across 100+ languages. Each language has different provider availability and quality levels.
+    Different providers support different languages. Use this table to pick the right combination:
 
-    ### Priority Languages (17)
+    | Language | Best STT | Best TTS | Best LLM |
+    |----------|----------|----------|----------|
+    | Arabic | Google (Chirp 3) | ElevenLabs | Gemini Flash |
+    | Hindi | Google (Chirp 3) | ElevenLabs | Gemini Flash |
+    | Bengali | Google (Chirp 3) | Google TTS | Gemini Flash |
+    | Tamil | Google (Chirp 3) | ElevenLabs | Gemini Flash |
+    | Telugu | Google (Chirp 3) | Google TTS | Gemini Flash |
+    | Gujarati | Google (Chirp 3) | Google TTS | Gemini Flash |
+    | Kannada | Google (Chirp 3) | Google TTS | Gemini Flash |
+    | Malayalam | Google (Chirp 3) | Google TTS | Gemini Flash |
+    | Marathi | Google (Chirp 3) | Google TTS | Gemini Flash |
+    | Punjabi | Google (Chirp 3) | Google TTS | Gemini Flash |
+    | Indonesian | Google (Chirp 3) | ElevenLabs | Gemini Flash |
+    | Vietnamese | Google (Chirp 3) | ElevenLabs | Gemini Flash |
+    | Tagalog | Deepgram / Google | ElevenLabs | Gemini Flash |
+    | Malay | Google (Chirp 3) | ElevenLabs | Gemini Flash |
+    | Thai | Google (Chirp 3) | ElevenLabs | Gemini Flash |
+    | English (Indian) | Deepgram (Nova-3) | ElevenLabs | GPT-4o / Gemini |
 
-    These languages have the deepest provider coverage and are optimized for Vora's voice pipeline:
-
-    | Language | Code | Speakers | Best ASR | Best TTS | Best LLM |
-    |----------|------|----------|----------|----------|----------|
-    | [Arabic](/languages/arabic) | ar | 400M | Munsit | Munsit | Falcon Arabic |
-    | [English (Indian)](/languages/english-indian) | en-IN | 125M | Deepgram | ElevenLabs | GPT-4o |
-    | [Hindi](/languages/hindi) | hi-IN | 600M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Bengali](/languages/bengali) | bn-IN | 230M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Tamil](/languages/tamil) | ta-IN | 80M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Telugu](/languages/telugu) | te-IN | 83M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Gujarati](/languages/gujarati) | gu-IN | 56M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Kannada](/languages/kannada) | kn-IN | 45M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Malayalam](/languages/malayalam) | ml-IN | 38M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Marathi](/languages/marathi) | mr-IN | 83M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Punjabi](/languages/punjabi) | pa-IN | 125M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Odia](/languages/odia) | od-IN | 35M | Sarvam AI | Sarvam AI | Sarvam 2B |
-    | [Indonesian](/languages/indonesian) | id-ID | 200M | Valsea | Murf AI | Qwen |
-    | [Vietnamese](/languages/vietnamese) | vi-VN | 85M | Valsea | Murf AI | Qwen |
-    | [Tagalog](/languages/tagalog) | tl-PH | 85M | Deepgram | Murf AI | Gemini |
-    | [Malay](/languages/malay) | ms-MY | 80M | Valsea | Murf AI | Qwen |
-    | [Thai](/languages/thai) | th-TH | 60M | Valsea | Murf AI | Qwen |
-
-    ### Provider Comparison
-
-    For detailed provider-by-provider comparison:
-    - [ASR Providers](/languages/asr-providers) - 12 speech-to-text providers compared
-    - [TTS Providers](/languages/tts-providers) - 11 text-to-speech providers compared
-    - [LLM Providers](/languages/llm-providers) - 15 language model providers compared
-
-    ### Configuration
+    ## Configuration
 
     Set language per-agent in the Command Center:
-    - **Ears Tab** - STT language for speech recognition
-    - **Voice Tab** - TTS language for speech output
-    - **Brain Tab** - LLM language context for response generation
+    - **Ears Tab** — STT language for speech recognition
+    - **Voice Tab** — TTS language and voice selection
+    - **Brain Tab** — LLM system prompt language context
 
-    For optimal results, ensure all three components support your target language. Check individual language pages for provider availability.
+    For optimal results, verify that all three components support your target language before deploying.
+
+    ## Provider Details
+
+    <CardGroup cols={3}>
+      <Card title="STT Providers" icon="microphone" href="/providers/stt">
+        Deepgram (30+), Google (125+), AssemblyAI (99+)
+      </Card>
+      <Card title="TTS Providers" icon="volume-high" href="/providers/tts">
+        ElevenLabs (32+), Google (75+)
+      </Card>
+      <Card title="LLM Providers" icon="brain" href="/providers/llm">
+        Gemini (100+), GPT-4o (50+), and more
+      </Card>
+    </CardGroup>
   </Tab>
 </Tabs>

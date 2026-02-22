@@ -23,16 +23,12 @@
   },
   "topbarLinks": [
     {
-      "name": "GitHub",
-      "url": "https://github.com/voicevora"
-    },
-    {
       "name": "Discord",
       "url": "https://discord.gg/vora"
     }
   ],
   "topbarCtaButton": {
-    "name": "Get Started",
+    "name": "Get Started Free",
     "url": "https://app.voicevora.com"
   },
   "anchors": [
@@ -61,8 +57,8 @@
             "group": "Welcome",
             "pages": [
               "introduction",
-              "getting-started/modes",
-              "getting-started/concepts"
+              "getting-started/concepts",
+              "getting-started/modes"
             ]
           },
           {
@@ -72,8 +68,9 @@
             ]
           },
           {
-            "group": "Updates",
+            "group": "Help",
             "pages": [
+              "platform/faq",
               "changelog"
             ]
           }
@@ -102,12 +99,6 @@
             ]
           },
           {
-            "group": "Voice",
-            "pages": [
-              "platform/voice/index"
-            ]
-          },
-          {
             "group": "Knowledge Base",
             "pages": [
               "platform/knowledge-base/index",
@@ -115,15 +106,6 @@
               "platform/knowledge-base/urls",
               "platform/knowledge-base/text",
               "platform/knowledge-base/integrations"
-            ]
-          },
-          {
-            "group": "Sessions",
-            "pages": [
-              "platform/sessions/index",
-              "platform/sessions/transcripts",
-              "platform/sessions/recordings",
-              "platform/sessions/events"
             ]
           },
           {
@@ -136,11 +118,19 @@
             ]
           },
           {
-            "group": "Functions",
+            "group": "Voice & Phone",
             "pages": [
-              "platform/functions/index",
-              "platform/functions/built-in",
-              "platform/functions/testing"
+              "platform/voice/index",
+              "platform/phone-numbers/index"
+            ]
+          },
+          {
+            "group": "Sessions",
+            "pages": [
+              "platform/sessions/index",
+              "platform/sessions/transcripts",
+              "platform/sessions/recordings",
+              "platform/sessions/events"
             ]
           },
           {
@@ -153,15 +143,9 @@
             ]
           },
           {
-            "group": "Settings",
+            "group": "Account & Support",
             "pages": [
               "platform/account/index",
-              "platform/phone-numbers/index"
-            ]
-          },
-          {
-            "group": "Help",
-            "pages": [
               "platform/support/index",
               "platform/support/troubleshooting"
             ]
@@ -169,8 +153,59 @@
         ]
       },
       {
-        "tab": "Advanced",
+        "tab": "Developers",
         "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "developers/index",
+              "developers/authentication"
+            ]
+          },
+          {
+            "group": "Quickstarts",
+            "pages": [
+              "developers/quickstarts/index",
+              "developers/quickstarts/javascript",
+              "developers/quickstarts/python",
+              "developers/quickstarts/curl"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "developers/concepts/agents",
+              "developers/concepts/sessions",
+              "developers/concepts/providers",
+              "developers/concepts/functions",
+              "developers/concepts/knowledge-base",
+              "developers/concepts/deployments"
+            ]
+          },
+          {
+            "group": "Build",
+            "pages": [
+              "developers/webhooks",
+              "developers/error-handling",
+              "developers/analytics"
+            ]
+          },
+          {
+            "group": "SDKs",
+            "pages": [
+              "sdks/index",
+              "sdks/javascript/index",
+              "sdks/javascript/agents",
+              "sdks/javascript/sessions",
+              "sdks/javascript/voice",
+              "sdks/python/index",
+              "sdks/python/agents",
+              "sdks/python/sessions",
+              "sdks/livekit/index",
+              "sdks/livekit/react",
+              "sdks/livekit/react-native"
+            ]
+          },
           {
             "group": "Command Center",
             "pages": [
@@ -187,15 +222,12 @@
             ]
           },
           {
-            "group": "Advanced Features",
+            "group": "Advanced",
             "pages": [
-              "advanced/custom-functions",
-              "advanced/flow-studio",
-              "advanced/monitoring",
               "advanced/api-keys",
-              "advanced/providers",
-              "advanced/campaigns",
-              "advanced/webhooks"
+              "advanced/custom-functions",
+              "advanced/webhooks",
+              "advanced/monitoring"
             ]
           }
         ]
@@ -204,14 +236,9 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "API Reference",
+            "group": "Overview",
             "pages": [
-              "api/index"
-            ]
-          },
-          {
-            "group": "Fundamentals",
-            "pages": [
+              "api/index",
               "api/authentication",
               "api/errors",
               "api/rate-limits",
@@ -264,45 +291,6 @@
         ]
       },
       {
-        "tab": "SDKs",
-        "groups": [
-          {
-            "group": "SDKs",
-            "pages": [
-              "sdks/index"
-            ]
-          },
-          {
-            "group": "JavaScript",
-            "pages": [
-              "sdks/javascript/index",
-              "sdks/javascript/agents",
-              "sdks/javascript/sessions",
-              "sdks/javascript/voice",
-              "sdks/javascript/reference"
-            ]
-          },
-          {
-            "group": "Python",
-            "pages": [
-              "sdks/python/index",
-              "sdks/python/agents",
-              "sdks/python/sessions",
-              "sdks/python/reference"
-            ]
-          },
-          {
-            "group": "LiveKit Integration",
-            "pages": [
-              "sdks/livekit/index",
-              "sdks/livekit/react",
-              "sdks/livekit/vanilla",
-              "sdks/livekit/react-native"
-            ]
-          }
-        ]
-      },
-      {
         "tab": "Providers",
         "groups": [
           {
@@ -329,7 +317,7 @@
             ]
           },
           {
-            "group": "LLM Providers",
+            "group": "Language Models (LLM)",
             "pages": [
               "providers/llm/index",
               "providers/llm/google",
@@ -341,12 +329,7 @@
               "providers/llm/perplexity",
               "providers/llm/ai21"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "Languages",
-        "groups": [
+          },
           {
             "group": "Language Support",
             "pages": [
@@ -354,46 +337,12 @@
               "languages/arabic",
               "languages/hindi",
               "languages/bengali",
-              "languages/tamil",
-              "languages/telugu",
-              "languages/gujarati",
-              "languages/kannada",
-              "languages/malayalam",
-              "languages/marathi",
-              "languages/punjabi",
-              "languages/odia",
               "languages/indonesian",
               "languages/vietnamese",
               "languages/tagalog",
               "languages/malay",
               "languages/thai",
               "languages/english-indian"
-            ]
-          },
-          {
-            "group": "Provider Comparison",
-            "pages": [
-              "languages/asr-providers",
-              "languages/tts-providers",
-              "languages/llm-providers"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Self-Hosting",
-        "groups": [
-          {
-            "group": "Self-Hosting",
-            "pages": [
-              "self-hosting/index",
-              "self-hosting/docker",
-              "self-hosting/fly",
-              "self-hosting/environment",
-              "self-hosting/database",
-              "self-hosting/redis",
-              "self-hosting/monitoring",
-              "self-hosting/scaling"
             ]
           }
         ]

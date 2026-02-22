@@ -1,0 +1,121 @@
+---
+title: FAQ
+description: Answers to common questions about Vora Voice AI
+---
+
+# Frequently Asked Questions
+
+<AccordionGroup>
+
+  <Accordion title="What is Vora?">
+    Vora is a platform for building voice AI agents. You create an agent, configure it with your business information, and deploy it to a phone number or your website. Callers speak naturally and your agent responds in real-time.
+
+    No coding required for basic agents. Developers can unlock advanced features via the API, SDKs, and Command Center.
+  </Accordion>
+
+  <Accordion title="Do I need to know how to code?">
+    No. You can create, configure, and deploy a fully functional voice agent without writing any code using the Interview or URL Import methods.
+
+    If you want to build custom integrations, call external APIs, or embed Vora into your own app, coding knowledge helps — but it's not required to get started.
+  </Accordion>
+
+  <Accordion title="How do I create my first agent?">
+    1. Sign up at [app.voicevora.com](https://app.voicevora.com)
+    2. Click **Create Agent**
+    3. Choose **Interview** — Vora asks you questions and builds your agent automatically
+    4. Test it in the simulator, then click **Deploy**
+
+    See the [Quickstart](/platform/quickstart) for step-by-step instructions.
+  </Accordion>
+
+  <Accordion title="What languages does Vora support?">
+    Vora supports 15+ languages including Arabic, Hindi, Bengali, Indonesian, Vietnamese, Tagalog, Malay, Thai, Tamil, Telugu, Gujarati, Kannada, Malayalam, Marathi, Punjabi, and English (Indian accent).
+
+    Language support depends on which providers you use — see the [Language Support](/languages) section under Providers for per-language recommendations.
+  </Accordion>
+
+  <Accordion title="What AI providers does Vora use?">
+    Vora connects to best-in-class AI providers for each part of the voice pipeline:
+
+    - **Speech-to-Text**: Deepgram (default), Google, AssemblyAI
+    - **Text-to-Speech**: ElevenLabs (default), Google
+    - **Language Models**: Gemini Flash (default), OpenAI, Anthropic, Groq, Mistral, Cohere, and more
+
+    You can use Vora's default providers with no setup, or bring your own API keys via **Settings → API Keys**.
+  </Accordion>
+
+  <Accordion title="What's the difference between Simple and Advanced mode?">
+    **Simple Mode** is for business users. It shows a clean interface with the essentials — create an agent, add knowledge, deploy to a phone number.
+
+    **Advanced Mode** is for developers and power users. It unlocks the Command Center (full 9-tab configuration), custom functions, API access, provider selection, and monitoring.
+
+    You can switch between modes at any time using the toggle in the dashboard sidebar. See [Simple & Advanced Modes](/getting-started/modes) for details.
+  </Accordion>
+
+  <Accordion title="How do I add my own documents or website content?">
+    Go to your agent's **Knowledge Base** tab and choose one of three methods:
+
+    - **Upload a file** — PDF, DOCX, or TXT
+    - **Import from URL** — Vora crawls the page and extracts content
+    - **Paste text** — Add content directly
+
+    Your agent will reference this content during conversations to answer questions accurately.
+  </Accordion>
+
+  <Accordion title="Can I connect Vora to my CRM or calendar?">
+    Yes. Vora integrates with HubSpot, Google Calendar, and supports webhook-based integrations for custom connections.
+
+    Go to **Integrations** in your agent settings to connect external services. See [Integrations](/platform/integrations) for the full list.
+  </Accordion>
+
+  <Accordion title="How do I give my agent a phone number?">
+    On your agent's deploy page, click **Phone Numbers** and either:
+    - Request a number from Vora (provisioned automatically)
+    - Connect your own number via SIP
+
+    See [Phone Numbers](/platform/phone-numbers) for details.
+  </Accordion>
+
+  <Accordion title="Can I embed a voice widget on my website?">
+    Yes. After deploying your agent, go to **Deploy → Web Widget** to get an embed script. Add it to your website and a voice button appears for visitors.
+  </Accordion>
+
+  <Accordion title="Where can I review past conversations?">
+    Go to **Sessions** in the dashboard to see all past conversations. For each session, you can view:
+    - Full transcript with timestamps
+    - Audio recording (if enabled)
+    - Session duration and metadata
+  </Accordion>
+
+  <Accordion title="How much does Vora cost?">
+    Vora has a free tier to get started with no credit card required. Paid plans are based on usage (minutes of voice conversation).
+
+    See [Billing & Plans](/platform/billing) for current pricing.
+  </Accordion>
+
+  <Accordion title="Can I use Vora's API to build custom integrations?">
+    Yes. Vora has a REST API for creating and managing agents, sessions, and knowledge bases programmatically.
+
+    Get started with the [API Reference](/api) or the [Developer Guide](/developers).
+  </Accordion>
+
+  <Accordion title="What is the Command Center?">
+    The Command Center is Vora's advanced agent builder, available in Advanced Mode. It has 9 tabs for granular control:
+
+    - **Brain** — LLM provider, model, system prompt, and temperature
+    - **Voice** — TTS provider, voice selection, and speech settings
+    - **Ears** — STT provider and transcription settings
+    - **Advanced** — Interruption handling, silence detection, and more
+    - **Deploy** — Phone numbers and web embed configuration
+    - **Testing** — Voice simulator with real-time logs
+
+    See [Command Center](/advanced/command-center) for detailed documentation.
+  </Accordion>
+
+  <Accordion title="I'm having issues — how do I get help?">
+    - **Troubleshooting guide**: [Common issues and solutions](/platform/support/troubleshooting)
+    - **Discord**: Join [our community](https://discord.gg/vora) for real-time support
+    - **Email**: support@voicevora.com
+  </Accordion>
+
+</AccordionGroup>
