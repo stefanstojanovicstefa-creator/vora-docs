@@ -2,7 +2,6 @@
   "$schema": "https://mintlify.com/schema.json",
   "theme": "mint",
   "name": "Vora Voice AI",
-  
   "logo": {
     "light": "/logo/vora-light.svg",
     "dark": "/logo/vora-dark.svg"
@@ -416,15 +415,5 @@
     "github": "https://github.com/voicevora",
     "twitter": "https://twitter.com/voravai",
     "discord": "https://discord.gg/vora"
-  },
-  "i18n": {
-    "defaultLocale": "en",
-    "languages": [
-      { "locale": "en", "name": "English" },
-      { "locale": "ar", "name": "العربية" },
-      { "locale": "hi", "name": "हिन्दी" },
-      { "locale": "id", "name": "Bahasa Indonesia" },
-      { "locale": "vi", "name": "Tiếng Việt" }
-    ]
   }
 }
