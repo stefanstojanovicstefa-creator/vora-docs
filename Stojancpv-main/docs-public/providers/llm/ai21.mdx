@@ -1,0 +1,37 @@
+---
+title: AI21 Labs
+description: AI21 Labs Jurassic language models for enterprise voice agents
+---
+
+AI21 Labs provides enterprise-grade language models with strong instruction-following capabilities for structured business conversations.
+
+## Available Models
+
+| Model | Context | Best For |
+|-------|---------|----------|
+| `j2-ultra` | 8K | Complex reasoning, detailed responses |
+| `j2-mid` | 8K | Balanced performance and cost |
+| `j2-light` | 8K | Fast responses, simple tasks |
+
+## Configuration
+
+In the Command Center **Brain** tab, select **AI21** as the provider and choose your model.
+
+```json
+{
+  "provider": "ai21",
+  "model": "j2-ultra"
+}
+```
+
+## Key Features
+
+- **Instruction following**: Strong at following structured prompts and rules
+- **Enterprise focus**: Designed for business applications with consistent outputs
+- **Multilingual**: Supports major European and Middle Eastern languages
+
+## Limitations
+
+- Smaller context window compared to GPT-4 or Gemini models
+- Less suited for highly creative or open-ended conversations
+- API key required from AI21 Labs dashboard

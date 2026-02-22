@@ -317,8 +317,7 @@
               "providers/stt/index",
               "providers/stt/deepgram",
               "providers/stt/google",
-              "providers/stt/assemblyai",
-              "providers/stt/soniox"
+              "providers/stt/assemblyai"
             ]
           },
           {
@@ -326,8 +325,7 @@
             "pages": [
               "providers/tts/index",
               "providers/tts/elevenlabs",
-              "providers/tts/google",
-              "providers/tts/cartesia"
+              "providers/tts/google"
             ]
           },
           {
@@ -339,7 +337,9 @@
               "providers/llm/anthropic",
               "providers/llm/groq",
               "providers/llm/mistral",
-              "providers/llm/cohere"
+              "providers/llm/cohere",
+              "providers/llm/perplexity",
+              "providers/llm/ai21"
             ]
           }
         ]

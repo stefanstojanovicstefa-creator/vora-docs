@@ -1,0 +1,37 @@
+---
+title: Perplexity
+description: Perplexity AI language models for real-time, search-grounded conversations
+---
+
+Perplexity AI models are designed for real-time information retrieval with built-in web search capabilities, making them ideal for agents that need current information.
+
+## Available Models
+
+| Model | Context | Best For |
+|-------|---------|----------|
+| `llama-3.1-sonar-large-128k-online` | 128K | General conversations with web access |
+| `llama-3.1-sonar-small-128k-online` | 128K | Faster responses, lower cost |
+| `llama-3.1-sonar-large-128k-chat` | 128K | Offline conversations, no search |
+
+## Configuration
+
+In the Command Center **Brain** tab, select **Perplexity** as the provider and choose your model.
+
+```json
+{
+  "provider": "perplexity",
+  "model": "llama-3.1-sonar-large-128k-online"
+}
+```
+
+## Key Features
+
+- **Real-time web search**: Online models can retrieve current information during conversations
+- **Source citations**: Responses include references to sources when searching
+- **Cost-effective**: Smaller online models offer strong performance at lower cost
+
+## Limitations
+
+- Online models require internet access for search grounding
+- Latency may be slightly higher than offline models due to search
+- Not recommended for strictly offline or air-gapped deployments

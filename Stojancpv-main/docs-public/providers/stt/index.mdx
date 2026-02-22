@@ -1,11 +1,11 @@
 ---
 title: STT Providers
-description: 12 speech-to-text providers for Vora voice agents
+description: Speech-to-text providers for Vora voice agents
 ---
 
 # STT Providers
 
-Vora integrates with **12 speech-to-text providers** for converting caller audio to text. Choose based on language support, latency, accuracy, and cost.
+Vora integrates with speech-to-text providers for converting caller audio to text. Choose based on language support, latency, accuracy, and cost.
 
 ---
 
@@ -21,33 +21,6 @@ Vora integrates with **12 speech-to-text providers** for converting caller audio
   <Card title="AssemblyAI" icon="waveform" href="/providers/stt/assemblyai">
     Universal-2 - 99+ languages, high accuracy
   </Card>
-  <Card title="Soniox" icon="audio-description" href="/providers/stt/soniox">
-    v4 - Cheapest, real-time translation
-  </Card>
-  <Card title="Azure Speech" icon="microsoft" href="/providers/stt/google">
-    110+ languages, enterprise custom models
-  </Card>
-  <Card title="AWS Transcribe" icon="aws" href="/providers/stt/google">
-    100+ languages, medical transcription
-  </Card>
-  <Card title="ElevenLabs Scribe" icon="waveform-lines" href="/providers/tts/elevenlabs">
-    99+ languages, high accuracy batch
-  </Card>
-  <Card title="Speechmatics" icon="comments" href="/providers/stt/google">
-    55+ languages, medical/enterprise
-  </Card>
-  <Card title="Sarvam AI" icon="globe" href="/languages/hindi">
-    Saarika - Best for 11 Indian languages
-  </Card>
-  <Card title="Munsit (CNTXT)" icon="language" href="/languages/arabic">
-    Best for Arabic (25+ dialects)
-  </Card>
-  <Card title="Valsea" icon="earth-asia" href="/languages/indonesian">
-    Best for SEA languages and Singlish
-  </Card>
-  <Card title="iFLYTEK" icon="dragon" href="/providers/stt/google">
-    Chinese and Asian language focus
-  </Card>
 </CardGroup>
 
 ---
@@ -59,15 +32,6 @@ Vora integrates with **12 speech-to-text providers** for converting caller audio
 | [Deepgram Nova-3](/providers/stt/deepgram) | 30+ | ~100ms | $0.0077/min | Real-time voice agents |
 | [Google Cloud STT](/providers/stt/google) | 125+ | ~200-300ms | $0.016/min | Widest language coverage |
 | [AssemblyAI](/providers/stt/assemblyai) | 99+ | ~300ms | $0.15/hr | Accuracy + add-ons |
-| [Soniox v4](/providers/stt/soniox) | 60+ | ~150ms | $0.10/hr | Lowest cost |
-| Azure Speech | 110+ | ~200-300ms | $0.017-$0.033/min | Enterprise, custom models |
-| AWS Transcribe | 100+ | ~300ms | $0.016-$0.024/min | Enterprise, medical |
-| ElevenLabs Scribe | 99+ | ~400ms | $0.40/hr | High accuracy batch |
-| Speechmatics | 55+ | ~300ms | ~$0.04/min | Medical, enterprise |
-| [Sarvam AI](/languages/hindi) | 11 Indian | ~300ms | ~$0.35/hr | Indian languages |
-| [Munsit](/languages/arabic) | Arabic (25+ dialects) | ~300ms | Enterprise | Arabic dialects |
-| [Valsea](/languages/indonesian) | 7 SEA | ~300ms | Contact | SEA accents, Singlish |
-| iFLYTEK | 15 | ~300ms | Contact | Chinese/Asian |
 
 ---
 
@@ -79,23 +43,19 @@ Vora integrates with **12 speech-to-text providers** for converting caller audio
 |----------|-------------|-----|
 | **Voice agents (general)** | Deepgram Nova-3 | Lowest latency, great accuracy |
 | **Multi-language (broad)** | Google Cloud STT | 125+ languages with Chirp 3 |
-| **Indian languages** | Sarvam AI Saarika | Purpose-built for 11 Indian languages |
-| **Arabic dialects** | Munsit (CNTXT) | 25+ Arabic dialect support |
-| **Southeast Asian** | Valsea | Singlish, accented English, SEA languages |
 | **Lowest latency** | Deepgram Nova-3 | ~100ms streaming |
-| **Lowest cost** | Soniox v4 | $0.10/hr async |
-| **Enterprise/custom** | Azure Speech | Custom acoustic models |
+| **Highest accuracy** | AssemblyAI | Universal-2 with add-ons |
+| **Enterprise/custom** | Google Cloud STT | Custom acoustic models available |
 
 ### By Region
 
 | Region | Recommended Providers |
 |--------|----------------------|
-| **North America** | Deepgram, Google, Azure |
-| **Europe** | Azure, Google, Speechmatics |
-| **India** | Sarvam AI, Google, Deepgram |
-| **MENA** | Munsit, Google, Azure |
-| **Southeast Asia** | Valsea, Google, Deepgram |
-| **China** | iFLYTEK, Google |
+| **North America** | Deepgram, Google |
+| **Europe** | Google, AssemblyAI |
+| **India** | Google, Deepgram |
+| **MENA** | Google, AssemblyAI |
+| **Southeast Asia** | Google, Deepgram |
 
 ---
 
@@ -108,17 +68,14 @@ For real-time voice agents, STT latency is critical:
 | Rank | Provider | Typical Latency |
 |------|----------|-----------------|
 | 1 | Deepgram Nova-3 | ~100ms |
-| 2 | Soniox v4 | ~150ms |
-| 3 | Google / Azure | ~200-300ms |
-| 4 | AssemblyAI | ~300ms |
+| 2 | Google / AssemblyAI | ~200-300ms |
+| 3 | AssemblyAI | ~300ms |
 
 ### Accuracy
 
 Accuracy varies by language and accent:
 - **English**: Deepgram and AssemblyAI lead
-- **Indian languages**: Sarvam AI leads with purpose-built models
-- **Arabic**: Munsit leads with 25+ dialect support
-- **SEA languages**: Valsea leads with Singlish and accent support
+- **Broad multilingual**: Google Cloud STT with Chirp 3 covers 125+ languages
 
 ### Pricing
 
@@ -127,9 +84,8 @@ Most cost-effective options:
 | Rank | Provider | Cost |
 |------|----------|------|
 | 1 | Deepgram | $0.0077/min (best value for quality) |
-| 2 | Soniox | $0.10/hr async ($0.0017/min) |
-| 3 | Google | $0.016/min |
-| 4 | Azure | $0.017/min |
+| 2 | Google | $0.016/min |
+| 3 | AssemblyAI | $0.15/hr |
 
 ---
 
@@ -211,7 +167,6 @@ sequenceDiagram
     ```
     Primary: Deepgram Nova-3
     Fallback: Google Cloud STT
-    Fallback: Azure Speech
     ```
     Configure in the [Advanced Tab](/advanced/command-center/advanced-tab).
   </Accordion>
@@ -230,9 +185,6 @@ sequenceDiagram
   </Card>
   <Card title="AssemblyAI" icon="waveform" href="/providers/stt/assemblyai">
     Universal-2, high accuracy
-  </Card>
-  <Card title="Soniox" icon="audio-description" href="/providers/stt/soniox">
-    v4, lowest cost
   </Card>
 </CardGroup>
 
