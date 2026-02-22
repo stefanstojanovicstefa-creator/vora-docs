@@ -113,7 +113,9 @@
             "pages": [
               "platform/integrations/index",
               "platform/integrations/hubspot",
+              "platform/integrations/salesforce",
               "platform/integrations/google-calendar",
+              "platform/integrations/calendly",
               "platform/integrations/webhooks"
             ]
           },
