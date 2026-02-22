@@ -1,63 +1,86 @@
 ---
 title: Analytics Tab
-description: View per-agent performance metrics and conversation insights
+description: Review call performance, sentiment, and usage metrics from the Command Center
 ---
 
-# Analytics Tab
+The **Analytics tab** gives you visibility into how your agent is performing — call volume, success rates, sentiment trends, and cost breakdown.
 
-The Analytics tab shows performance metrics specific to this agent, helping you understand how well it's performing and where to improve.
+## Overview Dashboard
 
----
-
-## Key Metrics
+The dashboard shows key metrics for the selected time range (last 7 days by default):
 
 | Metric | Description |
 |--------|-------------|
-| **Total Sessions** | Number of calls/conversations handled |
-| **Average Duration** | Mean conversation length |
-| **Success Rate** | Percentage of conversations that achieved their goal |
-| **Cost per Session** | Average cost including STT, LLM, and TTS usage |
-| **Avg Response Latency** | Time from caller speech end to agent response start |
+| **Total calls** | Number of completed sessions |
+| **Avg. duration** | Average call length in seconds |
+| **Completion rate** | Calls that reached a successful resolution |
+| **Avg. sentiment** | Mean sentiment score (positive/neutral/negative) |
+| **Total cost** | Estimated cost across all calls |
 
----
+## Call Volume
 
-## Time Range
+The call volume chart shows sessions over time. Use it to:
+- Spot traffic patterns (peak hours, days)
+- Identify sudden drops or spikes
+- Track growth over time
 
-View analytics for different periods:
-- **Last 24 hours** - Recent activity
-- **Last 7 days** - Weekly trends
-- **Last 30 days** - Monthly overview
-- **Custom range** - Select specific dates
+## Sentiment Analysis
 
----
+Vora analyzes sentiment at the segment level during each call.
 
-## Conversation Insights
+**Sentiment scores:**
+- **Positive** (>0.6): Caller is satisfied, engaged, or friendly
+- **Neutral** (0.4–0.6): Informational exchange
+- **Negative** (<0.4): Caller is frustrated or dissatisfied
 
-The Analytics tab surfaces patterns from your agent's conversations:
-- **Top topics** - Most common questions and subjects
-- **Unhandled queries** - Questions the agent couldn't answer
-- **Transfer rate** - How often calls are transferred to humans
-- **Drop-off points** - Where callers tend to hang up
+**Using sentiment data:**
+- High negative sentiment early in calls → your greeting may be off
+- Sentiment drop at specific points → your agent may be struggling with certain topics
+- Overall negative trends → consider retraining or updating your knowledge base
 
-<Tip>
-  Review **Unhandled queries** weekly and add relevant information to your Knowledge Base or system prompt to improve coverage.
-</Tip>
+## Interruptions
 
----
+Interruption events are logged when a caller speaks while the agent is speaking. High interruption rates indicate:
+- Your agent talks too long before pausing
+- Responses are not directly answering the caller's question
+- Callers are impatient or confused
+
+Reduce interruptions by:
+- Shortening agent responses (adjust in the Advanced tab)
+- Making sure the agent acknowledges the question before answering
 
 ## Cost Breakdown
 
-See per-component costs for this agent:
+| Component | What It Measures |
+|-----------|-----------------|
+| **LLM** | Tokens used for language model inference |
+| **STT** | Audio seconds transcribed |
+| **TTS** | Characters synthesized to speech |
+| **Total** | Combined cost per call |
 
-| Component | Metric |
-|-----------|--------|
-| **STT** | Cost per minute of transcription |
-| **LLM** | Cost per 1K tokens (input + output) |
-| **TTS** | Cost per 1K characters of speech |
-| **Total** | Combined cost per session |
+## Session History
 
----
+The sessions list shows individual calls with:
+- Date and duration
+- Sentiment score
+- Token and cost usage
+- Link to full transcript
 
-## Exporting Data
+Click any session to open the transcript viewer.
 
-Export analytics data as CSV for external analysis. Click **Export** in the top-right of the Analytics tab.
+## Export
+
+Export analytics data as CSV for external analysis:
+
+1. Set your date range
+2. Click **Export**
+3. Choose: Summary (aggregated) or Raw (per-call)
+4. Download the CSV file
+
+## Filters
+
+Filter analytics by:
+- Date range
+- Sentiment range
+- Duration range
+- Resolution status

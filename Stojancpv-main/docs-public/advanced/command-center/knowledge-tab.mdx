@@ -1,71 +1,96 @@
 ---
 title: Knowledge Tab
-description: Configure knowledge base and RAG retrieval for your agent
+description: Build and manage your agent's knowledge base from the Command Center
 ---
 
-# Knowledge Tab
-
-The Knowledge tab connects your agent to documents and data sources so it can answer questions using your business information.
-
----
+The **Knowledge tab** is where you add information your agent can retrieve during conversations — product details, FAQs, policies, documentation, and more.
 
 ## How Knowledge Base Works
 
-Vora uses RAG (Retrieval-Augmented Generation):
-1. Your documents are split into chunks and embedded as vectors
-2. During conversations, relevant chunks are retrieved based on semantic similarity
-3. Retrieved context is injected into the LLM prompt
-4. The agent generates responses grounded in your documents
+Your agent uses Retrieval-Augmented Generation (RAG). When a caller asks a question, Vora searches your knowledge base for relevant content and injects it into the agent's context before generating a response.
 
----
+This means your agent can answer questions accurately without memorizing everything — it looks up answers in real time.
 
-## Adding Knowledge Sources
+## Adding Content
 
-| Source | Description |
-|--------|-------------|
-| **Documents** | Upload PDF, DOCX, TXT, or Markdown files |
-| **URLs** | Crawl and index web pages |
-| **Text** | Paste raw text directly |
-| **Integrations** | Connect external data sources |
+<Tabs>
+  <Tab title="Simple">
+    Three ways to add knowledge:
 
-<Steps>
-  <Step title="Add a source">
-    Click **Add Knowledge** and choose your source type.
-  </Step>
-  <Step title="Upload or connect">
-    Upload files, enter URLs, or paste text. Vora processes and indexes the content automatically.
-  </Step>
-  <Step title="Verify">
-    Test your agent to confirm it can answer questions from the new content.
-  </Step>
-</Steps>
+    - **Upload a file**: PDF, Word, or text document
+    - **Paste text**: Copy-paste any content directly
+    - **Import from URL**: Vora crawls your website automatically
+  </Tab>
+  <Tab title="Advanced">
+    Source types supported:
+    - PDF documents (`.pdf`)
+    - Word documents (`.docx`)
+    - Plain text (`.txt`)
+    - Web URLs (single page or full site crawl)
+    - Direct text input
+  </Tab>
+</Tabs>
 
----
+### Upload a Document
 
-## RAG Settings
+1. Click **Add Source** → **Document**
+2. Select your file (PDF, DOCX, or TXT, max 50MB)
+3. Vora processes and chunks the document automatically
+4. Processing takes 30–120 seconds depending on file size
+
+### Import from a URL
+
+1. Click **Add Source** → **URL**
+2. Enter your URL
+3. Choose crawl depth:
+   - **Single page**: Just the URL you entered
+   - **Full site**: Follow links up to 3 levels deep (max 100 pages)
+4. Click **Import**
+
+Set up scheduled re-crawls to keep content fresh:
+- Daily (for pages that change frequently)
+- Weekly (for documentation or static pages)
+
+### Paste Text
+
+1. Click **Add Source** → **Text**
+2. Give the source a name (e.g., "Pricing FAQ")
+3. Paste your content
+4. Click **Save**
+
+## Managing Sources
+
+| Action | How |
+|--------|-----|
+| View source details | Click the source name |
+| Delete a source | Click the source → **Delete** |
+| Re-process a source | Click the source → **Re-index** |
+| Check processing status | Status badge shows: Pending, Processing, Ready, Error |
+
+## Retrieval Settings
+
+Configure how Vora retrieves knowledge during calls:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| **Chunk size** | Size of document chunks for retrieval | 512 tokens |
-| **Chunk overlap** | Overlap between adjacent chunks | 50 tokens |
-| **Top K** | Number of chunks retrieved per query | 5 |
-| **Similarity threshold** | Minimum relevance score for retrieval | 0.7 |
+| **Relevance threshold** | Minimum similarity score (0–1) to include a chunk | 0.7 |
+| **Max chunks** | Maximum knowledge chunks injected per turn | 3 |
+| **Context budget** | Max tokens allocated to knowledge | 2,000 |
 
-<Tip>
-  For most use cases, the defaults work well. Increase **Top K** if the agent misses relevant information. Decrease **Chunk size** for more precise retrieval.
-</Tip>
+Higher relevance thresholds reduce noise but may miss relevant content. Start at 0.7 and adjust based on testing.
 
----
+## Testing Your Knowledge Base
 
-## Knowledge Base vs. System Prompt
+Use the **Test** button to search your knowledge base directly:
 
-| Use System Prompt For | Use Knowledge Base For |
-|----------------------|----------------------|
-| Agent personality and rules | Large documents (manuals, FAQs) |
-| Short, critical information | Dynamic content that changes |
-| Behavioral instructions | Detailed product/service info |
-| Always-needed context | Contextual, query-dependent info |
+1. Enter a question a caller might ask
+2. See which chunks would be retrieved
+3. Review relevance scores
+4. Adjust your content or settings if needed
 
-<Note>
-  The system prompt is included in every request. Knowledge Base content is only retrieved when relevant to the current question. Use the system prompt for things the agent always needs to know.
-</Note>
+## Best Practices
+
+- **Be specific**: A focused knowledge base outperforms a broad one. Add only what's relevant to your agent's purpose.
+- **Use clear headings**: Vora chunks by semantic boundaries — well-structured documents retrieve better.
+- **Test with real questions**: Use actual questions customers ask, not hypothetical ones.
+- **Keep content current**: Set up weekly re-crawls for documentation that changes regularly.

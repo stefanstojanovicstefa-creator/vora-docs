@@ -1,0 +1,36 @@
+---
+title: Salesforce
+description: Sync Vora call data and leads directly to Salesforce
+---
+
+Connect Vora to Salesforce to automatically create leads, log call activities, and update contacts after every conversation.
+
+## What Syncs
+
+| Data | Direction | Description |
+|------|-----------|-------------|
+| New leads | Vora → Salesforce | Callers identified as leads are created as Salesforce Leads |
+| Call activity | Vora → Salesforce | Every session logged as a Salesforce Activity |
+| Contact updates | Bidirectional | Phone numbers matched against existing contacts |
+
+## Connect Salesforce
+
+1. Go to **Settings** → **Integrations**
+2. Click **Salesforce** → **Connect**
+3. Log in with your Salesforce credentials
+4. Grant Vora permission to read/write Leads, Contacts, and Activities
+5. Choose your Salesforce instance (Production or Sandbox)
+
+## Configuration
+
+After connecting, configure how Vora maps data to Salesforce:
+
+- **Lead source**: Set the lead source value for Vora-created leads (e.g., "Phone - AI Agent")
+- **Activity type**: Set the activity type for call logs (e.g., "Call")
+- **Duplicate handling**: What to do when a phone number matches an existing contact
+
+## Troubleshooting
+
+**Leads not appearing**: Check that your Salesforce user has Create permission on the Lead object.
+
+**Duplicate contacts**: Enable the "Check existing contacts" setting to match by phone number before creating new records.

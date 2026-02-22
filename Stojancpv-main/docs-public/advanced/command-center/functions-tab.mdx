@@ -1,82 +1,97 @@
 ---
 title: Functions Tab
-description: Attach custom functions and tool calls to your agent
+description: Connect your agent to external tools, APIs, and MCP servers from the Command Center
 ---
 
-# Functions Tab
+The **Functions tab** is where you give your agent the ability to take actions — look up data, send messages, create records, and interact with external systems.
 
-The Functions tab lets you attach tool calls to your agent. Functions are actions the agent can execute during conversations - like booking appointments, checking order status, or transferring calls.
+## What You Can Connect
 
----
+<Tabs>
+  <Tab title="Simple">
+    Functions let your agent do more than just talk. You can connect to your existing tools or use built-in capabilities.
 
-## How Functions Work
+    **Common uses:**
+    - Look up customer information during a call
+    - Create a booking or reservation
+    - Send a follow-up SMS or email
+    - Check product availability
+  </Tab>
+  <Tab title="Advanced">
+    Vora supports three function types:
+    - **HTTP Functions**: Custom HTTP endpoints you control
+    - **MCP Servers**: Model Context Protocol servers for rich integrations
+    - **Built-in Templates**: Pre-built functions for common tasks
+  </Tab>
+</Tabs>
 
-1. You define a function with a name, description, and parameters
-2. During conversation, the LLM decides when to call the function
-3. Vora executes the function and returns the result
-4. The agent incorporates the result into its response
+## Adding an HTTP Function
 
----
+HTTP Functions call any endpoint you define when your agent needs to take action.
 
-## Attaching Functions
+1. Click **Add Function** → **HTTP Function**
+2. Enter a name (e.g., `check_availability`)
+3. Enter your endpoint URL
+4. Define the parameters your agent will collect from the caller
+5. Map the response fields back to what your agent should say
 
-In the Functions tab, you'll see:
-- **Available functions** - Functions you've created or from templates
-- **Attached functions** - Functions currently active on this agent
-
-Click **Add Function** to browse available functions, or create a new one.
-
----
-
-## Built-in Functions
-
-Vora includes several built-in functions:
-
-| Function | Description |
-|----------|-------------|
-| **transfer_call** | Transfer the caller to a human agent or phone number |
-| **end_call** | Gracefully end the conversation |
-| **book_appointment** | Schedule via Google Calendar integration |
-| **send_email** | Send an email via connected email service |
-| **lookup_crm** | Query connected CRM (HubSpot, etc.) |
-
----
-
-## Custom Functions
-
-Create your own functions for agent-specific actions. See the [Custom Functions](/advanced/custom-functions) guide for:
-- Writing function code
-- Defining parameter schemas
-- Testing functions in isolation
-- Using function templates
-
----
-
-## Function Parameters
-
-Each function defines parameters the LLM extracts from conversation:
-
+**Example: Reservation check**
 ```json
 {
-  "name": "check_order_status",
-  "description": "Look up the status of a customer order",
+  "name": "check_availability",
+  "description": "Check if a table is available for a given date and party size",
   "parameters": {
-    "type": "object",
-    "properties": {
-      "order_id": {
-        "type": "string",
-        "description": "The order ID to look up"
-      }
-    },
-    "required": ["order_id"]
+    "date": { "type": "string", "description": "Date in YYYY-MM-DD format" },
+    "party_size": { "type": "integer", "description": "Number of guests" }
   }
 }
 ```
 
-The LLM extracts `order_id` from the conversation (e.g., "Can you check order #12345?") and passes it to the function.
+## Using the Function Wizard
 
----
+The Function Wizard generates function schemas from plain English.
+
+1. Click **Add Function** → **Function Wizard**
+2. Describe what you want in plain English: _"Check if a product is in stock by SKU number"_
+3. Vora generates the function schema automatically
+4. Review and adjust, then save
+
+## Connecting an MCP Server
+
+MCP (Model Context Protocol) servers give your agent access to rich integrations.
+
+1. Click **Add Function** → **MCP Server**
+2. Browse the MCP Catalog or enter a custom server URL
+3. Authenticate the connection
+4. Choose which tools to expose to your agent
+
+See the [MCP documentation](/platform/integrations/index) for available integrations.
+
+## Function Templates
+
+Pre-built functions you can deploy in one click:
+
+| Template | Description |
+|----------|-------------|
+| Send Email | Send a follow-up email after a call |
+| Create CRM Lead | Add caller to your CRM as a lead |
+| Calendar Booking | Book an appointment |
+| SMS Notification | Send a text message confirmation |
+| Order Lookup | Look up order status by ID |
 
 ## Testing Functions
 
-Use the [Testing Tab](/advanced/command-center/testing-tab) to verify functions work correctly. During test calls, you'll see function calls logged in real-time with their inputs and outputs.
+Use **Test Function** to call your function with sample data before going live.
+
+1. Select a function from the list
+2. Click **Test**
+3. Enter sample values for each parameter
+4. Review the response and verify your agent will handle it correctly
+
+## Troubleshooting
+
+**Function not triggering**: Make sure your system prompt mentions the function by name or describes scenarios where it should be used.
+
+**Timeout errors**: Functions must respond within 5 seconds. For slow operations, return an acknowledgment immediately and follow up asynchronously.
+
+**Authentication errors**: Check your API keys and ensure your endpoint accepts the Authorization header format Vora sends.
