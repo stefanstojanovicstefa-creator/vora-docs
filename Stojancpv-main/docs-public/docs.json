@@ -315,7 +315,8 @@
             "pages": [
               "providers/tts/index",
               "providers/tts/elevenlabs",
-              "providers/tts/google"
+              "providers/tts/google",
+              "providers/tts/cartesia"
             ]
           },
           {

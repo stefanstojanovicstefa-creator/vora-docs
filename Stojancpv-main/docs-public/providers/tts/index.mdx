@@ -15,8 +15,11 @@ Vora integrates with text-to-speech providers for natural, expressive agent voic
   <Card title="ElevenLabs" icon="waveform-lines" href="/providers/tts/elevenlabs">
     Premium quality, voice cloning, 32+ languages
   </Card>
+  <Card title="Cartesia" icon="bolt" href="/providers/tts/cartesia">
+    Sonic-3 — ultra-low latency, 9 languages
+  </Card>
   <Card title="Google TTS" icon="google" href="/providers/tts/google">
-    WaveNet/Neural2 - 75+ languages, 380+ voices
+    WaveNet/Neural2 — 75+ languages, 380+ voices
   </Card>
 </CardGroup>
 
@@ -24,83 +27,54 @@ Vora integrates with text-to-speech providers for natural, expressive agent voic
 
 ## Comparison Matrix
 
-| Provider | Languages | Voices | Quality | Latency | Pricing |
-|----------|-----------|--------|---------|---------|---------|
-| [ElevenLabs](/providers/tts/elevenlabs) | 32+ | 100+ | Excellent | ~200ms | $0.05-$0.15/min |
-| [Google TTS](/providers/tts/google) | 75+ | 380+ | Good | ~200-400ms | $4-$16/1M chars |
+| Provider | Languages | Voices | Quality | Latency | Best For |
+|----------|-----------|--------|---------|---------|----------|
+| [ElevenLabs](/providers/tts/elevenlabs) | 32+ | 100+ | Excellent | ~200ms | Natural voices, cloning |
+| [Cartesia](/providers/tts/cartesia) | 9 | 100+ | Excellent | ~80ms | Ultra-low latency voice AI |
+| [Google TTS](/providers/tts/google) | 75+ | 380+ | Good | ~200–400ms | Widest language coverage |
 
 ---
 
 ## Choosing a Provider
 
-### By Priority
-
 | Priority | Recommended Provider | Why |
 |----------|---------------------|-----|
-| **Most natural English** | ElevenLabs | Gold standard for naturalness and expression |
+| **Lowest latency** | Cartesia (Sonic-3) | ~80ms first byte — best for real-time conversation |
+| **Most natural voices** | ElevenLabs | Gold standard for naturalness and expression |
 | **Widest language coverage** | Google Cloud TTS | 75+ languages, 380+ voices |
-| **Voice cloning** | ElevenLabs | Clone any voice |
-| **Cost-effective at scale** | Google Cloud TTS | Lower per-character pricing |
-
-### Voice Quality Rankings (English)
-
-| Rank | Provider | Notes |
-|------|----------|-------|
-| 1 | ElevenLabs | Most natural, expressive |
-| 2 | Google Neural2 | High quality, many voices |
-
----
-
-## Key Considerations
-
-### Latency
-
-For real-time voice agents, TTS latency matters:
-
-| Rank | Provider | First Byte Latency |
-|------|----------|--------------------|
-| 1 | ElevenLabs | ~200ms |
-| 2 | Google TTS | ~200-400ms |
-
-### Pricing
-
-Most cost-effective options:
-
-| Rank | Provider | Cost |
-|------|----------|------|
-| 1 | Google Cloud | $4/1M chars (~$0.02/min) |
-| 2 | ElevenLabs | $0.05/min (premium quality) |
-
-### Voice Selection
-
-| Provider | Premade Voices | Cloning | Custom Voice |
-|----------|---------------|---------|--------------|
-| ElevenLabs | 100+ | Yes | Yes |
-| Google TTS | 380+ | No | Custom Voice (enterprise) |
+| **Voice cloning** | ElevenLabs | Clone any voice with a short sample |
+| **Cost at scale** | Google Cloud TTS | Cheapest per-character pricing |
 
 ---
 
 ## Configuration
 
-Configure TTS providers in the Command Center [Voice Tab](/advanced/command-center/voice-tab):
+Configure TTS in the Command Center [Voice Tab](/advanced/command-center/voice-tab):
 1. Select your TTS provider
 2. Browse and preview available voices
 3. Set speech speed
-4. Configure a fallback voice in the [Advanced Tab](/advanced/command-center/advanced-tab)
+4. Optionally set a fallback voice in the [Advanced Tab](/advanced/command-center/advanced-tab)
 
 ### API Configuration
 
 ```typescript
+// ElevenLabs
 const agent = await vora.agents.create({
-  name: 'Voice Agent',
-  systemPrompt: 'You are a helpful assistant.',
   voice: {
     provider: 'elevenlabs',
     voiceId: 'EXAVITQu4vr4xnSDxMaL',
     model: 'eleven_turbo_v2_5',
     stability: 0.5,
-    similarityBoost: 0.75,
     speed: 1.0
+  }
+});
+
+// Cartesia (ultra-low latency)
+const agent = await vora.agents.create({
+  voice: {
+    provider: 'cartesia',
+    voiceId: 'sonic-3',
+    language: 'en'
   }
 });
 ```
@@ -110,51 +84,32 @@ const agent = await vora.agents.create({
 ## Best Practices
 
 <AccordionGroup>
-  <Accordion title="Optimize for Conversation">
+  <Accordion title="Optimize for Real-Time Conversation">
+    For voice AI where every millisecond matters, Cartesia's Sonic-3 has the lowest first-byte latency:
     ```typescript
     voice: {
-      provider: 'elevenlabs',
-      voiceId: 'EXAVITQu4vr4xnSDxMaL',
-      model: 'eleven_turbo_v2_5',
-      stability: 0.4,
-      speed: 1.05
+      provider: 'cartesia',
+      voiceId: 'sonic-3',
+      language: 'en'
     }
     ```
   </Accordion>
 
   <Accordion title="Match Voice to Use Case">
-    | Use Case | Voice Style | Provider |
-    |----------|-------------|----------|
-    | Customer support | Calm, professional | ElevenLabs |
-    | Sales | Energetic, confident | ElevenLabs |
-    | Healthcare | Warm, reassuring | Google Neural |
-    | IVR/Menu | Clear, neutral | Google Neural |
-    | Budget | Natural, cost-effective | Google TTS |
+    | Use Case | Provider | Why |
+    |----------|----------|-----|
+    | Customer support | ElevenLabs | Most natural, expressive voices |
+    | Sales | ElevenLabs | Voice cloning for brand consistency |
+    | Real-time AI | Cartesia | Lowest latency (~80ms) |
+    | Multi-language (broad) | Google TTS | 75+ language coverage |
+    | Healthcare | Google Neural2 | Clear, neutral, trustworthy |
   </Accordion>
 
   <Accordion title="Configure Fallbacks">
-    Set up automatic failover:
+    Set up automatic failover in the [Advanced Tab](/advanced/command-center/advanced-tab):
     ```
     Primary: ElevenLabs
     Fallback: Google TTS
     ```
-    Configure in the [Advanced Tab](/advanced/command-center/advanced-tab).
   </Accordion>
 </AccordionGroup>
-
----
-
-## Provider Details
-
-<CardGroup cols={2}>
-  <Card title="ElevenLabs" icon="waveform-lines" href="/providers/tts/elevenlabs">
-    Premium voices, cloning
-  </Card>
-  <Card title="Google TTS" icon="google" href="/providers/tts/google">
-    75+ languages
-  </Card>
-</CardGroup>
-
-<Tip>
-  For detailed language-specific provider recommendations, see the [TTS Provider Comparison](/languages/tts-providers) page.
-</Tip>
